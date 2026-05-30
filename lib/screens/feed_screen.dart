@@ -9,6 +9,7 @@ import 'package:dharma_ai/widgets/mandala_background.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
+import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/screens/profile_screen.dart';
 
 class DailyFeedScreen extends ConsumerStatefulWidget {
@@ -28,6 +29,11 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final currentLanguage = ref.watch(languageProvider);
+    final user = ref.watch(authUserProvider).valueOrNull;
+    final fullName = user?.userMetadata?['full_name'] as String?;
+    final firstName = (fullName != null && fullName.isNotEmpty)
+        ? fullName.split(' ').first
+        : null;
 
     // Use Gita 2.47 for the Daily Verse
     final Verse dailyVerse = MockScriptureData.gitaVerses[0];
@@ -53,7 +59,9 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppTranslations.get('greetingSeeker', currentLanguage),
+                          firstName != null
+                              ? 'Hari Om, $firstName'
+                              : AppTranslations.get('greetingSeeker', currentLanguage),
                           style: textTheme.headlineMedium?.copyWith(
                             color: SacredTheme.meditativeIndigo,
                             fontWeight: FontWeight.w600,

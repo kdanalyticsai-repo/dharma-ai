@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
-import 'package:dharma_ai/screens/personalize_screen.dart';
+import 'package:dharma_ai/screens/login_screen.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
@@ -193,11 +193,30 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PersonalizeScreen(),
+                              builder: (context) => const LoginScreen(startInSignUpMode: true),
                             ),
                           );
                         },
                         child: Text(AppTranslations.get('beginYourPath', currentLanguage)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(startInSignUpMode: false),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Already on the path? Sign in',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: SacredTheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                     const SizedBox(height: SacredTheme.safeAreaBottom),

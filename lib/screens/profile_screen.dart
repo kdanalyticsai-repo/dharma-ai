@@ -14,6 +14,7 @@ import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/offline_library_screen.dart';
 import 'package:dharma_ai/screens/offline_reader_screen.dart';
+import 'package:dharma_ai/providers/auth_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -162,6 +163,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final tier = ref.watch(purchaseProvider);
     final isPaid = tier != SubscriptionTier.free;
     final textTheme = Theme.of(context).textTheme;
+    final user = ref.watch(authUserProvider).valueOrNull;
+    final fullName = (user?.userMetadata?['full_name'] as String?)?.trim();
+    final displayName = (fullName != null && fullName.isNotEmpty) ? fullName : 'Seeker of Truth';
+    final avatarLetter = displayName[0].toUpperCase();
 
     return Scaffold(
       appBar: AppBar(
@@ -188,12 +193,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                   padding: const EdgeInsets.all(20.0),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 30,
                         backgroundColor: SacredTheme.primary,
                         child: Text(
-                          'S',
-                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                          avatarLetter,
+                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -201,7 +206,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Seeker of Truth', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                            Text(displayName, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
                             Text('Level: Practitioner', style: textTheme.labelSmall),
                             const SizedBox(height: 6),
