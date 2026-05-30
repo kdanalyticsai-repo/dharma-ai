@@ -10,6 +10,8 @@ class SupabaseConfig {
   );
 
   static bool get isConfigured =>
-      supabaseUrl != 'YOUR_SUPABASE_URL' &&
+      supabaseUrl.isNotEmpty &&
+      supabaseUrl.startsWith('https://') &&
+      supabaseAnonKey.isNotEmpty &&
       supabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY';
 }

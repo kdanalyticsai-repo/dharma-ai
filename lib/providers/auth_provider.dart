@@ -32,6 +32,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
   // ── Sign up with email + password ──────────────────────────
   Future<String?> signUp(String email, String password, String name) async {
+    if (!SupabaseConfig.isConfigured) return 'Backend not configured — check Supabase URL in settings.';
     try {
       final res = await _client.auth.signUp(
         email: email,
@@ -56,6 +57,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
   // ── Sign in with email + password ──────────────────────────
   Future<String?> signIn(String email, String password) async {
+    if (!SupabaseConfig.isConfigured) return 'Backend not configured — check Supabase URL in settings.';
     try {
       final res = await _client.auth.signInWithPassword(
         email: email,

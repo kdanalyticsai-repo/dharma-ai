@@ -41,10 +41,10 @@ jobs:
         # Cloudflare Worker (OPENAI_WORKER_URL) which holds the key server-side.
         run: |
           flutter build web \
-            --dart-define=R2_BUCKET_URL=${{ secrets.R2_BUCKET_URL }} \
-            --dart-define=OPENAI_WORKER_URL=${{ secrets.OPENAI_WORKER_URL }} \
-            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+            "--dart-define=R2_BUCKET_URL=${{ secrets.R2_BUCKET_URL }}" \
+            "--dart-define=OPENAI_WORKER_URL=${{ secrets.OPENAI_WORKER_URL }}" \
+            "--dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+            "--dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}"
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
