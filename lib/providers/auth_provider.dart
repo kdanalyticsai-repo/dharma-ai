@@ -75,7 +75,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   // ── Sign in with Google ─────────────────────────────────────
   Future<String?> signInWithGoogle() async {
     try {
-      await _client.auth.signInWithOAuth(OAuthProvider.google);
+      await _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'https://dharma-ai-web.kdanalyticsai.workers.dev',
+      );
       return null;
     } on AuthException catch (e) {
       return e.message;
