@@ -39,10 +39,18 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         data: {'full_name': name},
       );
       state = AsyncValue.data(res.user);
-      if (res.user != null) await _upsertProfile(res.user!.id, name, email);
+      if (res.user != null) {
+        try {
+          await _upsertProfile(res.user!.id, name, email);
+        } catch (_) {
+          // Profile row creation failed but auth succeeded — not blocking
+        }
+      }
       return null; // null = success
     } on AuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
@@ -57,6 +65,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       return null;
     } on AuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
@@ -67,6 +77,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       return null;
     } on AuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
