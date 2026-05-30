@@ -220,13 +220,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    icon: const Icon(Icons.g_mobiledata, size: 22),
-                    label: const Text('Continue with Google'),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: SacredTheme.outlineVariant),
-                      foregroundColor: SacredTheme.onSurface,
+                  child: Tooltip(
+                    message: 'Google sign-in coming soon',
+                    child: OutlinedButton.icon(
+                      onPressed: null, // disabled until Google OAuth is configured
+                      icon: const Icon(Icons.g_mobiledata, size: 22),
+                      label: const Text('Continue with Google (coming soon)'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: SacredTheme.outlineVariant),
+                        foregroundColor: SacredTheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
