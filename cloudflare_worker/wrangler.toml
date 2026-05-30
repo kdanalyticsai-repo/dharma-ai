@@ -2,8 +2,12 @@ name = "dharma-ai"
 main = "dharma_ai_proxy.js"
 compatibility_date = "2024-01-01"
 
-# Secrets (never put real values here — set via wrangler CLI):
-#   wrangler secret put OPENAI_API_KEY
+# Secrets (never put real values here — set in Cloudflare dashboard or via CLI):
+#   Dashboard: Settings → Variables and Secrets → Add secret → OPENAI_API_KEY
+#   CLI: wrangler secret put OPENAI_API_KEY
+#
+# Worker URL: https://dharma-ai.kdanalyticsai.workers.dev
+# Set this as OPENAI_WORKER_URL in GitHub Secrets for CI.
 
 [vars]
 # Comma-separated list of allowed request origins (no spaces).
