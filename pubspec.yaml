@@ -1,0 +1,55 @@
+name: dharma_ai
+description: "A Sacred & Serene AI Scripture Reader and Spiritual Companion mobile app."
+version: 1.0.0+1
+
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.4.9
+
+  # Backend & Database
+  supabase_flutter: ^2.3.3
+  hive_flutter: ^1.1.0
+
+  # Navigation
+  go_router: ^12.1.3
+
+  # UI & Design System
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+
+  # Audio Wisdom
+  just_audio: ^0.9.36
+  audio_service: ^0.18.12
+
+  # HTTP client (Gemini API)
+  http: ^1.2.0
+
+  # Utility
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.8
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/mandalas/
+    - assets/audio/
+
+  # Fonts can also be defined here if they are bundled locally,
+  # but google_fonts package fetches them dynamically and caches them.

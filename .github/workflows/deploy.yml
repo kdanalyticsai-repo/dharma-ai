@@ -1,0 +1,40 @@
+name: Build & Deploy DharmaAI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        # NOTE: do NOT pass OPENAI_API_KEY here — --dart-define values are
+        # embedded in the shipped web bundle. OpenAI calls go through the
+        # Cloudflare Worker (OPENAI_WORKER_URL) which holds the key server-side.
+        run: |
+          flutter build web \
+            --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+            --dart-define=R2_BUCKET_URL=${{ secrets.R2_BUCKET_URL }} \
+            --dart-define=OPENAI_WORKER_URL=${{ secrets.OPENAI_WORKER_URL }} \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+
+      # Deploy to your hosting (Firebase, Netlify, Cloudflare Pages, etc.)
+      # Example: Cloudflare Pages
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: dharma-ai
+          directory: build/web
