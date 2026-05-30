@@ -35,8 +35,10 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
         ? fullName.split(' ').first
         : null;
 
-    // Use Gita 2.47 for the Daily Verse
-    final Verse dailyVerse = MockScriptureData.gitaVerses[0];
+    // Rotate daily verse based on day of year so it changes each day
+    final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
+    final verseIndex = dayOfYear % MockScriptureData.gitaVerses.length;
+    final Verse dailyVerse = MockScriptureData.gitaVerses[verseIndex];
 
     return Scaffold(
       body: MandalaBackground(
