@@ -35,16 +35,23 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build web
-        # NOTE: do NOT pass OPENAI_API_KEY here — --dart-define values are
-        # embedded in the shipped web bundle. OpenAI calls go through the
-        # Cloudflare Worker (OPENAI_WORKER_URL) which holds the key server-side.
+      - name: Create dart defines file
+        # Using --dart-define-from-file avoids shell escaping issues with
+        # JWT tokens (dots, plus signs, equals) that break --dart-define.
+        # NOTE: OPENAI_API_KEY is intentionally excluded — it would be
+        # embedded in the JS bundle. OpenAI calls go through the Worker.
         run: |
-          flutter build web \
-            "--dart-define=R2_BUCKET_URL=${{ secrets.R2_BUCKET_URL }}" \
-            "--dart-define=OPENAI_WORKER_URL=${{ secrets.OPENAI_WORKER_URL }}" \
-            "--dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
-            "--dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}"
+          cat > dart_defines.json << 'EOF'
+          {
+            "SUPABASE_URL": "${{ secrets.SUPABASE_URL }}",
+            "SUPABASE_ANON_KEY": "${{ secrets.SUPABASE_ANON_KEY }}",
+            "OPENAI_WORKER_URL": "${{ secrets.OPENAI_WORKER_URL }}",
+            "R2_BUCKET_URL": "${{ secrets.R2_BUCKET_URL }}"
+          }
+          EOF
+
+      - name: Build web
+        run: flutter build web --dart-define-from-file=dart_defines.json
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
