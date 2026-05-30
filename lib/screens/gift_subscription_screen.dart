@@ -112,6 +112,10 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final tier = ref.watch(purchaseProvider);
+    final isAnnual = tier == SubscriptionTier.annual;
+    final giftLabel = isAnnual ? 'Sadhaka Annual Pass' : 'Sadhaka Premium Monthly Pass';
+    final giftPrice = isAnnual ? '₹1,100' : '₹201';
 
     return Scaffold(
       appBar: AppBar(
@@ -142,7 +146,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Help a fellow seeker study the scriptures and consult the AI spiritual guide by gifting them a Sadhaka Premium Monthly Pass (\$4.99).',
+                  'Help a fellow seeker study the scriptures and consult the AI spiritual guide by gifting them a $giftLabel ($giftPrice).',
                   style: textTheme.bodyMedium,
                 ),
                 const FadingDivider(height: 28),
@@ -202,8 +206,8 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Sadhaka Premium Monthly Pass', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                        Text('\$4.99', style: textTheme.bodyLarge?.copyWith(color: SacredTheme.primary, fontWeight: FontWeight.bold)),
+                        Text(giftLabel, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                        Text(giftPrice, style: textTheme.bodyLarge?.copyWith(color: SacredTheme.primary, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),

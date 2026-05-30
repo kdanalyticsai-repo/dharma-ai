@@ -135,8 +135,8 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                   price: '₹0 / Month',
                   benefits: [
                     'Standard Bhagavad Gita Reader',
-                    '3 daily AI Scripture Scholar prompts',
-                    'Offline access to Gita verse 2.47',
+                    '11 daily AI Scripture Scholar prompts',
+                    'Offline access to all Gita verses',
                   ],
                   isActive: activeTier == SubscriptionTier.free,
                   button: OutlinedButton(
@@ -155,10 +155,11 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                   badge: 'MONTHLY',
                   benefits: [
                     'Access all scriptures (Upanishads, Vedas)',
-                    'Unlimited RAG-backed AI Chat Scholar',
+                    'Unlimited AI-powered Chat Scholar',
                     'Unlimited introspective AI Guru counseling',
                     'Background Audio Wisdom streaming player',
                     'Full offline downloads library',
+                    'Offline access to all Gita verses',
                     'Sangha community pass gifting actions',
                   ],
                   isActive: activeTier == SubscriptionTier.sadhaka,

@@ -1,5 +1,9 @@
 name = "dharma-ai-web"
 compatibility_date = "2024-01-01"
 
+routes = [
+  { pattern = "apps.kdaanalytics.com/dharma-ai*", zone_name = "kdaanalytics.com" }
+]
+
 [assets]
 directory = "./build/web"

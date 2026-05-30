@@ -51,7 +51,7 @@ jobs:
           EOF
 
       - name: Build web
-        run: flutter build web --dart-define-from-file=dart_defines.json
+        run: flutter build web --dart-define-from-file=dart_defines.json --base-href=/dharma-ai/
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3

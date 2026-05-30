@@ -14,6 +14,7 @@ import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/offline_library_screen.dart';
 import 'package:dharma_ai/screens/offline_reader_screen.dart';
+import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -115,6 +116,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                     context,
                     MaterialPageRoute(builder: (context) => const OfflineReaderScreen()),
                   );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.redAccent),
+                title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await ref.read(authProvider.notifier).signOut();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      (route) => false,
+                    );
+                  }
                 },
               ),
               const SizedBox(height: 12),
