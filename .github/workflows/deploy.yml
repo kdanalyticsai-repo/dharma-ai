@@ -41,7 +41,6 @@ jobs:
         # Cloudflare Worker (OPENAI_WORKER_URL) which holds the key server-side.
         run: |
           flutter build web \
-            --dart-define=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
             --dart-define=R2_BUCKET_URL=${{ secrets.R2_BUCKET_URL }} \
             --dart-define=OPENAI_WORKER_URL=${{ secrets.OPENAI_WORKER_URL }} \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
