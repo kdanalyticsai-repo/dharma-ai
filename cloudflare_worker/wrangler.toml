@@ -1,4 +1,4 @@
-name = "dharma-ai-proxy"
+name = "dharma-ai"
 main = "dharma_ai_proxy.js"
 compatibility_date = "2024-01-01"
 
