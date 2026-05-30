@@ -1,0 +1,11 @@
+name = "dharma-ai-proxy"
+main = "dharma_ai_proxy.js"
+compatibility_date = "2024-01-01"
+
+# Secrets (never put real values here — set via wrangler CLI):
+#   wrangler secret put OPENAI_API_KEY
+
+[vars]
+# Comma-separated list of allowed request origins (no spaces).
+# Add your prod domain here. localhost entry is for local wrangler dev.
+ALLOWED_ORIGINS = "http://localhost:3456,https://dharmaai.kdaanalytics.com"
