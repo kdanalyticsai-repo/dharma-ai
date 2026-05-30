@@ -11,8 +11,11 @@ class OpenAIConfig {
   static const String model = 'gpt-4o-mini';
 
   // Production: Cloudflare Worker URL (key hidden server-side)
-  // Development: Direct OpenAI (key in env var)
-  static const String _workerUrl = 'YOUR_CLOUDFLARE_WORKER_URL'; // e.g. https://dharma-ai-proxy.yourname.workers.dev
+  // Development: Direct OpenAI (key in --dart-define=OPENAI_API_KEY)
+  static const String _workerUrl = String.fromEnvironment(
+    'OPENAI_WORKER_URL',
+    defaultValue: 'YOUR_CLOUDFLARE_WORKER_URL',
+  );
   static const String _directUrl = 'https://api.openai.com/v1/chat/completions';
 
   static bool get _workerConfigured => _workerUrl != 'YOUR_CLOUDFLARE_WORKER_URL';
