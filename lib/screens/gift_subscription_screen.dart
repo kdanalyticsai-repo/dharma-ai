@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/providers/community_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
+import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 
