@@ -295,10 +295,22 @@ class ReaderSettingsSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              AppTranslations.get('readingOptions', currentLanguage),
-              style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: SacredTheme.onSurfaceVariant),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Close',
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  AppTranslations.get('readingOptions', currentLanguage),
+                  style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context)),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 

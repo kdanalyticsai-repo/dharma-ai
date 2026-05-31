@@ -52,8 +52,45 @@ alter table bookmarks        enable row level security;
 alter table sadhana_records  enable row level security;
 alter table subscriptions    enable row level security;
 
--- Users can only see/edit their own data
+-- Users can only see/edit their own data.
+-- Note: `for all using (...)` also acts as the INSERT WITH CHECK in Postgres,
+-- so users may only insert/update rows that belong to them.
 create policy "own profile"    on profiles        for all using (auth.uid() = id);
 create policy "own bookmarks"  on bookmarks       for all using (auth.uid() = user_id);
 create policy "own sadhana"    on sadhana_records for all using (auth.uid() = user_id);
 create policy "own subs"       on subscriptions   for all using (auth.uid() = user_id);
+
+-- ── Auto-create a profile row on signup ───────────────────────
+-- Runs as SECURITY DEFINER so it bypasses RLS and reliably inserts a
+-- profile for every new auth user (works for email AND OAuth signups).
+-- This is the source of truth for profile creation — the app no longer
+-- depends on a client-side insert succeeding.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, email, subscription_tier)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', ''),
+    new.email,
+    'free'
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Backfill: create profile rows for any users who signed up before the
+-- trigger existed (e.g. the 2 test accounts).
+insert into public.profiles (id, full_name, email, subscription_tier)
+select id, coalesce(raw_user_meta_data->>'full_name', ''), email, 'free'
+from auth.users
+on conflict (id) do nothing;
