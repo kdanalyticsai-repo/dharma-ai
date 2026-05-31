@@ -36,10 +36,18 @@ class SacredTheme {
   
   // Custom Accents
   static const Color deepSaffron = Color(0xFFCC5500);
-  static const Color meditativeIndigo = Color(0xFF2E3A59);
+  static const Color meditativeIndigo = Color(0xFF1A2540);      // darkened for mobile contrast
   static const Color deepMeditativeIndigo = Color(0xFF0D1A38);
   static const Color parchmentCream = Color(0xFFFDF5E6);
   static const Color templeGold = Color(0xFFD4AF37);
+
+  // Dark mode surface colors
+  static const Color surfaceDark = Color(0xFF1A1210);
+  static const Color surfaceContainerLowDark = Color(0xFF2A1C16);
+  static const Color surfaceContainerDark = Color(0xFF331F17);
+  static const Color onSurfaceDark = Color(0xFFFFF1EB);
+  static const Color onSurfaceVariantDark = Color(0xFFD4B0A2);
+  static const Color outlineVariantDark = Color(0xFF4A3028);
 
   // Spacing & Layout Rhythm
   static const double marginEdge = 24.0;
@@ -159,6 +167,80 @@ class SacredTheme {
     );
   }
 
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+        primary: Color(0xFFFFB68A),
+        onPrimary: Color(0xFF4A1800),
+        primaryContainer: Color(0xFFCC5500),
+        onPrimaryContainer: Color(0xFFFFE0CC),
+        secondary: Color(0xFFAAB8D8),
+        onSecondary: Color(0xFF1A2540),
+        secondaryContainer: Color(0xFF2A3A5A),
+        onSecondaryContainer: Color(0xFFCAD6FD),
+        tertiary: Color(0xFFBDB9AC),
+        onTertiary: Color(0xFF302E25),
+        error: Color(0xFFFFB4AB),
+        onError: Color(0xFF690005),
+        surface: surfaceDark,
+        onSurface: onSurfaceDark,
+        onSurfaceVariant: onSurfaceVariantDark,
+        outline: Color(0xFF8C7166),
+        outlineVariant: outlineVariantDark,
+      ),
+      scaffoldBackgroundColor: surfaceDark,
+      cardTheme: CardTheme(
+        color: surfaceContainerLowDark,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusDefault),
+          side: const BorderSide(color: outlineVariantDark, width: 0.5),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: outlineVariantDark,
+        thickness: 0.5,
+        space: 1,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButtonButtonTheme(),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButtonThemeDark(),
+      ),
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.newsreader(
+          fontSize: 42, fontWeight: FontWeight.w600, height: 1.23,
+          letterSpacing: -0.02, color: onSurfaceDark,
+        ),
+        headlineLarge: GoogleFonts.newsreader(
+          fontSize: 32, fontWeight: FontWeight.w500, height: 1.25, color: onSurfaceDark,
+        ),
+        headlineMedium: GoogleFonts.newsreader(
+          fontSize: 28, fontWeight: FontWeight.w500, height: 1.28, color: onSurfaceDark,
+        ),
+        titleLarge: GoogleFonts.newsreader(
+          fontSize: 20, fontWeight: FontWeight.w400, height: 1.6, color: onSurfaceDark,
+        ),
+        bodyLarge: GoogleFonts.beVietnamPro(
+          fontSize: 16, fontWeight: FontWeight.w400, height: 1.5, color: onSurfaceDark,
+        ),
+        bodyMedium: GoogleFonts.beVietnamPro(
+          fontSize: 14, fontWeight: FontWeight.w400, height: 1.43, color: onSurfaceVariantDark,
+        ),
+        labelLarge: GoogleFonts.inter(
+          fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.05,
+        ),
+        labelSmall: GoogleFonts.inter(
+          fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.05,
+          color: onSurfaceVariantDark,
+        ),
+      ),
+    );
+  }
+
   static ButtonStyle ElevatedButtonButtonTheme() {
     return ElevatedButton.styleFrom(
       backgroundColor: deepSaffron,
@@ -182,14 +264,18 @@ class SacredTheme {
       foregroundColor: meditativeIndigo,
       side: const BorderSide(color: outline, width: 1.0),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(radiusDefault),
-      ),
-      textStyle: GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.05,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusDefault)),
+      textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.05),
+    );
+  }
+
+  static ButtonStyle OutlinedButtonThemeDark() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: const Color(0xFFFFB68A),
+      side: const BorderSide(color: outlineVariantDark, width: 1.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusDefault)),
+      textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.05),
     );
   }
 }

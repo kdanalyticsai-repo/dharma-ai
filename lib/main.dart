@@ -30,6 +30,8 @@ class DharmaApp extends ConsumerWidget {
     return MaterialApp(
       title: 'DharmaAI',
       theme: SacredTheme.lightTheme,
+      darkTheme: SacredTheme.darkTheme,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       home: authState.when(
         data: (user) => user != null ? const HomeShell() : const WelcomeScreen(),
