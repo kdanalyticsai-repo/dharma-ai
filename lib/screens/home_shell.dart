@@ -8,31 +8,26 @@ import 'package:dharma_ai/screens/sadhana_screen.dart';
 import 'package:dharma_ai/screens/sangha_screen.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
+import 'package:dharma_ai/providers/navigation_provider.dart';
 
-class HomeShell extends ConsumerStatefulWidget {
+class HomeShell extends ConsumerWidget {
   const HomeShell({Key? key}) : super(key: key);
 
-  @override
-  ConsumerState<HomeShell> createState() => _HomeShellState();
-}
-
-class _HomeShellState extends ConsumerState<HomeShell> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const DailyFeedScreen(),
-    const ScripturesScreen(),
-    const ChatParentScreen(),
-    const SadhanaScreen(),
-    const SanghaScreen(),
+  static const List<Widget> _screens = [
+    DailyFeedScreen(),
+    ScripturesScreen(),
+    ChatParentScreen(),
+    SadhanaScreen(),
+    SanghaScreen(),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentLanguage = ref.watch(languageProvider);
+    final currentIndex = ref.watch(homeTabProvider);
 
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: _screens[currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           border: Border(
@@ -64,11 +59,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             }),
           ),
           child: NavigationBar(
-            selectedIndex: _currentIndex,
+            selectedIndex: currentIndex,
             onDestinationSelected: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+              ref.read(homeTabProvider.notifier).state = index;
             },
             backgroundColor: SacredTheme.surfaceContainerLow,
             elevation: 0,

@@ -10,6 +10,8 @@ import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/providers/sadhana_provider.dart';
+import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/screens/profile_screen.dart';
 
 class DailyFeedScreen extends ConsumerStatefulWidget {
@@ -20,14 +22,10 @@ class DailyFeedScreen extends ConsumerStatefulWidget {
 }
 
 class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
-  // Mock sadhana habits state for Screen 6
-  bool _readScriptureChecked = false;
-  int _chantingRounds = 0;
-  bool _meditated = false;
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final sadhana = ref.watch(sadhanaProvider);
     final currentLanguage = ref.watch(languageProvider);
     final user = ref.watch(authUserProvider).valueOrNull;
     final fullName = user?.userMetadata?['full_name'] as String?;
@@ -184,88 +182,65 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
 
                 const SizedBox(height: SacredTheme.stackLg),
 
-                // Sadhana Checklist (Check-ins)
-                Text(
-                  AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
-                  style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
-                ),
-                const SizedBox(height: SacredTheme.stackMd),
-
-                // Habit 1: Scripture Reading
-                _buildSadhanaCard(
-                  context,
-                  title: AppTranslations.get('readScripture', currentLanguage),
-                  subtitle: AppTranslations.get('readScriptureSub', currentLanguage),
-                  icon: Icons.auto_stories_outlined,
-                  trailing: Checkbox(
-                    value: _readScriptureChecked,
-                    activeColor: SacredTheme.primary,
-                    onChanged: (val) {
-                      setState(() {
-                        _readScriptureChecked = val ?? false;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(height: SacredTheme.stackSm),
-
-                // Habit 2: Meditation
-                _buildSadhanaCard(
-                  context,
-                  title: AppTranslations.get('meditateBreathe', currentLanguage),
-                  subtitle: AppTranslations.get('meditateBreatheSub', currentLanguage),
-                  icon: Icons.self_improvement,
-                  trailing: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _meditated = !_meditated;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _meditated
-                            ? SacredTheme.primary
-                            : SacredTheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
-                      ),
-                      child: Text(
-                        _meditated
-                            ? AppTranslations.get('completedBtn', currentLanguage)
-                            : AppTranslations.get('beginBtn', currentLanguage),
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: _meditated ? Colors.white : SacredTheme.primary,
+                // Daily Sadhana — read-only snapshot. Logging happens on
+                // the Sadhana tab so there's a single source of truth.
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
+                      style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                    ),
+                    InkWell(
+                      onTap: () => ref.read(homeTabProvider.notifier).state = 3,
+                      borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Go to Sadhana',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: SacredTheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Icon(Icons.arrow_forward, size: 13, color: SacredTheme.primary),
+                          ],
                         ),
                       ),
                     ),
-                  ),
+                  ],
+                ),
+                const SizedBox(height: SacredTheme.stackMd),
+
+                _buildProgressRow(
+                  context,
+                  icon: Icons.self_improvement,
+                  title: AppTranslations.get('meditateBreathe', currentLanguage),
+                  current: sadhana.todayMeditation,
+                  target: sadhana.targetMeditation,
+                  unit: AppTranslations.get('minsLabel', currentLanguage),
                 ),
                 const SizedBox(height: SacredTheme.stackSm),
-
-                // Habit 3: Chanting (Counter rounds)
-                _buildSadhanaCard(
+                _buildProgressRow(
                   context,
-                  title: AppTranslations.get('aumJapaChanting', currentLanguage),
-                  subtitle: '${AppTranslations.get('currentlyLabel', currentLanguage)}: $_chantingRounds ${AppTranslations.get('roundsLabel', currentLanguage)}',
+                  icon: Icons.auto_stories_outlined,
+                  title: AppTranslations.get('readScripture', currentLanguage),
+                  current: sadhana.todayVerses,
+                  target: sadhana.targetVerses,
+                  unit: AppTranslations.get('versesLabel', currentLanguage),
+                ),
+                const SizedBox(height: SacredTheme.stackSm),
+                _buildProgressRow(
+                  context,
                   icon: Icons.grain,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove, color: SacredTheme.outline),
-                        onPressed: _chantingRounds > 0
-                            ? () => setState(() => _chantingRounds--)
-                            : null,
-                      ),
-                      Text('$_chantingRounds', style: textTheme.labelLarge),
-                      IconButton(
-                        icon: const Icon(Icons.add, color: SacredTheme.primary),
-                        onPressed: () => setState(() => _chantingRounds++),
-                      ),
-                    ],
-                  ),
+                  title: AppTranslations.get('aumJapaChanting', currentLanguage),
+                  current: sadhana.todayChanting,
+                  target: sadhana.targetChanting,
+                  unit: AppTranslations.get('beadsLabel', currentLanguage),
                 ),
 
                 const SizedBox(height: SacredTheme.safeAreaBottom),
@@ -277,14 +252,17 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
     );
   }
 
-  Widget _buildSadhanaCard(
+  // Read-only progress row: icon, title, a thin progress bar, and "x / y unit".
+  Widget _buildProgressRow(
     BuildContext context, {
-    required String title,
-    required String subtitle,
     required IconData icon,
-    required Widget trailing,
+    required String title,
+    required int current,
+    required int target,
+    required String unit,
   }) {
     final textTheme = Theme.of(context).textTheme;
+    final double progress = target == 0 ? 0 : (current / target).clamp(0.0, 1.0);
     return Card(
       color: SacredTheme.surfaceContainerLow,
       child: Padding(
@@ -309,14 +287,21 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                     title,
                     style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                   ),
-                  Text(
-                    subtitle,
-                    style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w400),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: SacredTheme.surfaceContainerHighest,
+                      valueColor: const AlwaysStoppedAnimation(SacredTheme.primary),
+                    ),
                   ),
                 ],
               ),
             ),
-            trailing,
+            const SizedBox(width: 12),
+            Text('$current / $target $unit', style: textTheme.labelSmall),
           ],
         ),
       ),
