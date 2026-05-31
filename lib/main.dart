@@ -8,6 +8,7 @@ import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/sadhana_provider.dart';
+import 'package:dharma_ai/widgets/dharma_logo.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 
 void main() async {
@@ -63,7 +64,16 @@ class _SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Color(0xFFFAF7F2),
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DharmaLogo(height: 140),
+            SizedBox(height: 28),
+            CircularProgressIndicator(),
+          ],
+        ),
+      ),
     );
   }
 }

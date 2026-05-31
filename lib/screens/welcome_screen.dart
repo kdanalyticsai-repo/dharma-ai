@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
+import 'package:dharma_ai/widgets/dharma_logo.dart';
 import 'package:dharma_ai/screens/login_screen.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 
@@ -35,15 +36,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 // Top Branding / Logo Zone
                 Column(
                   children: [
-                    Text(
-                      'DharmaAI',
-                      style: textTheme.displayLarge?.copyWith(
-                        color: SacredTheme.headingColor(context),
-                        fontSize: 36,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
+                    const DharmaLogo(height: 132),
+                    const SizedBox(height: 8),
                     Container(
                       width: 40,
                       height: 1,

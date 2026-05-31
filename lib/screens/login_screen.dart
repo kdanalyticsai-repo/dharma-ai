@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
+import 'package:dharma_ai/widgets/rotating_chakra.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
 import 'package:dharma_ai/screens/personalize_screen.dart';
@@ -121,6 +122,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   padding: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,
                 ),
+                const SizedBox(height: 12),
+                const Center(child: RotatingChakra(size: 88)),
                 const SizedBox(height: 24),
 
                 Text(
