@@ -38,7 +38,7 @@ class SadhanaScreen extends ConsumerWidget {
                     Text(
                       AppTranslations.get('sadhanaDashboard', currentLanguage),
                       style: textTheme.headlineMedium?.copyWith(
-                        color: SacredTheme.meditativeIndigo,
+                        color: SacredTheme.headingColor(context),
                       ),
                     ),
                     Container(

@@ -38,7 +38,7 @@ class ScripturesScreen extends ConsumerWidget {
                     Text(
                       AppTranslations.get('bhagavadGita', currentLanguage),
                       style: textTheme.headlineLarge?.copyWith(
-                        color: SacredTheme.meditativeIndigo,
+                        color: SacredTheme.headingColor(context),
                       ),
                     ),
                     Row(
@@ -298,7 +298,7 @@ class ReaderSettingsSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               AppTranslations.get('readingOptions', currentLanguage),
-              style: textTheme.headlineSmall?.copyWith(color: SacredTheme.meditativeIndigo),
+              style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context)),
             ),
             const SizedBox(height: 16),
 
@@ -417,7 +417,7 @@ class ReaderSettingsSheet extends ConsumerWidget {
               color: SacredTheme.surfaceContainer,
               borderRadius: BorderRadius.circular(SacredTheme.radiusDefault),
             ),
-            child: Icon(icon, color: SacredTheme.meditativeIndigo, size: 18),
+            child: Icon(icon, color: SacredTheme.headingColor(context), size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(

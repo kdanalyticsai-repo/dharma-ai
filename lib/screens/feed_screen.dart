@@ -65,7 +65,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                               ? 'Hari Om, $firstName'
                               : AppTranslations.get('greetingSeeker', currentLanguage),
                           style: textTheme.headlineMedium?.copyWith(
-                            color: SacredTheme.meditativeIndigo,
+                            color: SacredTheme.headingColor(context),
                             fontWeight: FontWeight.w600,
                           ),
                         ),

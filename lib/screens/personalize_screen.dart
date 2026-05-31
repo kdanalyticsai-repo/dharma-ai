@@ -65,7 +65,7 @@ class _PersonalizeScreenState extends ConsumerState<PersonalizeScreen> {
                 Text(
                   AppTranslations.get('personalizeTitle', currentLanguage),
                   style: textTheme.headlineLarge?.copyWith(
-                    color: SacredTheme.meditativeIndigo,
+                    color: SacredTheme.headingColor(context),
                   ),
                 ),
                 const SizedBox(height: 4),

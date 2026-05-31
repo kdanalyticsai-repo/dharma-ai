@@ -34,7 +34,7 @@ class ScriptureSearchScreen extends ConsumerWidget {
               child: Text(
                 AppTranslations.get('scriptureSearch', currentLanguage),
                 style: textTheme.headlineLarge?.copyWith(
-                  color: SacredTheme.meditativeIndigo,
+                  color: SacredTheme.headingColor(context),
                 ),
               ),
             ),
@@ -69,7 +69,7 @@ class ScriptureSearchScreen extends ConsumerWidget {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(SacredTheme.radiusDefault),
-                    borderSide: const BorderSide(color: SacredTheme.meditativeIndigo, width: 1.5),
+                    borderSide: BorderSide(color: SacredTheme.headingColor(context), width: 1.5),
                   ),
                 ),
                 style: textTheme.bodyLarge,

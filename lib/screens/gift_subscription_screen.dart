@@ -142,7 +142,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                 Text(
                   'Share the Path of Wisdom',
                   style: textTheme.headlineMedium?.copyWith(
-                    color: SacredTheme.meditativeIndigo,
+                    color: SacredTheme.headingColor(context),
                   ),
                 ),
                 const SizedBox(height: 6),

@@ -37,7 +37,7 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
             style: GoogleFonts.newsreader(
               fontSize: 22,
               fontWeight: FontWeight.w600,
-              color: SacredTheme.meditativeIndigo,
+              color: SacredTheme.headingColor(context),
             ),
           ),
           content: Column(
@@ -130,7 +130,7 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
                     Text(
                       AppTranslations.get('tabSanghaTitle', currentLanguage),
                       style: textTheme.headlineMedium?.copyWith(
-                        color: SacredTheme.meditativeIndigo,
+                        color: SacredTheme.headingColor(context),
                       ),
                     ),
                     ElevatedButton.icon(

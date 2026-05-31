@@ -30,8 +30,9 @@ class DharmaApp extends ConsumerWidget {
     return MaterialApp(
       title: 'DharmaAI',
       theme: SacredTheme.lightTheme,
-      darkTheme: SacredTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      // Locked to the designed light palette so a device's dark mode cannot
+      // wash out text/contrast. A full dark theme is tracked as a follow-up.
+      themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
       home: authState.when(
         data: (user) => user != null ? const HomeShell() : const WelcomeScreen(),

@@ -92,7 +92,7 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                 const SizedBox(height: 24),
                 Text('Audio Wisdom',
                     style: textTheme.headlineMedium
-                        ?.copyWith(color: SacredTheme.meditativeIndigo),
+                        ?.copyWith(color: SacredTheme.headingColor(context)),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 12),
                 Text(
@@ -149,7 +149,7 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                     Text(
                       'Audio Wisdom',
                       style: textTheme.headlineLarge
-                          ?.copyWith(color: SacredTheme.meditativeIndigo),
+                          ?.copyWith(color: SacredTheme.headingColor(context)),
                     ),
                   ],
                 ),
@@ -192,7 +192,7 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                         track.localizedTitle(lang.code),
                         style: textTheme.headlineMedium?.copyWith(
                           fontSize: 22,
-                          color: SacredTheme.meditativeIndigo,
+                          color: SacredTheme.headingColor(context),
                         ),
                         textAlign: TextAlign.center,
                       ),

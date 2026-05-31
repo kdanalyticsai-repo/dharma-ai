@@ -125,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 Text(
                   _isSignUp ? 'Begin Your Path' : 'Welcome Back',
-                  style: textTheme.headlineLarge?.copyWith(color: SacredTheme.meditativeIndigo),
+                  style: textTheme.headlineLarge?.copyWith(color: SacredTheme.headingColor(context)),
                 ),
                 const SizedBox(height: 4),
                 Text(

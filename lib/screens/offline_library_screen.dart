@@ -126,7 +126,7 @@ class _OfflineLibraryScreenState extends ConsumerState<OfflineLibraryScreen> {
               Text(
                 'Offline Wisdom Library',
                 style: textTheme.headlineMedium?.copyWith(
-                  color: SacredTheme.meditativeIndigo,
+                  color: SacredTheme.headingColor(context),
                 ),
               ),
               const SizedBox(height: 6),

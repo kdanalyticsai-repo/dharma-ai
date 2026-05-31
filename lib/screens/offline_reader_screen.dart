@@ -75,7 +75,7 @@ class OfflineReaderScreen extends StatelessWidget {
                       Text(
                         'Bhagavad Gita 2.47',
                         style: textTheme.headlineMedium?.copyWith(
-                          color: SacredTheme.meditativeIndigo,
+                          color: SacredTheme.headingColor(context),
                         ),
                       ),
                       const SizedBox(height: 4),

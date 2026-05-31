@@ -51,7 +51,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                 Text(
                   'Choose Language',
                   style: textTheme.headlineLarge?.copyWith(
-                    color: SacredTheme.meditativeIndigo,
+                    color: SacredTheme.headingColor(context),
                   ),
                 ),
                 const SizedBox(height: SacredTheme.stackSm),

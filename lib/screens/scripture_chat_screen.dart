@@ -192,7 +192,7 @@ class _ScriptureChatScreenState extends ConsumerState<ScriptureChatScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(SacredTheme.radiusXl),
-                        borderSide: const BorderSide(color: SacredTheme.meditativeIndigo, width: 1.0),
+                        borderSide: BorderSide(color: SacredTheme.headingColor(context), width: 1.0),
                       ),
                     ),
                     style: textTheme.bodyLarge,

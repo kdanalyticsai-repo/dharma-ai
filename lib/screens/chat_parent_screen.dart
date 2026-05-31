@@ -57,7 +57,7 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
                   Text(
                     AppTranslations.get('aiSpiritualGuide', lang),
                     style: textTheme.headlineLarge?.copyWith(
-                      color: SacredTheme.meditativeIndigo,
+                      color: SacredTheme.headingColor(context),
                     ),
                   ),
                 ],
@@ -144,11 +144,11 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
           height: 72,
           decoration: isSelected
               ? BoxDecoration(
-                  color: SacredTheme.meditativeIndigo,
+                  color: SacredTheme.accentFill(context),
                   borderRadius: BorderRadius.circular(SacredTheme.radiusLg),
                   boxShadow: [
                     BoxShadow(
-                      color: SacredTheme.meditativeIndigo.withOpacity(0.3),
+                      color: SacredTheme.accentFill(context).withOpacity(0.3),
                       blurRadius: 10,
                       spreadRadius: 0,
                       offset: const Offset(0, 4),
@@ -156,10 +156,10 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
                   ],
                 )
               : BoxDecoration(
-                  color: SacredTheme.meditativeIndigo.withOpacity(0.08),
+                  color: SacredTheme.headingColor(context).withOpacity(0.08),
                   borderRadius: BorderRadius.circular(SacredTheme.radiusLg),
                   border: Border.all(
-                    color: SacredTheme.meditativeIndigo.withOpacity(0.2),
+                    color: SacredTheme.headingColor(context).withOpacity(0.2),
                     width: 1.0,
                   ),
                 ),
@@ -171,7 +171,7 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
                 size: 22,
                 color: isSelected
                     ? SacredTheme.templeGold
-                    : SacredTheme.meditativeIndigo.withOpacity(0.6),
+                    : SacredTheme.headingColor(context).withOpacity(0.6),
               ),
               const SizedBox(height: 6),
               Text(
@@ -183,7 +183,7 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected
                       ? Colors.white
-                      : SacredTheme.meditativeIndigo.withOpacity(0.7),
+                      : SacredTheme.headingColor(context).withOpacity(0.7),
                   letterSpacing: 0.4,
                 ),
               ),

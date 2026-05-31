@@ -64,6 +64,19 @@ class SacredTheme {
   static const double radiusLg = 16.0;
   static const double radiusXl = 24.0;
 
+  // ── Theme-aware helpers ─────────────────────────────────────
+  // Heading/title color: dark indigo on light bg, light cream on dark bg.
+  static Color headingColor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? onSurfaceDark
+          : meditativeIndigo;
+
+  // Filled accent (e.g. selected tab card) with white text in both modes.
+  static Color accentFill(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? primaryContainer       // saffron in dark mode
+          : meditativeIndigo;      // indigo in light mode
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -120,13 +133,13 @@ class SacredTheme {
           fontSize: 32,
           fontWeight: FontWeight.w500,
           height: 1.25,
-          color: onSurface,
+          color: meditativeIndigo,
         ),
         headlineMedium: GoogleFonts.newsreader(
           fontSize: 28,
           fontWeight: FontWeight.w500,
           height: 1.28,
-          color: onSurface,
+          color: meditativeIndigo,
         ),
         
         // Newsreader for scripture content

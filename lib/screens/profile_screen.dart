@@ -68,7 +68,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               Text(
                 'Sanctuary Settings',
                 style: textTheme.headlineSmall?.copyWith(
-                  color: SacredTheme.meditativeIndigo,
+                  color: SacredTheme.headingColor(context),
                 ),
               ),
               const SizedBox(height: 16),

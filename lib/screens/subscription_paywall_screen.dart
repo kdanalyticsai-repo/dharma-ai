@@ -115,7 +115,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 Text(
                   'Choose Your Path',
                   style: textTheme.headlineLarge?.copyWith(
-                    color: SacredTheme.meditativeIndigo,
+                    color: SacredTheme.headingColor(context),
                     fontSize: 32,
                   ),
                   textAlign: TextAlign.center,

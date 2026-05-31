@@ -38,7 +38,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     Text(
                       'DharmaAI',
                       style: textTheme.displayLarge?.copyWith(
-                        color: SacredTheme.meditativeIndigo,
+                        color: SacredTheme.headingColor(context),
                         fontSize: 36,
                       ),
                       textAlign: TextAlign.center,
