@@ -2,11 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 
-// Current Supabase user (null = not signed in)
-final authUserProvider = StreamProvider<User?>((ref) {
-  if (!SupabaseConfig.isConfigured) return Stream.value(null);
-  return Supabase.instance.client.auth.onAuthStateChange
-      .map((event) => event.session?.user);
+// Current Supabase user (null = not signed in).
+// Emits the already-restored session first so a page refresh keeps the
+// user signed in, then follows subsequent auth state changes.
+final authUserProvider = StreamProvider<User?>((ref) async* {
+  if (!SupabaseConfig.isConfigured) {
+    yield null;
+    return;
+  }
+  final auth = Supabase.instance.client.auth;
+  yield auth.currentSession?.user; // restored from local storage on refresh
+  yield* auth.onAuthStateChange.map((event) => event.session?.user);
 });
 
 // Convenience: is the user signed in?
