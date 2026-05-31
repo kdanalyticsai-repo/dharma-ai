@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dharma_ai/models/sadhana_record.dart';
+import 'package:dharma_ai/services/supabase_sync.dart';
 
 class SadhanaState {
   final int streak;
@@ -51,22 +51,63 @@ class SadhanaState {
 
 class SadhanaNotifier extends StateNotifier<SadhanaState> {
   SadhanaNotifier() : super(const SadhanaState()) {
-    _loadFromLocal();
+    _load();
   }
 
-  Future<void> _loadFromLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    final streak = prefs.getInt('sadhana_streak') ?? 5;
-    final todayMeditation = prefs.getInt('today_meditation') ?? 0;
-    final todayVerses = prefs.getInt('today_verses') ?? 0;
-    final todayChanting = prefs.getInt('today_chanting') ?? 0;
+  String get _today => DateTime.now().toIso8601String().substring(0, 10);
 
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
     state = state.copyWith(
-      streak: streak,
-      todayMeditation: todayMeditation,
-      todayVerses: todayVerses,
-      todayChanting: todayChanting,
+      streak: prefs.getInt('sadhana_streak') ?? 5,
+      todayMeditation: prefs.getInt('today_meditation') ?? 0,
+      todayVerses: prefs.getInt('today_verses') ?? 0,
+      todayChanting: prefs.getInt('today_chanting') ?? 0,
     );
+    await _loadRemoteToday();
+  }
+
+  // Pull today's row from Supabase (source of truth when signed in).
+  Future<void> _loadRemoteToday() async {
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return;
+    try {
+      final row = await client.from('sadhana_records')
+          .select()
+          .eq('user_id', uid)
+          .eq('date', _today)
+          .maybeSingle();
+      if (row != null) {
+        state = state.copyWith(
+          todayMeditation: row['meditation_minutes'] as int? ?? state.todayMeditation,
+          todayVerses: row['verses_read'] as int? ?? state.todayVerses,
+          todayChanting: row['chanting_rounds'] as int? ?? state.todayChanting,
+          streak: row['streak_count'] as int? ?? state.streak,
+        );
+      }
+    } catch (_) {
+      // keep local state
+    }
+  }
+
+  // Upsert today's record to Supabase (keyed on user_id + date).
+  Future<void> _syncRemote() async {
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return;
+    try {
+      await client.from('sadhana_records').upsert({
+        'user_id': uid,
+        'date': _today,
+        'meditation_minutes': state.todayMeditation,
+        'verses_read': state.todayVerses,
+        'chanting_rounds': state.todayChanting,
+        'streak_count': state.streak,
+      }, onConflict: 'user_id,date');
+    } catch (_) {
+      // Non-blocking — local state already updated.
+    }
   }
 
   Future<void> incrementMeditation(int minutes) async {
@@ -74,7 +115,8 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final newVal = state.todayMeditation + minutes;
     await prefs.setInt('today_meditation', newVal);
     state = state.copyWith(todayMeditation: newVal);
-    _checkAndUpdateStreak();
+    await _checkAndUpdateStreak();
+    await _syncRemote();
   }
 
   Future<void> incrementVerses() async {
@@ -82,7 +124,8 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final newVal = state.todayVerses + 1;
     await prefs.setInt('today_verses', newVal);
     state = state.copyWith(todayVerses: newVal);
-    _checkAndUpdateStreak();
+    await _checkAndUpdateStreak();
+    await _syncRemote();
   }
 
   Future<void> incrementChanting(int rounds) async {
@@ -90,7 +133,8 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final newVal = state.todayChanting + rounds;
     await prefs.setInt('today_chanting', newVal);
     state = state.copyWith(todayChanting: newVal);
-    _checkAndUpdateStreak();
+    await _checkAndUpdateStreak();
+    await _syncRemote();
   }
 
   Future<void> resetToday() async {
@@ -103,6 +147,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
       todayVerses: 0,
       todayChanting: 0,
     );
+    await _syncRemote();
   }
 
   Future<void> _checkAndUpdateStreak() async {
