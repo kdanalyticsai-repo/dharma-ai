@@ -2,34 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 
-/// The DharmaAI brand logo. Falls back to styled text if the image asset
-/// (assets/images/dharma_logo.png) hasn't been added yet.
+/// The DharmaAI brand lockup: the mark + "DharmaAI" wordmark image with a
+/// crisp, separately-rendered tagline beneath it. Rendering the tagline as
+/// real text (instead of baking it into the image) keeps it sharp and
+/// legible at any size, and consistent everywhere the logo appears.
+///
+/// [height] is the height of the logo image (mark + wordmark). The tagline
+/// scales proportionally. Falls back to styled text if the asset is missing.
 class DharmaLogo extends StatelessWidget {
   final double height;
-  const DharmaLogo({Key? key, this.height = 120}) : super(key: key);
+  final bool showTagline;
+
+  const DharmaLogo({Key? key, this.height = 120, this.showTagline = true})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
+    final image = Image.asset(
       'assets/images/dharma_logo.png',
       height: height,
       fit: BoxFit.contain,
       filterQuality: FilterQuality.high,
-      // Multiply blend removes residual white: white * cream bg = cream bg.
-      // Orange logo pixels are preserved since orange * cream ≈ orange.
       color: SacredTheme.surface,
       colorBlendMode: BlendMode.multiply,
-      errorBuilder: (context, error, stack) {
-        return Text(
-          'DharmaAI',
+      errorBuilder: (context, error, stack) => Text(
+        'DharmaAI',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.newsreader(
+          fontSize: height * 0.5,
+          fontWeight: FontWeight.w600,
+          color: SacredTheme.headingColor(context),
+        ),
+      ),
+    );
+
+    if (!showTagline) return image;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        image,
+        SizedBox(height: height * 0.10),
+        Text(
+          'Wisdom · Intelligence · Purpose',
           textAlign: TextAlign.center,
-          style: GoogleFonts.newsreader(
-            fontSize: height * 0.42,
-            fontWeight: FontWeight.w600,
-            color: SacredTheme.headingColor(context),
+          style: GoogleFonts.inter(
+            fontSize: height * 0.155,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.0,
+            color: SacredTheme.primary,
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }

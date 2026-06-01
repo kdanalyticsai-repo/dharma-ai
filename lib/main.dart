@@ -90,7 +90,7 @@ class _SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            DharmaLogo(height: 140),
+            DharmaLogo(height: 104),
             SizedBox(height: 28),
             CircularProgressIndicator(),
           ],

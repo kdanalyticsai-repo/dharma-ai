@@ -36,8 +36,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 // Top Branding / Logo Zone
                 Column(
                   children: [
-                    const DharmaLogo(height: 132),
-                    const SizedBox(height: 8),
+                    const DharmaLogo(height: 96),
+                    const SizedBox(height: 12),
                     Container(
                       width: 40,
                       height: 1,
