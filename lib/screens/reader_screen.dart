@@ -10,7 +10,18 @@ import 'package:dharma_ai/widgets/lotus_painter.dart';
 
 import 'package:dharma_ai/screens/search_screen.dart';
 import 'package:dharma_ai/screens/audio_wisdom_screen.dart';
+import 'package:dharma_ai/screens/subscription_paywall_screen.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
+import 'package:dharma_ai/providers/purchase_provider.dart';
+import 'package:dharma_ai/services/purchase_service.dart';
+import 'package:dharma_ai/services/mock_scripture_data.dart';
+
+// Scripture collections shown in the Wisdom reader.
+// Gita is free; Upanishads and Vedas are Premium/Annual only.
+enum ScriptureBook { gita, upanishads, vedas }
+
+final selectedBookProvider =
+    StateProvider<ScriptureBook>((ref) => ScriptureBook.gita);
 
 class ScripturesScreen extends ConsumerWidget {
   const ScripturesScreen({Key? key}) : super(key: key);
@@ -20,6 +31,9 @@ class ScripturesScreen extends ConsumerWidget {
     final versesAsync = ref.watch(versesProvider);
     final textTheme = Theme.of(context).textTheme;
     final currentLanguage = ref.watch(languageProvider);
+    final selectedBook = ref.watch(selectedBookProvider);
+    final tier = ref.watch(purchaseProvider);
+    final isPaid = tier != SubscriptionTier.free;
 
     return Scaffold(
       body: MandalaBackground(
@@ -36,7 +50,11 @@ class ScripturesScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      AppTranslations.get('bhagavadGita', currentLanguage),
+                      selectedBook == ScriptureBook.gita
+                          ? AppTranslations.get('bhagavadGita', currentLanguage)
+                          : selectedBook == ScriptureBook.upanishads
+                              ? 'Upanishads'
+                              : 'Vedas',
                       style: textTheme.headlineLarge?.copyWith(
                         color: SacredTheme.headingColor(context),
                       ),
@@ -71,38 +89,163 @@ class ScripturesScreen extends ConsumerWidget {
                 ),
               ),
 
+              // Scripture collection selector (Gita / Upanishads / Vedas)
+              _buildBookSelector(context, ref, selectedBook),
+
               const FadingDivider(height: 12),
 
-              // Main Scripture List
+              // Content — Gita is free; Upanishads/Vedas require a paid tier
               Expanded(
-                child: versesAsync.when(
-                  data: (verses) {
-                    if (verses.isEmpty) {
-                      return Center(child: Text(AppTranslations.get('noScripturesLoaded', currentLanguage)));
-                    }
-                    return ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: SacredTheme.marginEdge,
-                        vertical: 16,
-                      ),
-                      itemCount: verses.length,
-                      itemBuilder: (context, index) {
-                        final verse = verses[index];
-                        return VerseCard(verse: verse);
-                      },
-                    );
-                  },
-                  loading: () => const Center(
-                    child: LotusLoadingIndicator(size: 60),
-                  ),
-                  error: (err, stack) => Center(
-                    child: Text('${AppTranslations.get('errorLoadingScriptures', currentLanguage)}: $err'),
-                  ),
+                child: _buildBookContent(
+                  context, ref, selectedBook, isPaid, versesAsync, currentLanguage,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookSelector(BuildContext context, WidgetRef ref, ScriptureBook selected) {
+    Widget chip(String label, ScriptureBook book, {bool locked = false}) {
+      final isSel = selected == book;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: InkWell(
+          onTap: () => ref.read(selectedBookProvider.notifier).state = book,
+          borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSel ? SacredTheme.primary : SacredTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+              border: Border.all(
+                color: isSel ? SacredTheme.primary : SacredTheme.outlineVariant,
+                width: isSel ? 1.0 : 0.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: isSel ? FontWeight.w600 : FontWeight.w500,
+                    color: isSel ? Colors.white : SacredTheme.onSurface,
+                  ),
+                ),
+                if (locked) ...[
+                  const SizedBox(width: 5),
+                  Icon(Icons.lock, size: 12,
+                      color: isSel ? Colors.white : SacredTheme.outline),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final isPaid = ref.watch(purchaseProvider) != SubscriptionTier.free;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(SacredTheme.marginEdge, 12, SacredTheme.marginEdge, 0),
+      child: Row(
+        children: [
+          chip('Bhagavad Gita', ScriptureBook.gita),
+          chip('Upanishads', ScriptureBook.upanishads, locked: !isPaid),
+          chip('Vedas', ScriptureBook.vedas, locked: !isPaid),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookContent(
+    BuildContext context,
+    WidgetRef ref,
+    ScriptureBook book,
+    bool isPaid,
+    AsyncValue<List<Verse>> gitaAsync,
+    AppLanguage lang,
+  ) {
+    // Gita — available to everyone
+    if (book == ScriptureBook.gita) {
+      return gitaAsync.when(
+        data: (verses) {
+          if (verses.isEmpty) {
+            return Center(child: Text(AppTranslations.get('noScripturesLoaded', lang)));
+          }
+          return ListView.builder(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge, vertical: 16),
+            itemCount: verses.length,
+            itemBuilder: (context, index) => VerseCard(verse: verses[index]),
+          );
+        },
+        loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
+        error: (err, stack) => Center(
+          child: Text('${AppTranslations.get('errorLoadingScriptures', lang)}: $err'),
+        ),
+      );
+    }
+
+    // Upanishads / Vedas — Premium gate
+    if (!isPaid) {
+      return _buildPremiumGate(context, book);
+    }
+
+    final verses = book == ScriptureBook.upanishads
+        ? MockScriptureData.upanishadVerses
+        : MockScriptureData.vedaVerses;
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge, vertical: 16),
+      itemCount: verses.length,
+      itemBuilder: (context, index) => VerseCard(verse: verses[index]),
+    );
+  }
+
+  Widget _buildPremiumGate(BuildContext context, ScriptureBook book) {
+    final textTheme = Theme.of(context).textTheme;
+    final name = book == ScriptureBook.upanishads ? 'the Upanishads' : 'the Vedas';
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.auto_stories, size: 64,
+                color: SacredTheme.templeGold.withOpacity(0.6)),
+            const SizedBox(height: 20),
+            Text('A Premium Scripture',
+                style: textTheme.headlineSmall?.copyWith(
+                    color: SacredTheme.headingColor(context)),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 10),
+            Text(
+              'Access to $name is part of the Sadhaka Premium and Annual paths.',
+              style: textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.star),
+                label: const Text('UPGRADE TO UNLOCK'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SacredTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SubscriptionPaywallScreen()),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
