@@ -19,24 +19,24 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
             .select()
             .order('created_at', ascending: false)
             .limit(50);
-        if ((rows as List).isNotEmpty) {
-          state = rows.map((r) => CommunityPost(
-                id: r['id'] as String,
-                authorName: r['author_name'] as String,
-                authorAvatar: r['author_avatar'] as String,
-                content: r['content'] as String,
-                timestamp: DateTime.parse(r['created_at'] as String),
-                likes: r['likes_count'] as int? ?? 0,
-                isLikedByMe: false,
-                giftLabel: r['gift_label'] as String?,
-              )).toList();
-          return;
-        }
+        // Always use Supabase data when configured — even an empty list.
+        // This replaces seed posts with real community posts.
+        state = (rows as List).map((r) => CommunityPost(
+              id: r['id'] as String,
+              authorName: r['author_name'] as String,
+              authorAvatar: r['author_avatar'] as String,
+              content: r['content'] as String,
+              timestamp: DateTime.parse(r['created_at'] as String),
+              likes: r['likes_count'] as int? ?? 0,
+              isLikedByMe: false,
+              giftLabel: r['gift_label'] as String?,
+            )).toList();
+        return;
       } catch (e) {
         debugPrint('sangha_posts load error: $e');
       }
     }
-    _loadSeedPosts(); // fallback while offline or table is empty
+    _loadSeedPosts(); // only when Supabase is not configured (dev/offline)
   }
 
   void _loadSeedPosts() {

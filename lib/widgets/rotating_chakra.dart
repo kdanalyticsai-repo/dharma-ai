@@ -52,23 +52,23 @@ class _ChakraPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final r = size.width / 2;
 
-    // Bolder, more visible colors
+    // Strong, bold colours — clearly visible on cream background
     final rim = Paint()
-      ..color = SacredTheme.primary        // rich #9C3F00 saffron
+      ..color = SacredTheme.deepSaffron    // vivid #CC5500 orange
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.055
+      ..strokeWidth = size.width * 0.075
       ..strokeCap = StrokeCap.round;
 
     final spoke = Paint()
-      ..color = SacredTheme.deepSaffron    // vivid #CC5500 orange
+      ..color = SacredTheme.primary        // #9C3F00 deep saffron
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.030
+      ..strokeWidth = size.width * 0.042
       ..strokeCap = StrokeCap.round;
 
     final accent = Paint()
-      ..color = SacredTheme.templeGold     // gold for inner ring + beads
+      ..color = SacredTheme.templeGold
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.022
+      ..strokeWidth = size.width * 0.030
       ..strokeCap = StrokeCap.round;
 
     // Outer rim + inner ring
@@ -93,15 +93,15 @@ class _ChakraPainter extends CustomPainter {
           center.dx + r * 0.76 * math.cos(angle),
           center.dy + r * 0.76 * math.sin(angle),
         ),
-        size.width * 0.026,
-        Paint()..color = SacredTheme.primary,
+        size.width * 0.032,
+        Paint()..color = SacredTheme.deepSaffron,
       );
     }
 
-    // Hub (filled + outlined)
-    canvas.drawCircle(center, r * 0.17,
-        Paint()..color = SacredTheme.primary);
-    canvas.drawCircle(center, r * 0.17, accent);
+    // Hub (filled saffron + gold ring)
+    canvas.drawCircle(center, r * 0.19,
+        Paint()..color = SacredTheme.deepSaffron);
+    canvas.drawCircle(center, r * 0.19, accent);
   }
 
   @override

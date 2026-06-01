@@ -135,17 +135,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Column(
                     children: [
                       RotatingChakra(
-                        size: (MediaQuery.of(context).size.width * 0.22)
-                            .clamp(72.0, 110.0),
+                        size: (MediaQuery.of(context).size.width * 0.25)
+                            .clamp(80.0, 140.0),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _chakraTagline(),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.newsreader(
-                          fontSize: 12,
+                          fontSize: 13,
                           fontStyle: FontStyle.italic,
-                          color: SacredTheme.onSurfaceVariant,
+                          color: SacredTheme.primary,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],

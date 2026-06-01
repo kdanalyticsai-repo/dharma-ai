@@ -50,8 +50,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 12),
-                const Center(child: DharmaLogo(height: 56)),
+                const SizedBox(height: 10),
+                const Center(child: DharmaLogo(height: 72)),
                 const SizedBox(height: 14),
 
                 // Header (Greeting and Subtitle)
@@ -83,11 +83,40 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                           MaterialPageRoute(builder: (context) => const ProfileScreen()),
                         );
                       },
-                      borderRadius: BorderRadius.circular(20),
-                      child: const CircleAvatar(
-                        backgroundColor: SacredTheme.surfaceContainerHighest,
-                        radius: 20,
-                        child: Icon(Icons.person_outline, color: SacredTheme.primary),
+                      borderRadius: BorderRadius.circular(22),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              SacredTheme.primary,
+                              SacredTheme.deepSaffron,
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: SacredTheme.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            firstName?.isNotEmpty == true
+                                ? firstName![0].toUpperCase()
+                                : 'S',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],

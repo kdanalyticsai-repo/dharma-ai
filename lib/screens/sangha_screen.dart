@@ -201,15 +201,35 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
 
               // Posts List
               Expanded(
-                child: ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge, vertical: 8),
-                  itemCount: posts.length,
-                  itemBuilder: (context, index) {
-                    final post = posts[index];
-                    return CommunityPostCard(post: post);
-                  },
-                ),
+                child: posts.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.spa_outlined,
+                                size: 48, color: SacredTheme.outlineVariant),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Be the first to share a reflection',
+                              style: textTheme.bodyLarge?.copyWith(
+                                  color: SacredTheme.onSurfaceVariant),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Your wisdom inspires the Sangha.',
+                              style: textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: SacredTheme.marginEdge, vertical: 8),
+                        itemCount: posts.length,
+                        itemBuilder: (context, index) =>
+                            CommunityPostCard(post: posts[index]),
+                      ),
               ),
             ],
           ),
