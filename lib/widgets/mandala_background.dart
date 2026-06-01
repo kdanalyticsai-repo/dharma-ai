@@ -7,6 +7,7 @@ class MandalaBackground extends StatefulWidget {
   final double scale;
   final Alignment alignment;
   final bool rotate;
+  final double opacity;
 
   const MandalaBackground({
     Key? key,
@@ -14,6 +15,7 @@ class MandalaBackground extends StatefulWidget {
     this.scale = 1.0,
     this.alignment = Alignment.center,
     this.rotate = false,
+    this.opacity = 0.03,
   }) : super(key: key);
 
   @override
@@ -70,7 +72,7 @@ class _MandalaBackgroundState extends State<MandalaBackground> with SingleTicker
                       painter: MandalaPainter(
                         scale: widget.scale,
                         alignment: widget.alignment,
-                        opacity: 0.03, // 3% opacity as specified in guidelines
+                        opacity: widget.opacity,
                       ),
                     ),
                   );

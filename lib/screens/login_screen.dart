@@ -117,6 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: MandalaBackground(
         scale: 1.0,
         alignment: Alignment.topRight,
+        opacity: 0.12,
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge),

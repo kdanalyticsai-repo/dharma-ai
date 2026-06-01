@@ -25,6 +25,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         scale: 1.1,
         alignment: Alignment.center,
         rotate: true,
+        opacity: 0.14,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge),
