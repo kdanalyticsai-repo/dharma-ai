@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/sadhana_provider.dart';
+import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/screens/profile_screen.dart';
 
@@ -34,10 +35,14 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
         ? fullName.split(' ').first
         : null;
 
-    // Rotate daily verse based on day of year so it changes each day
+    // Rotate the daily verse by day-of-year across the full Gita from
+    // Supabase; fall back to the bundled samples while loading / offline.
+    final allVerses = ref.watch(versesProvider).valueOrNull;
+    final List<Verse> versePool = (allVerses != null && allVerses.isNotEmpty)
+        ? allVerses
+        : MockScriptureData.gitaVerses;
     final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
-    final verseIndex = dayOfYear % MockScriptureData.gitaVerses.length;
-    final Verse dailyVerse = MockScriptureData.gitaVerses[verseIndex];
+    final Verse dailyVerse = versePool[dayOfYear % versePool.length];
 
     return Scaffold(
       body: MandalaBackground(
