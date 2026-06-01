@@ -201,6 +201,7 @@ class ScripturesScreen extends ConsumerWidget {
         data: (verses) => Column(
           children: [
             _aiAssistedBanner(context),
+            _samavedaNote(context),
             Expanded(child: _verseList(verses)),
           ],
         ),
@@ -208,6 +209,7 @@ class ScripturesScreen extends ConsumerWidget {
         error: (_, __) => Column(
           children: [
             _aiAssistedBanner(context),
+            _samavedaNote(context),
             Expanded(child: _verseList(MockScriptureData.vedaVerses)),
           ],
         ),
@@ -243,6 +245,22 @@ class ScripturesScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _samavedaNote(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(SacredTheme.marginEdge, 8, SacredTheme.marginEdge, 0),
+      child: Text(
+        'Note: The library includes the Rig, Yajur and Atharva Veda. The '
+        'Sama Veda is the melodic (sāman) arrangement of Rig Veda hymns for '
+        'chanting — its verses are largely drawn from the Rig Veda already here.',
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontStyle: FontStyle.italic,
+          color: SacredTheme.onSurfaceVariant,
+        ),
       ),
     );
   }
