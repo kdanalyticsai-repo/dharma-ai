@@ -51,7 +51,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                const Center(child: DharmaLogo(height: 140)),
+                const Center(child: DharmaLogo(height: 190)),
                 const SizedBox(height: 14),
 
                 // Header (Greeting and Subtitle)
