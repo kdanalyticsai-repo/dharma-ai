@@ -186,7 +186,6 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                   title: 'Sadhaka Annual',
                   price: '₹1100 / Year',
                   badge: 'BEST VALUE',
-                  savingsLabel: 'Save ₹1312 vs monthly',
                   benefits: [
                     'Everything in Sadhaka Premium',
                     'Best value — save ₹1,312 vs monthly',
