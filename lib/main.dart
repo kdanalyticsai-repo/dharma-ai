@@ -21,31 +21,53 @@ void main() async {
     );
   }
 
-  runApp(const ProviderScope(child: DharmaApp()));
+  runApp(ProviderScope(child: DharmaApp(navigatorKey: _navigatorKey)));
 }
 
+final _navigatorKey = GlobalKey<NavigatorState>();
+
 class DharmaApp extends ConsumerWidget {
-  const DharmaApp({Key? key}) : super(key: key);
+  final GlobalKey<NavigatorState> navigatorKey;
+  const DharmaApp({Key? key, required this.navigatorKey}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authUserProvider);
 
-    // When the signed-in user changes (sign in / out / switch account),
-    // reset the per-user data providers so they reload the new user's data.
+    // Imperatively navigate whenever the signed-in user changes.
+    // MaterialApp.home changes alone don't navigate an already-mounted
+    // Navigator — the NavigatorKey + pushAndRemoveUntil is the reliable fix.
     ref.listen(authUserProvider, (prev, next) {
-      if (prev?.valueOrNull?.id != next.valueOrNull?.id) {
-        ref.invalidate(purchaseProvider);
-        ref.invalidate(bookmarksProvider);
-        ref.invalidate(sadhanaProvider);
+      final prevId = prev?.valueOrNull?.id;
+      final nextId = next.valueOrNull?.id;
+      if (prevId == nextId) return;
+
+      final nav = navigatorKey.currentState;
+      if (nav == null) return;
+
+      if (nextId != null) {
+        nav.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeShell()),
+          (_) => false,
+        );
+      } else if (prev?.hasValue == true) {
+        // Only redirect to welcome when we had a session (not on initial load)
+        nav.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (_) => false,
+        );
       }
+
+      // Reset per-user data providers
+      ref.invalidate(purchaseProvider);
+      ref.invalidate(bookmarksProvider);
+      ref.invalidate(sadhanaProvider);
     });
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'DharmaAI',
       theme: SacredTheme.lightTheme,
-      // Locked to the designed light palette so a device's dark mode cannot
-      // wash out text/contrast. A full dark theme is tracked as a follow-up.
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
       home: authState.when(

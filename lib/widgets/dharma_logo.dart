@@ -14,6 +14,7 @@ class DharmaLogo extends StatelessWidget {
       'assets/images/dharma_logo.png',
       height: height,
       fit: BoxFit.contain,
+      filterQuality: FilterQuality.high, // sharper when scaled down
       errorBuilder: (context, error, stack) {
         return Text(
           'DharmaAI',

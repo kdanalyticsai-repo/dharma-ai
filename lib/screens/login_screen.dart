@@ -40,6 +40,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  String _chakraTagline() {
+    final h = DateTime.now().hour;
+    if (h >= 5 && h < 12) return 'The wheel of dharma turns with the dawn.';
+    if (h >= 12 && h < 17) return 'Act without attachment. Serve with love.';
+    if (h >= 17 && h < 21) return 'Reflect with gratitude at dusk.';
+    return 'In stillness, the eternal awakens.';
+  }
+
   Future<void> _submit() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -123,8 +131,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   alignment: Alignment.centerLeft,
                 ),
                 const SizedBox(height: 12),
-                const Center(child: RotatingChakra(size: 88)),
-                const SizedBox(height: 24),
+                Center(
+                  child: Column(
+                    children: [
+                      const RotatingChakra(size: 88),
+                      const SizedBox(height: 8),
+                      Text(
+                        _chakraTagline(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.newsreader(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: SacredTheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
 
                 Text(
                   _isSignUp ? 'Begin Your Path' : 'Welcome Back',

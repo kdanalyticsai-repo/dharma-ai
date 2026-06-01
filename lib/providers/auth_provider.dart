@@ -3,16 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 
 // Current Supabase user (null = not signed in).
-// Emits the already-restored session first so a page refresh keeps the
-// user signed in, then follows subsequent auth state changes.
-final authUserProvider = StreamProvider<User?>((ref) async* {
-  if (!SupabaseConfig.isConfigured) {
-    yield null;
-    return;
-  }
-  final auth = Supabase.instance.client.auth;
-  yield auth.currentSession?.user; // restored from local storage on refresh
-  yield* auth.onAuthStateChange.map((event) => event.session?.user);
+// Stays in loading state until Supabase fires the INITIAL_SESSION event
+// (which includes the restored session from localStorage on web refresh).
+// Subsequent events (SIGNED_IN, SIGNED_OUT) continue to stream.
+final authUserProvider = StreamProvider<User?>((ref) {
+  if (!SupabaseConfig.isConfigured) return Stream.value(null);
+  return Supabase.instance.client.auth.onAuthStateChange
+      .map((event) => event.session?.user);
 });
 
 // Convenience: is the user signed in?
@@ -83,7 +80,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     try {
       await _client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'https://dharma-ai-web.kdanalyticsai.workers.dev',
+        redirectTo: 'https://dharma.kdaanalytics.com',
       );
       return null;
     } on AuthException catch (e) {
