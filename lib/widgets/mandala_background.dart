@@ -14,7 +14,7 @@ class MandalaBackground extends StatefulWidget {
     required this.child,
     this.scale = 1.0,
     this.alignment = Alignment.center,
-    this.rotate = false,
+    this.rotate = true, // slow serene rotation on every screen
     this.opacity = 0.10, // visible mandala on every screen
   }) : super(key: key);
 
