@@ -198,14 +198,53 @@ class ScripturesScreen extends ConsumerWidget {
     // Vedas come from Supabase (full Sanskrit text); samples as fallback.
     if (book == ScriptureBook.vedas) {
       return ref.watch(vedaVersesProvider).when(
-        data: (verses) => _verseList(verses),
+        data: (verses) => Column(
+          children: [
+            _aiAssistedBanner(context),
+            Expanded(child: _verseList(verses)),
+          ],
+        ),
         loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
-        error: (_, __) => _verseList(MockScriptureData.vedaVerses),
+        error: (_, __) => Column(
+          children: [
+            _aiAssistedBanner(context),
+            Expanded(child: _verseList(MockScriptureData.vedaVerses)),
+          ],
+        ),
       );
     }
 
     // Upanishads — curated samples for now
     return _verseList(MockScriptureData.upanishadVerses);
+  }
+
+  Widget _aiAssistedBanner(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(SacredTheme.marginEdge, 12, SacredTheme.marginEdge, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: SacredTheme.templeGold.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+        border: Border.all(color: SacredTheme.templeGold.withOpacity(0.3), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.auto_awesome, size: 14, color: SacredTheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Veda translations are AI-assisted — please verify against traditional scholarly sources.',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: SacredTheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _verseList(List<Verse> verses) {
