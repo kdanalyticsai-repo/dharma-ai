@@ -59,6 +59,24 @@ create table if not exists sangha_posts (
   created_at    timestamptz default now()
 );
 
+-- ── Scripture Verses (public content) ────────────────────────
+-- Column names are camelCase (quoted) to match the Flutter Verse model
+-- and the queries in scripture_service.dart exactly.
+create table if not exists verses (
+  id                       text primary key,        -- e.g. 'BG_2_47'
+  "bookName"               text not null default 'Bhagavad Gita',
+  chapter                  int  not null,
+  "verseNumber"            int  not null,
+  "sanskritText"           text,
+  "englishTransliteration" text,
+  translation              text,
+  commentary               text,
+  "wordMeanings"           jsonb
+);
+alter table verses enable row level security;
+-- Scriptures are public: anyone (even signed-out) may read.
+create policy "verses are public" on verses for select using (true);
+
 -- ── Row Level Security ────────────────────────────────────────
 alter table profiles         enable row level security;
 alter table bookmarks        enable row level security;
