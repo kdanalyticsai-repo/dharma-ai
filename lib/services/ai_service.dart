@@ -69,6 +69,43 @@ class AiService {
     return _simulateGuruResponse(prompt, history, language);
   }
 
+  // ── Name transliteration (Latin → selected script) ──────────
+  // Returns the name written in the language's native script. Returns the
+  // original name for English, when not configured, or on any error.
+  Future<String> transliterateName(String name, AppLanguage language) async {
+    if (!OpenAIConfig.isConfigured) return name;
+    final String script;
+    switch (language) {
+      case AppLanguage.hindi:
+        script = 'Devanagari (Hindi)';
+        break;
+      case AppLanguage.tamil:
+        script = 'Tamil';
+        break;
+      case AppLanguage.bengali:
+        script = 'Bengali';
+        break;
+      default:
+        return name; // English / unknown — keep as-is
+    }
+    try {
+      final result = await _postToOpenAI([
+        {
+          'role': 'system',
+          'content':
+              'You transliterate personal names into other scripts, preserving '
+              'pronunciation. Output ONLY the transliterated name — no quotes, '
+              'punctuation, romanization, or any extra words.'
+        },
+        {'role': 'user', 'content': 'Transliterate this name into $script script: $name'},
+      ]);
+      final cleaned = result.trim().split('\n').first.trim();
+      return cleaned.isEmpty ? name : cleaned;
+    } catch (_) {
+      return name;
+    }
+  }
+
   // ── OpenAI: Scripture Chat ────────────────────────────────────
 
   Future<Map<String, dynamic>> _callOpenAIScripture(

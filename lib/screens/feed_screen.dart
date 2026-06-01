@@ -14,6 +14,7 @@ import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/sadhana_provider.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/navigation_provider.dart';
+import 'package:dharma_ai/providers/transliteration_provider.dart';
 import 'package:dharma_ai/screens/profile_screen.dart';
 
 class DailyFeedScreen extends ConsumerStatefulWidget {
@@ -34,6 +35,14 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
     final firstName = (fullName != null && fullName.isNotEmpty)
         ? fullName.split(' ').first
         : null;
+    // Show the name in the selected script (e.g. इन्द्र for Hindi); falls
+    // back to the Latin name while loading / for English.
+    final displayName = firstName == null
+        ? null
+        : (ref
+                .watch(transliteratedNameProvider((name: firstName, lang: currentLanguage)))
+                .valueOrNull ??
+            firstName);
 
     // Rotate the daily verse by day-of-year across the full Gita from
     // Supabase; fall back to the bundled samples while loading / offline.
@@ -65,8 +74,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          firstName != null
-                              ? '${AppTranslations.get('greetingHariOm', currentLanguage)} $firstName'
+                          displayName != null
+                              ? '${AppTranslations.get('greetingHariOm', currentLanguage)} $displayName'
                               : AppTranslations.get('greetingSeeker', currentLanguage),
                           style: textTheme.headlineMedium?.copyWith(
                             color: SacredTheme.headingColor(context),
