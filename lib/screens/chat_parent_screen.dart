@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
+import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/screens/scripture_chat_screen.dart';
 import 'package:dharma_ai/screens/guru_chat_screen.dart';
 
@@ -41,7 +42,9 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
     final lang = ref.watch(languageProvider);
 
     return Scaffold(
-      body: SafeArea(
+      body: MandalaBackground(
+        scale: 0.85,
+        child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -121,6 +124,7 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
               ),
             ),
           ],
+        ),
         ),
       ),
     );

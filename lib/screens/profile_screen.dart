@@ -16,6 +16,7 @@ import 'package:dharma_ai/screens/offline_library_screen.dart';
 import 'package:dharma_ai/screens/offline_reader_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/widgets/mandala_background.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -40,6 +41,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final textTheme = Theme.of(context).textTheme;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true, // allow the sheet to grow + scroll on small screens
       backgroundColor: SacredTheme.surfaceContainerLow,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -48,8 +50,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
         ),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        return SafeArea(
+          child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 20,
+            bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,6 +145,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               const SizedBox(height: 12),
             ],
           ),
+        ),
         );
       },
     );
@@ -198,7 +207,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
           ),
         ],
       ),
-      body: SafeArea(
+      body: MandalaBackground(
+        scale: 0.85,
+        child: SafeArea(
         child: Column(
           children: [
             // User Header Profile Card
@@ -432,6 +443,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               ),
             ),
           ],
+        ),
         ),
       ),
     );
