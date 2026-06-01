@@ -131,7 +131,7 @@ class _OfflineLibraryScreenState extends ConsumerState<OfflineLibraryScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Download scriptures, translations, and audio summaries directly to your device storage to seek wisdom even without a network vessel.',
+                'Save your unlocked scriptures for offline reading. Full volumes and audio packs are being added to your library — more titles coming soon.',
                 style: textTheme.bodyMedium,
               ),
               const FadingDivider(height: 28),
