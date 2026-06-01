@@ -41,26 +41,30 @@ class SadhanaScreen extends ConsumerWidget {
                         color: SacredTheme.headingColor(context),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: SacredTheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
-                        border: Border.all(color: SacredTheme.primary.withOpacity(0.3), width: 0.5),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.local_fire_department, color: SacredTheme.primary, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${sadhana.streak} ${AppTranslations.get('dayStreakLabel', currentLanguage)}',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: SacredTheme.primary,
+                    InkWell(
+                      borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                      onTap: () => _showStreakInfo(context, sadhana.streak, currentLanguage),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: SacredTheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                          border: Border.all(color: SacredTheme.primary.withOpacity(0.3), width: 0.5),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.local_fire_department, color: SacredTheme.primary, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${sadhana.streak} ${AppTranslations.get('dayStreakLabel', currentLanguage)}',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: SacredTheme.primary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -192,6 +196,42 @@ class SadhanaScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showStreakInfo(BuildContext context, int streak, AppLanguage lang) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: SacredTheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
+        title: Row(
+          children: [
+            const Icon(Icons.local_fire_department, color: SacredTheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                AppTranslations.get('streakInfoTitle', lang),
+                style: GoogleFonts.newsreader(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: SacredTheme.headingColor(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          '🔥 $streak ${AppTranslations.get('dayStreakLabel', lang)}\n\n${AppTranslations.get('streakInfoBody', lang)}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppTranslations.get('streakInfoBtn', lang)),
+          ),
+        ],
       ),
     );
   }

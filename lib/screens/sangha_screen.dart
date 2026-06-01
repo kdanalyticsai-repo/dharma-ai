@@ -160,6 +160,15 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
               ),
               const FadingDivider(height: 12),
 
+              // Purpose / intro
+              Padding(
+                padding: const EdgeInsets.fromLTRB(SacredTheme.marginEdge, 0, SacredTheme.marginEdge, 4),
+                child: Text(
+                  AppTranslations.get('sanghaIntro', currentLanguage),
+                  style: textTheme.bodyMedium,
+                ),
+              ),
+
               // Post composer
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge, vertical: 8),

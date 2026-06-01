@@ -50,8 +50,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 10),
-                const Center(child: DharmaLogo(height: 100)),
+                const SizedBox(height: 8),
+                const Center(child: DharmaLogo(height: 140)),
                 const SizedBox(height: 14),
 
                 // Header (Greeting and Subtitle)
@@ -63,7 +63,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       children: [
                         Text(
                           firstName != null
-                              ? 'Hari Om, $firstName'
+                              ? '${AppTranslations.get('greetingHariOm', currentLanguage)} $firstName'
                               : AppTranslations.get('greetingSeeker', currentLanguage),
                           style: textTheme.headlineMedium?.copyWith(
                             color: SacredTheme.headingColor(context),
@@ -224,7 +224,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
                     ),
                     InkWell(
-                      onTap: () => ref.read(homeTabProvider.notifier).state = 3,
+                      onTap: () => ref.read(homeTabProvider.notifier).state = 1,
                       borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),

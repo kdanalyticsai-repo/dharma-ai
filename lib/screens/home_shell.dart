@@ -15,9 +15,9 @@ class HomeShell extends ConsumerWidget {
 
   static const List<Widget> _screens = [
     DailyFeedScreen(),
-    ScripturesScreen(),
-    ChatParentScreen(),
     SadhanaScreen(),
+    ChatParentScreen(),
+    ScripturesScreen(),
     SanghaScreen(),
   ];
 
@@ -72,9 +72,9 @@ class HomeShell extends ConsumerWidget {
                 label: AppTranslations.get('tabFeed', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.menu_book_outlined),
-                selectedIcon: const Icon(Icons.menu_book),
-                label: AppTranslations.get('tabWisdom', currentLanguage),
+                icon: const Icon(Icons.self_improvement_outlined),
+                selectedIcon: const Icon(Icons.self_improvement),
+                label: AppTranslations.get('tabSadhana', currentLanguage),
               ),
               NavigationDestination(
                 icon: const Icon(Icons.psychology_outlined),
@@ -82,9 +82,9 @@ class HomeShell extends ConsumerWidget {
                 label: AppTranslations.get('tabAiGuru', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.self_improvement_outlined),
-                selectedIcon: const Icon(Icons.self_improvement),
-                label: AppTranslations.get('tabSadhana', currentLanguage),
+                icon: const Icon(Icons.menu_book_outlined),
+                selectedIcon: const Icon(Icons.menu_book),
+                label: AppTranslations.get('tabWisdom', currentLanguage),
               ),
               NavigationDestination(
                 icon: const Icon(Icons.people_outline),

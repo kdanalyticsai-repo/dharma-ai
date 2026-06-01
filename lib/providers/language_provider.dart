@@ -256,6 +256,36 @@ class AppTranslations {
       AppLanguage.hindi: 'हरि ओम, साधक',
       AppLanguage.bengali: 'হরি ওম, অন্বেষক',
     },
+    'greetingHariOm': {
+      AppLanguage.english: 'Hari Om,',
+      AppLanguage.tamil: 'ஹரி ஓம்,',
+      AppLanguage.hindi: 'हरि ओम,',
+      AppLanguage.bengali: 'হরি ওম,',
+    },
+    'streakInfoTitle': {
+      AppLanguage.english: 'Your Sadhana Streak',
+      AppLanguage.tamil: 'உங்கள் சாதனைத் தொடர்',
+      AppLanguage.hindi: 'आपकी साधना श्रृंखला',
+      AppLanguage.bengali: 'আপনার সাধনা ধারা',
+    },
+    'streakInfoBody': {
+      AppLanguage.english: 'Complete all your daily goals — meditation, scripture reading and chanting — to keep the flame alive and grow your streak. Consistency is the heart of sadhana.',
+      AppLanguage.tamil: 'தியானம், வேதபாடம், ஜபம் ஆகிய அனைத்து தினசரி இலக்குகளையும் நிறைவேற்றி, உங்கள் தொடரை வளர்த்துக் கொள்ளுங்கள். நிலைத்தன்மையே சாதனையின் இதயம்.',
+      AppLanguage.hindi: 'अपने सभी दैनिक लक्ष्य — ध्यान, शास्त्र पठन और जप — पूरा करें ताकि ज्योति जलती रहे और आपकी श्रृंखला बढ़ती रहे। निरंतरता ही साधना का हृदय है।',
+      AppLanguage.bengali: 'ধ্যান, শাস্ত্র পাঠ ও জপ — আপনার সমস্ত দৈনিক লক্ষ্য সম্পূর্ণ করুন যাতে শিখা জ্বলতে থাকে এবং আপনার ধারা বৃদ্ধি পায়। ধারাবাহিকতাই সাধনার হৃদয়।',
+    },
+    'streakInfoBtn': {
+      AppLanguage.english: 'KEEP GOING',
+      AppLanguage.tamil: 'தொடருங்கள்',
+      AppLanguage.hindi: 'जारी रखें',
+      AppLanguage.bengali: 'চালিয়ে যান',
+    },
+    'sanghaIntro': {
+      AppLanguage.english: 'Sangha is your community of fellow seekers. Share reflections from your practice, celebrate milestones, and draw inspiration from others walking the path of dharma.',
+      AppLanguage.tamil: 'சங்கம் உங்கள் சக சாதகர்களின் சமூகம். உங்கள் பயிற்சியின் சிந்தனைகளைப் பகிருங்கள், மைல்கற்களைக் கொண்டாடுங்கள், தர்மப் பாதையில் நடப்பவர்களிடமிருந்து உத்வேகம் பெறுங்கள்.',
+      AppLanguage.hindi: 'संघ आपके सहयात्री साधकों का समुदाय है। अपने अभ्यास के विचार साझा करें, उपलब्धियों का उत्सव मनाएं, और धर्म-पथ पर चलने वाले अन्य लोगों से प्रेरणा लें।',
+      AppLanguage.bengali: 'সঙ্ঘ আপনার সহ-অন্বেষকদের সম্প্রদায়। আপনার অনুশীলনের ভাবনা ভাগ করুন, মাইলফলক উদযাপন করুন, এবং ধর্মপথে চলা অন্যদের থেকে অনুপ্রেরণা নিন।',
+    },
     'greetingSubtitle': {
       AppLanguage.english: 'May peace guide your day.',
       AppLanguage.tamil: 'அமைதி உங்கள் நாளை வழிநடத்தட்டும்.',
