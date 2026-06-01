@@ -134,7 +134,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Center(
                   child: Column(
                     children: [
-                      const RotatingChakra(size: 88),
+                      RotatingChakra(
+                        size: (MediaQuery.of(context).size.width * 0.22)
+                            .clamp(72.0, 110.0),
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         _chakraTagline(),

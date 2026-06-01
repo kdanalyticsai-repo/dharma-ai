@@ -46,11 +46,25 @@ create table if not exists subscriptions (
   expires_at      timestamptz
 );
 
+-- ── Sangha Community Posts ───────────────────────────────────
+create table if not exists sangha_posts (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references profiles(id) on delete set null,
+  author_name   text not null,
+  author_avatar text not null,        -- single initial letter
+  content       text not null,
+  likes_count   int default 0,
+  is_gift       boolean default false,
+  gift_label    text,
+  created_at    timestamptz default now()
+);
+
 -- ── Row Level Security ────────────────────────────────────────
 alter table profiles         enable row level security;
 alter table bookmarks        enable row level security;
 alter table sadhana_records  enable row level security;
 alter table subscriptions    enable row level security;
+alter table sangha_posts     enable row level security;
 
 -- Users can only see/edit their own data.
 -- Note: `for all using (...)` also acts as the INSERT WITH CHECK in Postgres,
@@ -59,6 +73,9 @@ create policy "own profile"    on profiles        for all using (auth.uid() = id
 create policy "own bookmarks"  on bookmarks       for all using (auth.uid() = user_id);
 create policy "own sadhana"    on sadhana_records for all using (auth.uid() = user_id);
 create policy "own subs"       on subscriptions   for all using (auth.uid() = user_id);
+-- Sangha posts: anyone authenticated can read; only author can insert
+create policy "read sangha"    on sangha_posts    for select using (auth.role() = 'authenticated');
+create policy "post sangha"    on sangha_posts    for insert with check (auth.uid() = user_id);
 
 -- ── Auto-create a profile row on signup ───────────────────────
 -- Runs as SECURITY DEFINER so it bypasses RLS and reliably inserts a

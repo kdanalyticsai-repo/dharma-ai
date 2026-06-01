@@ -14,7 +14,11 @@ class DharmaLogo extends StatelessWidget {
       'assets/images/dharma_logo.png',
       height: height,
       fit: BoxFit.contain,
-      filterQuality: FilterQuality.high, // sharper when scaled down
+      filterQuality: FilterQuality.high,
+      // Multiply blend removes residual white: white * cream bg = cream bg.
+      // Orange logo pixels are preserved since orange * cream ≈ orange.
+      color: SacredTheme.surface,
+      colorBlendMode: BlendMode.multiply,
       errorBuilder: (context, error, stack) {
         return Text(
           'DharmaAI',
