@@ -7,10 +7,16 @@ final scriptureServiceProvider = Provider<ScriptureService>((ref) {
   return ScriptureService();
 });
 
-// All verses list provider
+// All Bhagavad Gita verses
 final versesProvider = FutureProvider<List<Verse>>((ref) async {
   final service = ref.watch(scriptureServiceProvider);
   return service.getVerses();
+});
+
+// Vedas (Rig / Yajur / Atharva) — Sanskrit, premium-gated in the reader
+final vedaVersesProvider = FutureProvider<List<Verse>>((ref) async {
+  final service = ref.watch(scriptureServiceProvider);
+  return service.getVedaVerses();
 });
 
 // Bookmark IDs provider

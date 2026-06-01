@@ -16,28 +16,53 @@ class ScriptureService {
   // Key for local bookmarks list in SharedPreferences
   static const String _bookmarksKey = 'dharma_bookmarks';
 
-  // Fetch all available verses
+  // Fetch all Bhagavad Gita verses (the Gita reader, feed daily verse and
+  // bookmark resolution use this — Vedas/Upanishads are fetched separately).
   Future<List<Verse>> getVerses() async {
     try {
       if (_supabase != null) {
-        // If Supabase is set up, attempt database retrieval
         final response = await _supabase!
             .from('verses')
             .select()
+            .eq('bookName', 'Bhagavad Gita')
             .order('chapter', ascending: true)
             .order('verseNumber', ascending: true);
-        
-        return (response as List)
+
+        final list = (response as List)
             .map((item) => Verse.fromJson(item as Map<String, dynamic>))
             .toList();
+        if (list.isNotEmpty) return list;
       }
     } catch (e) {
       print('Supabase scripture load failed, falling back to local mocks: $e');
     }
 
-    // Default local fallback
-    await Future.delayed(const Duration(milliseconds: 200)); // Simulate networking delay
+    await Future.delayed(const Duration(milliseconds: 200));
     return MockScriptureData.gitaVerses;
+  }
+
+  // Fetch the Vedas (Rig / Yajur / Atharva). Sanskrit-only for now;
+  // falls back to the curated samples when the table isn't populated.
+  Future<List<Verse>> getVedaVerses() async {
+    try {
+      if (_supabase != null) {
+        final response = await _supabase!
+            .from('verses')
+            .select()
+            .inFilter('bookName', ['Rig Veda', 'Yajur Veda', 'Atharva Veda'])
+            .order('bookName', ascending: true)
+            .order('chapter', ascending: true)
+            .order('verseNumber', ascending: true);
+
+        final list = (response as List)
+            .map((item) => Verse.fromJson(item as Map<String, dynamic>))
+            .toList();
+        if (list.isNotEmpty) return list;
+      }
+    } catch (e) {
+      print('Supabase Veda load failed, falling back to samples: $e');
+    }
+    return MockScriptureData.vedaVerses;
   }
 
   // Fetch single verse by ID

@@ -195,9 +195,20 @@ class ScripturesScreen extends ConsumerWidget {
       return _buildPremiumGate(context, book);
     }
 
-    final verses = book == ScriptureBook.upanishads
-        ? MockScriptureData.upanishadVerses
-        : MockScriptureData.vedaVerses;
+    // Vedas come from Supabase (full Sanskrit text); samples as fallback.
+    if (book == ScriptureBook.vedas) {
+      return ref.watch(vedaVersesProvider).when(
+        data: (verses) => _verseList(verses),
+        loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
+        error: (_, __) => _verseList(MockScriptureData.vedaVerses),
+      );
+    }
+
+    // Upanishads — curated samples for now
+    return _verseList(MockScriptureData.upanishadVerses);
+  }
+
+  Widget _verseList(List<Verse> verses) {
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge, vertical: 16),
