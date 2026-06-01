@@ -193,6 +193,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final fullName = (user?.userMetadata?['full_name'] as String?)?.trim();
     final displayName = (fullName != null && fullName.isNotEmpty) ? fullName : 'Seeker of Truth';
     final avatarLetter = displayName[0].toUpperCase();
+    final avatarUrl = (user?.userMetadata?['avatar_url'] ??
+        user?.userMetadata?['picture']) as String?;
 
     return Scaffold(
       appBar: AppBar(
@@ -224,10 +226,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                       CircleAvatar(
                         radius: 30,
                         backgroundColor: SacredTheme.primary,
-                        child: Text(
-                          avatarLetter,
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
+                        backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                            ? NetworkImage(avatarUrl)
+                            : null,
+                        child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                            ? null
+                            : Text(
+                                avatarLetter,
+                                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                              ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
