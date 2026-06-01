@@ -35,12 +35,15 @@ class SadhanaScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      AppTranslations.get('sadhanaDashboard', currentLanguage),
-                      style: textTheme.headlineMedium?.copyWith(
-                        color: SacredTheme.headingColor(context),
+                    Expanded(
+                      child: Text(
+                        AppTranslations.get('sadhanaDashboard', currentLanguage),
+                        style: textTheme.headlineMedium?.copyWith(
+                          color: SacredTheme.headingColor(context),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
                       onTap: () => _showStreakInfo(context, sadhana.streak, currentLanguage),
