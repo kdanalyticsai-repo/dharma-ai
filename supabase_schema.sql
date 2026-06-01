@@ -106,11 +106,13 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, email, subscription_tier)
+  insert into public.profiles (id, full_name, email, avatar_url, subscription_tier)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'full_name', ''),
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', ''),
     new.email,
+    -- Google OAuth supplies a profile photo URL as avatar_url / picture
+    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
     'free'
   )
   on conflict (id) do nothing;
@@ -123,9 +125,19 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Backfill: create profile rows for any users who signed up before the
--- trigger existed (e.g. the 2 test accounts).
-insert into public.profiles (id, full_name, email, subscription_tier)
-select id, coalesce(raw_user_meta_data->>'full_name', ''), email, 'free'
+-- Backfill: create/refresh profile rows for users who signed up before the
+-- trigger existed, pulling name + avatar from their auth metadata.
+insert into public.profiles (id, full_name, email, avatar_url, subscription_tier)
+select id,
+       coalesce(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name', ''),
+       email,
+       coalesce(raw_user_meta_data->>'avatar_url', raw_user_meta_data->>'picture'),
+       'free'
 from auth.users
 on conflict (id) do nothing;
+
+-- Backfill avatar_url for existing profile rows that are missing it.
+update public.profiles p
+set avatar_url = coalesce(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture')
+from auth.users u
+where p.id = u.id and p.avatar_url is null;

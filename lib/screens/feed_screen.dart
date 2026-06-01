@@ -35,6 +35,9 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
     final firstName = (fullName != null && fullName.isNotEmpty)
         ? fullName.split(' ').first
         : null;
+    // Google sign-in provides a profile photo URL in auth metadata.
+    final avatarUrl = (user?.userMetadata?['avatar_url'] ??
+        user?.userMetadata?['picture']) as String?;
     // Show the name in the selected script (e.g. इन्द्र for Hindi); falls
     // back to the Latin name while loading / for English.
     final displayName = firstName == null
@@ -101,14 +104,6 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                         height: 44,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              SacredTheme.primary,
-                              SacredTheme.deepSaffron,
-                            ],
-                          ),
                           boxShadow: [
                             BoxShadow(
                               color: SacredTheme.primary.withOpacity(0.3),
@@ -117,17 +112,16 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                             ),
                           ],
                         ),
-                        child: Center(
-                          child: Text(
-                            firstName?.isNotEmpty == true
-                                ? firstName![0].toUpperCase()
-                                : 'S',
-                            style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+                        child: ClipOval(
+                          child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                              ? Image.network(
+                                  avatarUrl,
+                                  width: 44,
+                                  height: 44,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _avatarInitial(firstName),
+                                )
+                              : _avatarInitial(firstName),
                         ),
                       ),
                     ),
@@ -293,6 +287,32 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                 const SizedBox(height: SacredTheme.safeAreaBottom),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Gradient circle with the user's first initial (avatar fallback).
+  Widget _avatarInitial(String? firstName) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [SacredTheme.primary, SacredTheme.deepSaffron],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          firstName?.isNotEmpty == true ? firstName![0].toUpperCase() : 'S',
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
       ),
