@@ -189,10 +189,9 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                   savingsLabel: 'Save ₹1312 vs monthly',
                   benefits: [
                     'Everything in Sadhaka Premium',
-                    'Priority access to new scriptures',
+                    'Best value — save ₹1,312 vs monthly',
                     'Exclusive annual seeker badge',
-                    'Extended AI Guru session memory',
-                    'Early access to new features',
+                    '3× longer AI Guru session memory',
                   ],
                   isActive: activeTier == SubscriptionTier.annual,
                   isPremiumHighlight: true,
