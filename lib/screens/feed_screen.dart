@@ -51,10 +51,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                const Center(child: DharmaLogo(height: 110)),
-                const SizedBox(height: 14),
 
-                // Header (Greeting and Subtitle)
+                // Header (Greeting and Subtitle) — at the very top
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -121,7 +119,10 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                     ),
                   ],
                 ),
-                
+
+                const SizedBox(height: 18),
+                const Center(child: DharmaLogo(height: 104)),
+
                 const FadingDivider(height: 24),
 
                 // Verse of the Day (Indigo Focus Card)
