@@ -13,10 +13,10 @@ final versesProvider = FutureProvider<List<Verse>>((ref) async {
   return service.getVerses();
 });
 
-// Vedas (Rig / Yajur / Atharva) — Sanskrit, premium-gated in the reader
-final vedaVersesProvider = FutureProvider<List<Verse>>((ref) async {
+// One Veda by name (e.g. 'Rig Veda') — Sanskrit, premium-gated in the reader
+final vedaVersesProvider = FutureProvider.family<List<Verse>, String>((ref, book) async {
   final service = ref.watch(scriptureServiceProvider);
-  return service.getVedaVerses();
+  return service.getVedaVersesByBook(book);
 });
 
 // Resolves the user's bookmarks into full verses across ALL books

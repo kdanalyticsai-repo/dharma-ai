@@ -41,18 +41,19 @@ class ScriptureService {
     return MockScriptureData.gitaVerses;
   }
 
-  // Fetch the Vedas (Rig / Yajur / Atharva). Sanskrit-only for now;
-  // falls back to the curated samples when the table isn't populated.
-  Future<List<Verse>> getVedaVerses() async {
+  // Fetch one Veda (Rig / Yajur / Atharva) by name. Queries per-book with a
+  // high limit so large Vedas (Rigveda ~1028) aren't truncated by the default
+  // row cap. Falls back to the curated samples for that book.
+  Future<List<Verse>> getVedaVersesByBook(String book) async {
     try {
       if (_supabase != null) {
         final response = await _supabase!
             .from('verses')
             .select()
-            .inFilter('bookName', ['Rig Veda', 'Yajur Veda', 'Atharva Veda'])
-            .order('bookName', ascending: true)
+            .eq('bookName', book)
             .order('chapter', ascending: true)
-            .order('verseNumber', ascending: true);
+            .order('verseNumber', ascending: true)
+            .limit(2000);
 
         final list = (response as List)
             .map((item) => Verse.fromJson(item as Map<String, dynamic>))
@@ -60,9 +61,9 @@ class ScriptureService {
         if (list.isNotEmpty) return list;
       }
     } catch (e) {
-      print('Supabase Veda load failed, falling back to samples: $e');
+      print('Supabase Veda load failed for $book, falling back to samples: $e');
     }
-    return MockScriptureData.vedaVerses;
+    return MockScriptureData.vedaVerses.where((v) => v.bookName == book).toList();
   }
 
   // Fetch single verse by ID
@@ -88,26 +89,39 @@ class ScriptureService {
     }
   }
 
-  // Fetch verses by their ids (used to resolve bookmarks across all books).
+  // Resolve verses by id across all books. Merges Supabase results with the
+  // local samples so ids that only exist locally (e.g. Upanishad samples)
+  // are still found. Preserves the order of the requested ids.
   Future<List<Verse>> getVersesByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
+    final found = <String, Verse>{};
+
     try {
       if (_supabase != null) {
         final response = await _supabase!.from('verses').select().inFilter('id', ids);
-        final list = (response as List)
-            .map((item) => Verse.fromJson(item as Map<String, dynamic>))
-            .toList();
-        if (list.isNotEmpty) return list;
+        for (final item in (response as List)) {
+          final v = Verse.fromJson(item as Map<String, dynamic>);
+          found[v.id] = v;
+        }
       }
     } catch (e) {
-      print('Supabase verses-by-id failed, searching local: $e');
+      print('Supabase verses-by-id failed, using local: $e');
     }
-    final all = [
-      ...MockScriptureData.gitaVerses,
-      ...MockScriptureData.upanishadVerses,
-      ...MockScriptureData.vedaVerses,
-    ];
-    return all.where((v) => ids.contains(v.id)).toList();
+
+    // Fill any ids not found in Supabase from the bundled samples.
+    final missing = ids.where((id) => !found.containsKey(id)).toSet();
+    if (missing.isNotEmpty) {
+      final all = [
+        ...MockScriptureData.gitaVerses,
+        ...MockScriptureData.upanishadVerses,
+        ...MockScriptureData.vedaVerses,
+      ];
+      for (final v in all) {
+        if (missing.contains(v.id)) found[v.id] = v;
+      }
+    }
+
+    return ids.where(found.containsKey).map((id) => found[id]!).toList();
   }
 
   // Keyword search on scriptures

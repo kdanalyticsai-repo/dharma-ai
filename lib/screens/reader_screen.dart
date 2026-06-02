@@ -201,27 +201,32 @@ class ScripturesScreen extends ConsumerWidget {
     // Vedas come from Supabase (full Sanskrit text); samples as fallback.
     if (book == ScriptureBook.vedas) {
       final selectedVeda = ref.watch(selectedVedaProvider);
-      Widget shell(List<Verse> all) {
-        final filtered = all.where((v) => v.bookName == selectedVeda).toList();
+      Widget shell(List<Verse> verses) {
         return Column(
           children: [
             _vedaSubFilter(context, ref, selectedVeda),
             _aiAssistedBanner(context),
             _samavedaNote(context),
             Expanded(
-              child: filtered.isEmpty
+              child: verses.isEmpty
                   ? Center(child: Text('No verses found for $selectedVeda.',
                       style: Theme.of(context).textTheme.bodyMedium))
-                  : _verseList(filtered),
+                  : _verseList(verses),
             ),
           ],
         );
       }
 
-      return ref.watch(vedaVersesProvider).when(
+      return ref.watch(vedaVersesProvider(selectedVeda)).when(
         data: (verses) => shell(verses),
-        loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
-        error: (_, __) => shell(MockScriptureData.vedaVerses),
+        loading: () => Column(
+          children: [
+            _vedaSubFilter(context, ref, selectedVeda),
+            const Expanded(child: Center(child: LotusLoadingIndicator(size: 60))),
+          ],
+        ),
+        error: (_, __) => shell(
+            MockScriptureData.vedaVerses.where((v) => v.bookName == selectedVeda).toList()),
       );
     }
 
