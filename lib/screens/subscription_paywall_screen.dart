@@ -92,10 +92,10 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   // Shown on the Free card when the user is already premium — replaces the
   // (now removed) downgrade button. One-time plans simply lapse, so we
   // reassure the user it won't auto-renew.
-  Widget _premiumStatus(BuildContext context, DateTime? end) {
+  Widget _premiumStatus(BuildContext context, String planLabel, DateTime? end) {
     final text = end != null
-        ? 'Premium active until ${_formatDate(end)} · won\'t auto-renew'
-        : 'Premium active · won\'t auto-renew';
+        ? '$planLabel active until ${_formatDate(end)} · won\'t auto-renew'
+        : '$planLabel active · won\'t auto-renew';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -309,7 +309,15 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                           onPressed: null,
                           child: const Text('ACTIVE PATH'),
                         )
-                      : _premiumStatus(context, subEnd),
+                      : _premiumStatus(
+                          context,
+                          activeTier == SubscriptionTier.annual
+                              ? 'Sadhaka Annual'
+                              : activePlan == 'quarterly'
+                                  ? 'Sadhaka Quarterly'
+                                  : 'Sadhaka Premium',
+                          subEnd,
+                        ),
                 ),
                 const SizedBox(height: 24),
               ],
