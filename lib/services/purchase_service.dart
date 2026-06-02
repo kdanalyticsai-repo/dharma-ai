@@ -5,10 +5,19 @@ enum SubscriptionTier { free, sadhaka, annual }
 
 class PurchaseService {
   static const String _subKey = 'dharma_sub_tier';
+  static const String _planKey = 'dharma_plan'; // free|monthly|quarterly|annual
 
   // Pricing (INR) — matches the paywall screen.
   static const int _sadhakaInr = 199;
+  static const int _quarterlyInr = 499;
   static const int _annualInr = 1499;
+
+  // The exact billing plan on this device (monthly & quarterly are both the
+  // Sadhaka tier feature-wise; this distinguishes them for the paywall UI).
+  Future<String> getActivePlan() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_planKey) ?? 'free';
+  }
 
   // Check active subscription status.
   // When signed in, the profiles.subscription_tier row is the source of
@@ -28,14 +37,21 @@ class PurchaseService {
   Future<bool> purchaseSadhaka() async {
     await Future.delayed(const Duration(milliseconds: 1200)); // Simulate gateway
     await _persist(SubscriptionTier.sadhaka, _sadhakaInr,
-        const Duration(days: 30));
+        const Duration(days: 30), 'monthly');
+    return true;
+  }
+
+  Future<bool> purchaseQuarterly() async {
+    await Future.delayed(const Duration(milliseconds: 1200));
+    await _persist(SubscriptionTier.sadhaka, _quarterlyInr,
+        const Duration(days: 90), 'quarterly');
     return true;
   }
 
   Future<bool> purchaseAnnual() async {
     await Future.delayed(const Duration(milliseconds: 1200));
     await _persist(SubscriptionTier.annual, _annualInr,
-        const Duration(days: 365));
+        const Duration(days: 365), 'annual');
     return true;
   }
 
@@ -43,6 +59,7 @@ class PurchaseService {
   Future<bool> resetSubscription() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_subKey, 'free');
+    await prefs.setString(_planKey, 'free');
 
     final client = SupabaseSync.client;
     final uid = SupabaseSync.userId;
@@ -63,9 +80,10 @@ class PurchaseService {
 
   // ── Persistence helpers ─────────────────────────────────────
 
-  Future<void> _persist(SubscriptionTier tier, int amountInr, Duration period) async {
+  Future<void> _persist(SubscriptionTier tier, int amountInr, Duration period, String plan) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_subKey, _tierToString(tier));
+    await prefs.setString(_planKey, plan);
 
     final client = SupabaseSync.client;
     final uid = SupabaseSync.userId;

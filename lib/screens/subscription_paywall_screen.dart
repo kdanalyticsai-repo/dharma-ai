@@ -16,7 +16,41 @@ class SubscriptionPaywallScreen extends ConsumerStatefulWidget {
 
 class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallScreen> {
   bool _isProcessing = false;
+  bool _isProcessingQuarterly = false;
   bool _isProcessingAnnual = false;
+
+  Future<void> _handleQuarterlyPurchase() async {
+    setState(() => _isProcessingQuarterly = true);
+    final success = await ref.read(purchaseProvider.notifier).buyQuarterly();
+    if (mounted) {
+      setState(() => _isProcessingQuarterly = false);
+      if (success) _showWelcomeDialog('Your quarterly Sadhaka Premium path is now active. May these months deepen your practice.');
+    }
+  }
+
+  void _showWelcomeDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: SacredTheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
+        title: Text(
+          'Welcome, Sadhaka',
+          style: GoogleFonts.newsreader(fontSize: 24, fontWeight: FontWeight.bold, color: SacredTheme.primary),
+        ),
+        content: Text(message, style: Theme.of(context).textTheme.bodyLarge),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text('ENTER SACRED SPACE'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _handlePurchase() async {
     setState(() => _isProcessing = true);
@@ -89,6 +123,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   @override
   Widget build(BuildContext context) {
     final activeTier = ref.watch(purchaseProvider);
+    final activePlan = ref.watch(activePlanProvider).valueOrNull ?? 'free';
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -128,63 +163,12 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 ),
                 const FadingDivider(height: 32),
 
-                // Tier 1: Free Card
-                _buildTierCard(
-                  context,
-                  title: 'Free Seeker',
-                  price: '₹0 / Month',
-                  benefits: [
-                    'Standard Bhagavad Gita Reader',
-                    '6 daily AI Scripture Scholar prompts',
-                    'Offline access to all Gita verses',
-                  ],
-                  isActive: activeTier == SubscriptionTier.free,
-                  button: OutlinedButton(
-                    onPressed: activeTier == SubscriptionTier.free ? null : () => ref.read(purchaseProvider.notifier).downgrade(),
-                    child: Text(activeTier == SubscriptionTier.free ? 'ACTIVE PATH' : 'SELECT FREE'),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Tier 2: Monthly Premium (Sadhaka) Card
-                _buildTierCard(
-                  context,
-                  title: 'Sadhaka Premium',
-                  price: '₹199 / Month',
-                  badge: 'MONTHLY',
-                  benefits: [
-                    'Access all scriptures (Upanishads, Vedas)',
-                    'Unlimited AI-powered Chat Scholar',
-                    'Unlimited introspective AI Guru counseling',
-                    'Background Audio Wisdom player (18 chapters)',
-                    'Offline access to your scriptures',
-                    'Sangha community pass gifting actions',
-                  ],
-                  isActive: activeTier == SubscriptionTier.sadhaka,
-                  isPremiumHighlight: true,
-                  button: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: SacredTheme.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: activeTier == SubscriptionTier.sadhaka
-                        ? null
-                        : _isProcessing ? null : _handlePurchase,
-                    child: _isProcessing
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(activeTier == SubscriptionTier.sadhaka ? 'ACTIVE PREMIUM PATH' : 'EMBARK ON PREMIUM PATH'),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Tier 3: Annual Premium Card
+                // ── Sadhaka Annual (Recommended) ──────────────────
                 _buildTierCard(
                   context,
                   title: 'Sadhaka Annual',
                   price: '₹1499 / Year',
-                  badge: 'BEST VALUE',
+                  badge: 'RECOMMENDED',
                   benefits: [
                     'Everything in Sadhaka Premium',
                     'Best value — save ₹889 vs monthly',
@@ -205,6 +189,86 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     child: _isProcessingAnnual
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(activeTier == SubscriptionTier.annual ? 'ACTIVE ANNUAL PATH' : 'EMBARK ON ANNUAL PATH'),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Sadhaka Quarterly ─────────────────────────────
+                _buildTierCard(
+                  context,
+                  title: 'Sadhaka Quarterly',
+                  price: '₹499 / 3 Months',
+                  badge: 'QUARTERLY',
+                  benefits: [
+                    'Everything in Sadhaka Premium',
+                    'Save ₹98 vs paying monthly',
+                    '₹166 / month — an easy commitment',
+                  ],
+                  isActive: activePlan == 'quarterly',
+                  isPremiumHighlight: true,
+                  button: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SacredTheme.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: activePlan == 'quarterly'
+                        ? null
+                        : _isProcessingQuarterly ? null : _handleQuarterlyPurchase,
+                    child: _isProcessingQuarterly
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text(activePlan == 'quarterly' ? 'ACTIVE QUARTERLY PATH' : 'EMBARK ON QUARTERLY PATH'),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Sadhaka Premium (Monthly) ─────────────────────
+                _buildTierCard(
+                  context,
+                  title: 'Sadhaka Premium',
+                  price: '₹199 / Month',
+                  badge: 'MONTHLY',
+                  benefits: [
+                    'Access all scriptures (Upanishads, Vedas)',
+                    'Unlimited AI-powered Chat Scholar',
+                    'Unlimited introspective AI Guru counseling',
+                    'Background Audio Wisdom player (18 chapters)',
+                    'Offline access to your scriptures',
+                    'Sangha community pass gifting actions',
+                  ],
+                  isActive: activePlan == 'monthly',
+                  isPremiumHighlight: true,
+                  button: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SacredTheme.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: activePlan == 'monthly'
+                        ? null
+                        : _isProcessing ? null : _handlePurchase,
+                    child: _isProcessing
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text(activePlan == 'monthly' ? 'ACTIVE PREMIUM PATH' : 'EMBARK ON PREMIUM PATH'),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Free Seeker ───────────────────────────────────
+                _buildTierCard(
+                  context,
+                  title: 'Free Seeker',
+                  price: '₹0 / Month',
+                  benefits: [
+                    'Standard Bhagavad Gita Reader',
+                    '6 daily AI Scripture Scholar prompts',
+                    'Offline access to all Gita verses',
+                  ],
+                  isActive: activeTier == SubscriptionTier.free,
+                  button: OutlinedButton(
+                    onPressed: activeTier == SubscriptionTier.free ? null : () => ref.read(purchaseProvider.notifier).downgrade(),
+                    child: Text(activeTier == SubscriptionTier.free ? 'ACTIVE PATH' : 'SELECT FREE'),
                   ),
                 ),
                 const SizedBox(height: 24),

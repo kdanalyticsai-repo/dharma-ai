@@ -148,7 +148,10 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
     // Daily limit — Free users draw from the shared pool
     if (tier == SubscriptionTier.free && counter.hasReachedLimit) return;
     // Fair-use soft cap — protects paid "unlimited" tiers from abuse
-    if (tier != SubscriptionTier.free && counter.hasReachedFairUse) return;
+    if (tier != SubscriptionTier.free && counter.hasReachedFairUse) {
+      _notifyFairUse();
+      return;
+    }
 
     // Rate limit — all tiers
     if (state.hasHitRateLimit) {
@@ -234,6 +237,22 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       isLoading: false,
     );
   }
+
+  void _notifyFairUse() {
+    final lang = _ref.read(languageProvider);
+    final text = AppTranslations.get('fairUseLimit', lang);
+    if (state.messages.isNotEmpty && state.messages.last.text == text) return;
+    state = state.copyWith(messages: [
+      ...state.messages,
+      ChatMessage(
+        id: DateTime.now().toString(),
+        text: text,
+        role: 'assistant',
+        timestamp: DateTime.now(),
+        isGuruMode: false,
+      ),
+    ]);
+  }
 }
 
 final scriptureChatProvider = StateNotifierProvider<ScriptureChatNotifier, ChatState>((ref) {
@@ -272,7 +291,10 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
     // Daily limit — Free users draw from the shared pool
     if (tier == SubscriptionTier.free && counter.hasReachedLimit) return;
     // Fair-use soft cap — protects paid "unlimited" tiers from abuse
-    if (tier != SubscriptionTier.free && counter.hasReachedFairUse) return;
+    if (tier != SubscriptionTier.free && counter.hasReachedFairUse) {
+      _notifyFairUse();
+      return;
+    }
 
     // Rate limit — all tiers
     if (state.hasHitRateLimit) {
@@ -358,6 +380,22 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
       ],
       isLoading: false,
     );
+  }
+
+  void _notifyFairUse() {
+    final lang = _ref.read(languageProvider);
+    final text = AppTranslations.get('fairUseLimit', lang);
+    if (state.messages.isNotEmpty && state.messages.last.text == text) return;
+    state = state.copyWith(messages: [
+      ...state.messages,
+      ChatMessage(
+        id: DateTime.now().toString(),
+        text: text,
+        role: 'assistant',
+        timestamp: DateTime.now(),
+        isGuruMode: true,
+      ),
+    ]);
   }
 }
 

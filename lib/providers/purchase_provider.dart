@@ -22,6 +22,12 @@ class PurchaseNotifier extends StateNotifier<SubscriptionTier> {
     return success;
   }
 
+  Future<bool> buyQuarterly() async {
+    final success = await _service.purchaseQuarterly();
+    if (success) state = SubscriptionTier.sadhaka; // same tier/features, 3-month billing
+    return success;
+  }
+
   Future<bool> buyAnnual() async {
     final success = await _service.purchaseAnnual();
     if (success) state = SubscriptionTier.annual;
@@ -37,4 +43,11 @@ class PurchaseNotifier extends StateNotifier<SubscriptionTier> {
 final purchaseProvider = StateNotifierProvider<PurchaseNotifier, SubscriptionTier>((ref) {
   final service = ref.watch(purchaseServiceProvider);
   return PurchaseNotifier(service);
+});
+
+// Exact active billing plan (free|monthly|quarterly|annual) for the paywall UI.
+// Re-reads whenever the tier changes.
+final activePlanProvider = FutureProvider<String>((ref) async {
+  ref.watch(purchaseProvider);
+  return ref.read(purchaseServiceProvider).getActivePlan();
 });
