@@ -6,6 +6,7 @@ import 'package:dharma_ai/services/ai_service.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
+import 'package:dharma_ai/services/qa_cache_service.dart';
 
 const int kFreePromptLimit = 6;    // Max prompts per day (free tier)
 const int kPaidDailyCap = 100;     // Fair-use soft cap for paid "unlimited" tiers
@@ -55,6 +56,11 @@ final dailyPromptCounterProvider =
 // Provider for AI service
 final aiServiceProvider = Provider<AiService>((ref) {
   return AiService();
+});
+
+// Shared Scripture Scholar answer cache (cuts repeat OpenAI calls)
+final qaCacheServiceProvider = Provider<QaCacheService>((ref) {
+  return QaCacheService();
 });
 
 // Chat state structure
@@ -190,13 +196,17 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
     try {
       final scriptureService = _ref.read(scriptureServiceProvider);
       final aiService = _ref.read(aiServiceProvider);
+      final cache = _ref.read(qaCacheServiceProvider);
       final currentLanguage = _ref.read(languageProvider);
 
-      // Perform RAG context search
-      final contextVerses = await scriptureService.searchScriptures(text);
-
-      // Request AI response
-      final result = await aiService.generateScriptureResponse(text, contextVerses, currentLanguage);
+      // Check the shared answer cache first (avoids a repeat OpenAI call).
+      Map<String, dynamic>? result = await cache.get(text, currentLanguage);
+      if (result == null) {
+        // Cache miss — perform RAG search, call the AI, then cache the answer.
+        final contextVerses = await scriptureService.searchScriptures(text);
+        result = await aiService.generateScriptureResponse(text, contextVerses, currentLanguage);
+        await cache.put(text, currentLanguage, result);
+      }
 
       final assistantMessage = ChatMessage(
         id: DateTime.now().toString(),

@@ -77,6 +77,23 @@ alter table verses enable row level security;
 -- Scriptures are public: anyone (even signed-out) may read.
 create policy "verses are public" on verses for select using (true);
 
+-- ── AI Q&A Cache (shared Scripture Scholar answers) ──────────
+-- A question answered once is reused for everyone, cutting repeat OpenAI
+-- calls. Keyed by normalized question + language.
+create table if not exists qa_cache (
+  question_key text primary key,   -- e.g. 'en:what is karma yoga'
+  question     text,
+  language     text,
+  response     text not null,
+  citations    jsonb default '[]'::jsonb,
+  hits         int default 0,
+  created_at   timestamptz default now()
+);
+alter table qa_cache enable row level security;
+create policy "qa read"   on qa_cache for select using (auth.role() = 'authenticated');
+create policy "qa insert" on qa_cache for insert with check (auth.role() = 'authenticated');
+create policy "qa update" on qa_cache for update using (auth.role() = 'authenticated');
+
 -- ── Row Level Security ────────────────────────────────────────
 alter table profiles         enable row level security;
 alter table bookmarks        enable row level security;
