@@ -140,7 +140,8 @@ async function verifyPayment(request, env, origin) {
   // 3. Write the subscription server-side (service role). Source of truth.
   const now = new Date();
   const expires = new Date(now.getTime() + p.days * 86400000);
-  const base = env.SUPABASE_URL.replace(/\/+$/, ''); // strip trailing slash
+  let base = env.SUPABASE_URL.replace(/\/+$/, ''); // strip trailing slash
+  if (!/^https?:\/\//i.test(base)) base = 'https://' + base; // ensure scheme
   const sb = (path, init) => fetch(`${base}/rest/v1/${path}`, {
     ...init,
     headers: {
@@ -151,28 +152,33 @@ async function verifyPayment(request, env, origin) {
     },
   });
 
-  await sb(`subscriptions?user_id=eq.${userId}&status=eq.active`, {
-    method: 'PATCH', headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify({ status: 'expired' }),
-  });
-  const insRes = await sb('subscriptions', {
-    method: 'POST', headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify({
-      user_id: userId, tier: p.tier, status: 'active',
-      amount_inr: p.amount / 100, razorpay_id: razorpay_payment_id,
-      started_at: now.toISOString(), expires_at: expires.toISOString(),
-    }),
-  });
-  console.log('VERIFY: subscription insert status', insRes.status);
-  if (!insRes.ok) {
-    const detail = await insRes.text();
-    console.log('VERIFY: insert FAILED', insRes.status, detail);
-    return cors(j({ valid: false, error: 'Subscription insert failed', status: insRes.status, detail }), 500, origin);
+  try {
+    await sb(`subscriptions?user_id=eq.${userId}&status=eq.active`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ status: 'expired' }),
+    });
+    const insRes = await sb('subscriptions', {
+      method: 'POST', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id: userId, tier: p.tier, status: 'active',
+        amount_inr: p.amount / 100, razorpay_id: razorpay_payment_id,
+        started_at: now.toISOString(), expires_at: expires.toISOString(),
+      }),
+    });
+    console.log('VERIFY: subscription insert status', insRes.status);
+    if (!insRes.ok) {
+      const detail = await insRes.text();
+      console.log('VERIFY: insert FAILED', insRes.status, detail);
+      return cors(j({ valid: false, error: 'Subscription insert failed', status: insRes.status, detail }), 500, origin);
+    }
+    await sb(`profiles?id=eq.${userId}`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),
+    });
+  } catch (e) {
+    console.log('VERIFY: supabase write threw', e.message);
+    return cors(j({ valid: false, error: 'Supabase write error', detail: e.message }), 500, origin);
   }
-  await sb(`profiles?id=eq.${userId}`, {
-    method: 'PATCH', headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),
-  });
 
   return cors(j({ valid: true, tier: p.tier, plan, expires_at: expires.toISOString() }), 200, origin);
 }
