@@ -9,7 +9,7 @@ import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/qa_cache_service.dart';
 
 const int kFreePromptLimit = 6;    // Max prompts per day (free tier)
-const int kPaidDailyCap = 100;     // Fair-use soft cap for paid "unlimited" tiers
+const int kPaidDailyCap = 101;     // Fair-use soft cap for paid "unlimited" tiers
 const int kRateLimitPerMinute = 3; // Max prompts per 60 seconds (all tiers)
 // Annual tier keeps more context for the AI Guru (extended memory perk)
 const int kAnnualHistoryDepth = 30;

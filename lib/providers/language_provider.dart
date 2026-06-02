@@ -263,10 +263,10 @@ class AppTranslations {
       AppLanguage.bengali: 'হরি ওম,',
     },
     'fairUseLimit': {
-      AppLanguage.english: "🙏 You've reached today's fair-use limit of 100 messages. It resets tomorrow — thank you for your understanding.",
-      AppLanguage.tamil: '🙏 இன்றைய நியாயமான பயன்பாட்டு வரம்பான 100 செய்திகளை அடைந்துவிட்டீர்கள். நாளை மீட்டமைக்கப்படும் — உங்கள் புரிதலுக்கு நன்றி.',
-      AppLanguage.hindi: '🙏 आप आज की उचित-उपयोग सीमा (100 संदेश) तक पहुँच गए हैं। यह कल पुनः आरंभ होगी — आपकी समझ के लिए धन्यवाद।',
-      AppLanguage.bengali: '🙏 আপনি আজকের ন্যায্য-ব্যবহার সীমা ১০০টি বার্তায় পৌঁছেছেন। এটি আগামীকাল রিসেট হবে — আপনার বোঝাপড়ার জন্য ধন্যবাদ।',
+      AppLanguage.english: "🙏 You've reached today's fair-use limit of 101 messages. It resets tomorrow — thank you for your understanding.",
+      AppLanguage.tamil: '🙏 இன்றைய நியாயமான பயன்பாட்டு வரம்பான 101 செய்திகளை அடைந்துவிட்டீர்கள். நாளை மீட்டமைக்கப்படும் — உங்கள் புரிதலுக்கு நன்றி.',
+      AppLanguage.hindi: '🙏 आप आज की उचित-उपयोग सीमा (101 संदेश) तक पहुँच गए हैं। यह कल पुनः आरंभ होगी — आपकी समझ के लिए धन्यवाद।',
+      AppLanguage.bengali: '🙏 আপনি আজকের ন্যায্য-ব্যবহার সীমা ১০১টি বার্তায় পৌঁছেছেন। এটি আগামীকাল রিসেট হবে — আপনার বোঝাপড়ার জন্য ধন্যবাদ।',
     },
     'streakInfoTitle': {
       AppLanguage.english: 'Your Sadhana Streak',
