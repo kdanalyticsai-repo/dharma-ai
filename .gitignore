@@ -49,6 +49,9 @@ run_dev.ps1
 .env
 .env.local
 
+# Local tooling scripts that may contain pasted API keys (TTS/translation)
+audio_scripts/
+
 # Downloaded audio files — large binaries, hosted on Cloudflare R2
 gita_audio/
 
