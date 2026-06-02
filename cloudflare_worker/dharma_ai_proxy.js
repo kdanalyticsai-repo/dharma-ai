@@ -109,25 +109,34 @@ async function verifyPayment(request, env, origin) {
     return cors(j({ valid: false, error: 'Signature mismatch' }), 400, origin);
   }
 
-  // 2. Re-fetch the order from Razorpay to read the trusted plan/user_id + paid status.
+  // 2. Re-fetch the order from Razorpay to read the trusted plan/user_id.
+  // The signature above already proves the payment is genuine; we do NOT
+  // hard-require status === 'paid' (capture can lag a moment after success).
   const auth = btoa(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`);
   const ordRes = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
     headers: { 'Authorization': `Basic ${auth}` },
   });
   const order = await ordRes.json();
-  if (!ordRes.ok || order.status !== 'paid') {
-    return cors(j({ valid: false, error: 'Order not paid' }), 400, origin);
+  if (!ordRes.ok) {
+    return cors(j({ valid: false, error: 'Order fetch failed', detail: order }), 400, origin);
   }
 
   const plan = order.notes?.plan;
   const userId = order.notes?.user_id;
   const p = PLANS[plan];
-  if (!p || !userId) return cors(j({ valid: false, error: 'Bad order notes' }), 400, origin);
+  if (!p || !userId) {
+    return cors(j({ valid: false, error: 'Bad order notes', notes: order.notes }), 400, origin);
+  }
+
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+    return cors(j({ valid: false, error: 'Supabase secrets not set on Worker' }), 500, origin);
+  }
 
   // 3. Write the subscription server-side (service role). Source of truth.
   const now = new Date();
   const expires = new Date(now.getTime() + p.days * 86400000);
-  const sb = (path, init) => fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
+  const base = env.SUPABASE_URL.replace(/\/+$/, ''); // strip trailing slash
+  const sb = (path, init) => fetch(`${base}/rest/v1/${path}`, {
     ...init,
     headers: {
       apikey: env.SUPABASE_SERVICE_KEY,
@@ -141,7 +150,7 @@ async function verifyPayment(request, env, origin) {
     method: 'PATCH', headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({ status: 'expired' }),
   });
-  await sb('subscriptions', {
+  const insRes = await sb('subscriptions', {
     method: 'POST', headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({
       user_id: userId, tier: p.tier, status: 'active',
@@ -149,6 +158,10 @@ async function verifyPayment(request, env, origin) {
       started_at: now.toISOString(), expires_at: expires.toISOString(),
     }),
   });
+  if (!insRes.ok) {
+    const detail = await insRes.text();
+    return cors(j({ valid: false, error: 'Subscription insert failed', status: insRes.status, detail }), 500, origin);
+  }
   await sb(`profiles?id=eq.${userId}`, {
     method: 'PATCH', headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),

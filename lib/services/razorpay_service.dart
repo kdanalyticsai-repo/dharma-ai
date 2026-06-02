@@ -53,8 +53,11 @@ class RazorpayService {
         'razorpay_signature': result.signature,
       }),
     );
-    if (verifyRes.statusCode != 200) return false;
     final v = jsonDecode(verifyRes.body) as Map<String, dynamic>;
-    return v['valid'] == true;
+    if (verifyRes.statusCode != 200 || v['valid'] != true) {
+      // Surface the server's reason so failures are visible during setup.
+      throw Exception(v['error']?.toString() ?? 'Payment verification failed.');
+    }
+    return true;
   }
 }
