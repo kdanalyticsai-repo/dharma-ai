@@ -1,10 +1,16 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 
 /// Shared cache for AI Scripture Scholar answers. A question answered once is
 /// reused for every user asking the same thing — cutting repeat OpenAI calls
-/// (the dominant variable cost at scale). Cache is keyed by a normalized
-/// question + language, so wording/casing/punctuation differences still hit.
+/// (the dominant variable cost at scale).
+///
+/// Privacy: the stored key is a SHA-256 hash of (language + normalized
+/// question), and the raw question text is never stored. So the table reveals
+/// nothing about what users asked, while still serving cache hits. SHA-256 is
+/// deterministic across web and Android, so the cache stays shared everywhere.
 class QaCacheService {
   String _key(String question, AppLanguage lang) {
     final norm = question
@@ -12,7 +18,7 @@ class QaCacheService {
         .trim()
         .replaceAll(RegExp(r'\s+'), ' ')
         .replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '');
-    return '${lang.code}:$norm';
+    return sha256.convert(utf8.encode('${lang.code}:$norm')).toString();
   }
 
   // Returns {'text': ..., 'citations': [...]} on a hit, or null on a miss.
@@ -43,10 +49,9 @@ class QaCacheService {
     // Never cache empty or error responses.
     if (text.isEmpty || text.startsWith('⚠️')) return;
     try {
+      // Only the hash + answer are stored — never the raw question.
       await client.from('qa_cache').upsert({
         'question_key': _key(question, lang),
-        'question': question,
-        'language': lang.code,
         'response': text,
         'citations': result['citations'] ?? <String>[],
       }, onConflict: 'question_key');

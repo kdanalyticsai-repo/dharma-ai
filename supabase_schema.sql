@@ -79,16 +79,19 @@ create policy "verses are public" on verses for select using (true);
 
 -- ── AI Q&A Cache (shared Scripture Scholar answers) ──────────
 -- A question answered once is reused for everyone, cutting repeat OpenAI
--- calls. Keyed by normalized question + language.
+-- calls. Privacy: question_key is a SHA-256 hash of (language + normalized
+-- question); the raw question text is never stored.
 create table if not exists qa_cache (
-  question_key text primary key,   -- e.g. 'en:what is karma yoga'
-  question     text,
-  language     text,
+  question_key text primary key,   -- SHA-256 hash, e.g. '9f2b...'
   response     text not null,
   citations    jsonb default '[]'::jsonb,
   hits         int default 0,
   created_at   timestamptz default now()
 );
+-- If you created the earlier version, clear plaintext rows + drop columns:
+--   truncate table qa_cache;
+--   alter table qa_cache drop column if exists question;
+--   alter table qa_cache drop column if exists language;
 alter table qa_cache enable row level security;
 create policy "qa read"   on qa_cache for select using (auth.role() = 'authenticated');
 create policy "qa insert" on qa_cache for insert with check (auth.role() = 'authenticated');
