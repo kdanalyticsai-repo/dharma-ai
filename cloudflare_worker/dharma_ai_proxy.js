@@ -103,13 +103,9 @@ async function verifyPayment(request, env, origin) {
     return cors(j({ valid: false, error: 'Missing fields' }), 400, origin);
   }
 
-  console.log('VERIFY hit | SUPABASE_URL set:', !!env.SUPABASE_URL,
-    '| SERVICE_KEY set:', !!env.SUPABASE_SERVICE_KEY);
-
   // 1. Verify the signature: HMAC_SHA256(order_id|payment_id, key_secret)
   const expected = await hmacHex(env.RAZORPAY_KEY_SECRET, `${razorpay_order_id}|${razorpay_payment_id}`);
   if (expected !== razorpay_signature) {
-    console.log('VERIFY: signature mismatch');
     return cors(j({ valid: false, error: 'Signature mismatch' }), 400, origin);
   }
 
@@ -128,7 +124,6 @@ async function verifyPayment(request, env, origin) {
   const plan = order.notes?.plan;
   const userId = order.notes?.user_id;
   const p = PLANS[plan];
-  console.log('VERIFY: order.status', order.status, '| plan', plan, '| user', userId);
   if (!p || !userId) {
     return cors(j({ valid: false, error: 'Bad order notes', notes: order.notes }), 400, origin);
   }
@@ -165,10 +160,8 @@ async function verifyPayment(request, env, origin) {
         started_at: now.toISOString(), expires_at: expires.toISOString(),
       }),
     });
-    console.log('VERIFY: subscription insert status', insRes.status);
     if (!insRes.ok) {
       const detail = await insRes.text();
-      console.log('VERIFY: insert FAILED', insRes.status, detail);
       return cors(j({ valid: false, error: 'Subscription insert failed', status: insRes.status, detail }), 500, origin);
     }
     await sb(`profiles?id=eq.${userId}`, {
@@ -176,7 +169,6 @@ async function verifyPayment(request, env, origin) {
       body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),
     });
   } catch (e) {
-    console.log('VERIFY: supabase write threw', e.message);
     return cors(j({ valid: false, error: 'Supabase write error', detail: e.message }), 500, origin);
   }
 

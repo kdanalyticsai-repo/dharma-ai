@@ -110,7 +110,29 @@ alter table sangha_posts     enable row level security;
 create policy "own profile"    on profiles        for all using (auth.uid() = id);
 create policy "own bookmarks"  on bookmarks       for all using (auth.uid() = user_id);
 create policy "own sadhana"    on sadhana_records for all using (auth.uid() = user_id);
-create policy "own subs"       on subscriptions   for all using (auth.uid() = user_id);
+-- Subscriptions: users may READ their own, but ONLY the server (service role,
+-- via the verified-payment Worker) may write them. A real payment is the only
+-- way to get premium — clients cannot self-grant.
+create policy "read own subs"  on subscriptions   for select using (auth.uid() = user_id);
+
+-- Protect subscription fields on profiles: users may update their own row
+-- (name, avatar) but NOT subscription_tier / subscription_end. Any client
+-- attempt is reverted; only the service role (auth.uid() is null — used by
+-- the payment Worker) may change them.
+create or replace function public.protect_subscription_fields()
+returns trigger language plpgsql as $$
+begin
+  if auth.uid() is not null then
+    new.subscription_tier := old.subscription_tier;
+    new.subscription_end  := old.subscription_end;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists profiles_protect_sub on public.profiles;
+create trigger profiles_protect_sub
+  before update on public.profiles
+  for each row execute function public.protect_subscription_fields();
 -- Sangha posts: anyone authenticated can read; only author can insert
 create policy "read sangha"    on sangha_posts    for select using (auth.role() = 'authenticated');
 create policy "post sangha"    on sangha_posts    for insert with check (auth.uid() = user_id);
