@@ -89,6 +89,50 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
     }
   }
 
+  // Shown on the Free card when the user is already premium — replaces the
+  // (now removed) downgrade button. One-time plans simply lapse, so we
+  // reassure the user it won't auto-renew.
+  Widget _premiumStatus(BuildContext context, DateTime? end) {
+    final text = end != null
+        ? 'Premium active until ${_formatDate(end)} · won\'t auto-renew'
+        : 'Premium active · won\'t auto-renew';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: SacredTheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+        border: Border.all(color: SacredTheme.outlineVariant, width: 0.5),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.verified_outlined, size: 14, color: SacredTheme.primary),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: SacredTheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime d) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+
   void _showWelcomeDialog(String message) {
     showDialog(
       context: context,
@@ -117,6 +161,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   Widget build(BuildContext context) {
     final activeTier = ref.watch(purchaseProvider);
     final activePlan = ref.watch(activePlanProvider).valueOrNull ?? 'free';
+    final subEnd = ref.watch(subscriptionEndProvider).valueOrNull;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -259,10 +304,12 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     'Offline access to all Gita verses',
                   ],
                   isActive: activeTier == SubscriptionTier.free,
-                  button: OutlinedButton(
-                    onPressed: activeTier == SubscriptionTier.free ? null : () => ref.read(purchaseProvider.notifier).downgrade(),
-                    child: Text(activeTier == SubscriptionTier.free ? 'ACTIVE PATH' : 'SELECT FREE'),
-                  ),
+                  button: activeTier == SubscriptionTier.free
+                      ? OutlinedButton(
+                          onPressed: null,
+                          child: const Text('ACTIVE PATH'),
+                        )
+                      : _premiumStatus(context, subEnd),
                 ),
                 const SizedBox(height: 24),
               ],

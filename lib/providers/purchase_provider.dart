@@ -57,3 +57,9 @@ final activePlanProvider = FutureProvider<String>((ref) async {
   ref.watch(purchaseProvider);
   return ref.read(purchaseServiceProvider).getActivePlan();
 });
+
+// When the current premium access ends (for the paywall status line).
+final subscriptionEndProvider = FutureProvider<DateTime?>((ref) async {
+  ref.watch(purchaseProvider);
+  return ref.read(purchaseServiceProvider).getSubscriptionEnd();
+});

@@ -19,6 +19,24 @@ class PurchaseService {
     return prefs.getString(_planKey) ?? 'free';
   }
 
+  // When the current premium access ends (from profiles.subscription_end).
+  Future<DateTime?> getSubscriptionEnd() async {
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return null;
+    try {
+      final row = await client
+          .from('profiles')
+          .select('subscription_end')
+          .eq('id', uid)
+          .maybeSingle();
+      final s = row?['subscription_end'] as String?;
+      return s == null ? null : DateTime.tryParse(s);
+    } catch (_) {
+      return null;
+    }
+  }
+
   // Record the plan locally after a web payment (the Worker already wrote the
   // authoritative subscription to Supabase) so the UI reflects it instantly.
   Future<void> setLocalPlan(String plan) async {
