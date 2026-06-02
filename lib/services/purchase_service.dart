@@ -7,8 +7,8 @@ class PurchaseService {
   static const String _subKey = 'dharma_sub_tier';
 
   // Pricing (INR) — matches the paywall screen.
-  static const int _sadhakaInr = 201;
-  static const int _annualInr = 1100;
+  static const int _sadhakaInr = 199;
+  static const int _annualInr = 1499;
 
   // Check active subscription status.
   // When signed in, the profiles.subscription_tier row is the source of

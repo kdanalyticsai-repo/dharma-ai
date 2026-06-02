@@ -135,7 +135,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                   price: '₹0 / Month',
                   benefits: [
                     'Standard Bhagavad Gita Reader',
-                    '11 daily AI Scripture Scholar prompts',
+                    '6 daily AI Scripture Scholar prompts',
                     'Offline access to all Gita verses',
                   ],
                   isActive: activeTier == SubscriptionTier.free,
@@ -151,7 +151,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: 'Sadhaka Premium',
-                  price: '₹201 / Month',
+                  price: '₹199 / Month',
                   badge: 'MONTHLY',
                   benefits: [
                     'Access all scriptures (Upanishads, Vedas)',
@@ -183,11 +183,11 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: 'Sadhaka Annual',
-                  price: '₹1100 / Year',
+                  price: '₹1499 / Year',
                   badge: 'BEST VALUE',
                   benefits: [
                     'Everything in Sadhaka Premium',
-                    'Best value — save ₹1,312 vs monthly',
+                    'Best value — save ₹889 vs monthly',
                     'Exclusive annual seeker badge',
                     '3× longer AI Guru session memory',
                   ],

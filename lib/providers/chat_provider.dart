@@ -7,7 +7,8 @@ import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 
-const int kFreePromptLimit = 11;   // Max prompts per day (free tier)
+const int kFreePromptLimit = 6;    // Max prompts per day (free tier)
+const int kPaidDailyCap = 100;     // Fair-use soft cap for paid "unlimited" tiers
 const int kRateLimitPerMinute = 3; // Max prompts per 60 seconds (all tiers)
 // Annual tier keeps more context for the AI Guru (extended memory perk)
 const int kAnnualHistoryDepth = 30;
@@ -15,7 +16,7 @@ const int kPaidHistoryDepth = 10;
 
 // ── Shared daily prompt counter (across BOTH chat modes) ─────────────────────
 // Both ScriptureChatNotifier and GuruChatNotifier read/write this provider
-// so that the 11 free prompts are consumed from a single shared pool.
+// so that the free daily prompts are consumed from a single shared pool.
 
 class DailyPromptCounter extends StateNotifier<int> {
   DailyPromptCounter() : super(0) { _load(); }
@@ -42,6 +43,10 @@ class DailyPromptCounter extends StateNotifier<int> {
 
   bool get hasReachedLimit => state >= kFreePromptLimit;
   int  get remaining       => (kFreePromptLimit - state).clamp(0, kFreePromptLimit);
+
+  // Fair-use soft cap so a single paid "unlimited" account can't run up
+  // unbounded AI cost (abuse protection at scale).
+  bool get hasReachedFairUse => state >= kPaidDailyCap;
 }
 
 final dailyPromptCounterProvider =
@@ -142,6 +147,8 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
 
     // Daily limit — Free users draw from the shared pool
     if (tier == SubscriptionTier.free && counter.hasReachedLimit) return;
+    // Fair-use soft cap — protects paid "unlimited" tiers from abuse
+    if (tier != SubscriptionTier.free && counter.hasReachedFairUse) return;
 
     // Rate limit — all tiers
     if (state.hasHitRateLimit) {
@@ -264,6 +271,8 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
 
     // Daily limit — Free users draw from the shared pool
     if (tier == SubscriptionTier.free && counter.hasReachedLimit) return;
+    // Fair-use soft cap — protects paid "unlimited" tiers from abuse
+    if (tier != SubscriptionTier.free && counter.hasReachedFairUse) return;
 
     // Rate limit — all tiers
     if (state.hasHitRateLimit) {

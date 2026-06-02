@@ -116,7 +116,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
     final tier = ref.watch(purchaseProvider);
     final isAnnual = tier == SubscriptionTier.annual;
     final giftLabel = isAnnual ? 'Sadhaka Annual Pass' : 'Sadhaka Premium Monthly Pass';
-    final giftPrice = isAnnual ? '₹1,100' : '₹201';
+    final giftPrice = isAnnual ? '₹1,499' : '₹199';
 
     return Scaffold(
       appBar: AppBar(
