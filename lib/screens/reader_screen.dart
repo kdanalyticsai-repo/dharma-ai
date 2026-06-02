@@ -23,6 +23,9 @@ enum ScriptureBook { gita, upanishads, vedas }
 final selectedBookProvider =
     StateProvider<ScriptureBook>((ref) => ScriptureBook.gita);
 
+// Which Veda is shown within the Vedas tab.
+final selectedVedaProvider = StateProvider<String>((ref) => 'Rig Veda');
+
 class ScripturesScreen extends ConsumerWidget {
   const ScripturesScreen({Key? key}) : super(key: key);
 
@@ -197,22 +200,28 @@ class ScripturesScreen extends ConsumerWidget {
 
     // Vedas come from Supabase (full Sanskrit text); samples as fallback.
     if (book == ScriptureBook.vedas) {
+      final selectedVeda = ref.watch(selectedVedaProvider);
+      Widget shell(List<Verse> all) {
+        final filtered = all.where((v) => v.bookName == selectedVeda).toList();
+        return Column(
+          children: [
+            _vedaSubFilter(context, ref, selectedVeda),
+            _aiAssistedBanner(context),
+            _samavedaNote(context),
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(child: Text('No verses found for $selectedVeda.',
+                      style: Theme.of(context).textTheme.bodyMedium))
+                  : _verseList(filtered),
+            ),
+          ],
+        );
+      }
+
       return ref.watch(vedaVersesProvider).when(
-        data: (verses) => Column(
-          children: [
-            _aiAssistedBanner(context),
-            _samavedaNote(context),
-            Expanded(child: _verseList(verses)),
-          ],
-        ),
+        data: (verses) => shell(verses),
         loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
-        error: (_, __) => Column(
-          children: [
-            _aiAssistedBanner(context),
-            _samavedaNote(context),
-            Expanded(child: _verseList(MockScriptureData.vedaVerses)),
-          ],
-        ),
+        error: (_, __) => shell(MockScriptureData.vedaVerses),
       );
     }
 
@@ -245,6 +254,45 @@ class ScripturesScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _vedaSubFilter(BuildContext context, WidgetRef ref, String selected) {
+    Widget chip(String book) {
+      final sel = selected == book;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: InkWell(
+          onTap: () => ref.read(selectedVedaProvider.notifier).state = book,
+          borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: sel ? SacredTheme.templeGold : SacredTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+              border: Border.all(
+                color: sel ? SacredTheme.templeGold : SacredTheme.outlineVariant,
+                width: sel ? 1.0 : 0.5,
+              ),
+            ),
+            child: Text(
+              book,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
+                color: sel ? Colors.white : SacredTheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(SacredTheme.marginEdge, 12, SacredTheme.marginEdge, 0),
+      child: Row(
+        children: [chip('Rig Veda'), chip('Yajur Veda'), chip('Atharva Veda')],
       ),
     );
   }
@@ -370,11 +418,14 @@ class VerseCard extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${AppTranslations.get('chapterLabel', currentLanguage)} ${verse.chapter}, ${AppTranslations.get('verseLabel', currentLanguage)} ${verse.verseNumber}',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: SacredTheme.primary,
-                      fontSize: (textTheme.labelSmall?.fontSize ?? 12) * textScale,
+                  Expanded(
+                    child: Text(
+                      '${verse.bookName == 'Bhagavad Gita' ? '' : '${verse.bookName} · '}'
+                      '${AppTranslations.get('chapterLabel', currentLanguage)} ${verse.chapter}, ${AppTranslations.get('verseLabel', currentLanguage)} ${verse.verseNumber}',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: SacredTheme.primary,
+                        fontSize: (textTheme.labelSmall?.fontSize ?? 12) * textScale,
+                      ),
                     ),
                   ),
                   IconButton(

@@ -19,6 +19,14 @@ final vedaVersesProvider = FutureProvider<List<Verse>>((ref) async {
   return service.getVedaVerses();
 });
 
+// Resolves the user's bookmarks into full verses across ALL books
+// (Gita, Vedas, Upanishads) — used by the Saved Wisdom tab.
+final bookmarkedVersesProvider = FutureProvider<List<Verse>>((ref) async {
+  final ids = ref.watch(bookmarksProvider);
+  final service = ref.watch(scriptureServiceProvider);
+  return service.getVersesByIds(ids);
+});
+
 // Bookmark IDs provider
 class BookmarksNotifier extends StateNotifier<List<String>> {
   final ScriptureService _service;

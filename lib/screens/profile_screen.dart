@@ -183,8 +183,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    final bookmarks = ref.watch(bookmarksProvider);
-    final versesAsync = ref.watch(versesProvider);
+    final savedVersesAsync = ref.watch(bookmarkedVersesProvider);
     final sadhana = ref.watch(sadhanaProvider);
     final tier = ref.watch(purchaseProvider);
     final isPaid = tier != SubscriptionTier.free;
@@ -330,9 +329,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                 controller: _tabController,
                 children: [
                   // Bookmarks Tab
-                  versesAsync.when(
-                    data: (verses) {
-                      final savedVerses = verses.where((v) => bookmarks.contains(v.id)).toList();
+                  savedVersesAsync.when(
+                    data: (savedVerses) {
                       if (savedVerses.isEmpty) {
                         return Center(
                           child: Padding(
@@ -356,7 +354,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                             child: Card(
                               child: ListTile(
                                 title: Text(
-                                  'Bhagavad Gita ${verse.chapter}.${verse.verseNumber}',
+                                  '${verse.bookName} ${verse.chapter}.${verse.verseNumber}',
                                   style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                                 subtitle: Text(

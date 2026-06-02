@@ -88,6 +88,28 @@ class ScriptureService {
     }
   }
 
+  // Fetch verses by their ids (used to resolve bookmarks across all books).
+  Future<List<Verse>> getVersesByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      if (_supabase != null) {
+        final response = await _supabase!.from('verses').select().inFilter('id', ids);
+        final list = (response as List)
+            .map((item) => Verse.fromJson(item as Map<String, dynamic>))
+            .toList();
+        if (list.isNotEmpty) return list;
+      }
+    } catch (e) {
+      print('Supabase verses-by-id failed, searching local: $e');
+    }
+    final all = [
+      ...MockScriptureData.gitaVerses,
+      ...MockScriptureData.upanishadVerses,
+      ...MockScriptureData.vedaVerses,
+    ];
+    return all.where((v) => ids.contains(v.id)).toList();
+  }
+
   // Keyword search on scriptures
   Future<List<Verse>> searchScriptures(String query) async {
     if (query.trim().isEmpty) return [];
