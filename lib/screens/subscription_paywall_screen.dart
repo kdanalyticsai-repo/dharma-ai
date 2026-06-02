@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
+import 'package:dharma_ai/config/payment_config.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
+import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
+import 'package:dharma_ai/services/razorpay_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 
@@ -19,12 +23,69 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   bool _isProcessingQuarterly = false;
   bool _isProcessingAnnual = false;
 
-  Future<void> _handleQuarterlyPurchase() async {
-    setState(() => _isProcessingQuarterly = true);
-    final success = await ref.read(purchaseProvider.notifier).buyQuarterly();
-    if (mounted) {
-      setState(() => _isProcessingQuarterly = false);
-      if (success) _showWelcomeDialog('Your quarterly Sadhaka Premium path is now active. May these months deepen your practice.');
+  // Unified purchase: web → Razorpay (real); other platforms → existing flow.
+  Future<void> _buyPlan(String plan) async {
+    setState(() => _setProcessing(plan, true));
+    bool success = false;
+    String? error;
+    try {
+      if (kIsWeb && PaymentConfig.isConfigured) {
+        final user = ref.read(authUserProvider).valueOrNull;
+        if (user == null) {
+          error = 'Please sign in to subscribe.';
+        } else {
+          success = await RazorpayService().checkout(
+            plan: plan,
+            userId: user.id,
+            email: user.email,
+            name: user.userMetadata?['full_name'] as String?,
+          );
+          if (success) {
+            await ref.read(purchaseServiceProvider).setLocalPlan(plan);
+            await ref.read(purchaseProvider.notifier).refresh();
+            ref.invalidate(activePlanProvider);
+          }
+        }
+      } else {
+        final n = ref.read(purchaseProvider.notifier);
+        success = plan == 'monthly'
+            ? await n.buySadhaka()
+            : plan == 'quarterly'
+                ? await n.buyQuarterly()
+                : await n.buyAnnual();
+      }
+    } catch (e) {
+      error = e.toString().replaceFirst('Exception: ', '');
+    }
+    if (!mounted) return;
+    setState(() => _setProcessing(plan, false));
+    if (success) {
+      _showWelcomeDialog(_planMessage(plan));
+    } else if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: SacredTheme.error),
+      );
+    }
+  }
+
+  void _setProcessing(String plan, bool v) {
+    if (plan == 'monthly') {
+      _isProcessing = v;
+    } else if (plan == 'quarterly') {
+      _isProcessingQuarterly = v;
+    } else {
+      _isProcessingAnnual = v;
+    }
+  }
+
+  String _planMessage(String plan) {
+    switch (plan) {
+      case 'annual':
+        return 'Your annual Sadhaka path is now active. May this year bring you deep wisdom and inner peace.';
+      case 'quarterly':
+        return 'Your quarterly Sadhaka path is now active. May these months deepen your practice.';
+      default:
+        return 'Your access level has been upgraded to Sadhaka Premium. May your spiritual path be blessed with clarity.';
     }
   }
 
@@ -50,74 +111,6 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
         ],
       ),
     );
-  }
-
-  Future<void> _handlePurchase() async {
-    setState(() => _isProcessing = true);
-    final success = await ref.read(purchaseProvider.notifier).buySadhaka();
-    if (mounted) {
-      setState(() => _isProcessing = false);
-      if (success) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: SacredTheme.surfaceContainerLow,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
-            title: Text(
-              'Welcome, Sadhaka',
-              style: GoogleFonts.newsreader(fontSize: 24, fontWeight: FontWeight.bold, color: SacredTheme.primary),
-            ),
-            content: Text(
-              'Your access level has been upgraded to Sadhaka Premium. May your spiritual path be blessed with clarity.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Close paywall screen
-                },
-                child: const Text('ENTER SACRED SPACE'),
-              ),
-            ],
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _handleAnnualPurchase() async {
-    setState(() => _isProcessingAnnual = true);
-    final success = await ref.read(purchaseProvider.notifier).buyAnnual();
-    if (mounted) {
-      setState(() => _isProcessingAnnual = false);
-      if (success) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: SacredTheme.surfaceContainerLow,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
-            title: Text(
-              'Welcome, Sadhaka',
-              style: GoogleFonts.newsreader(fontSize: 24, fontWeight: FontWeight.bold, color: SacredTheme.primary),
-            ),
-            content: Text(
-              'Your annual Sadhaka Premium path is now active. May this year bring you deep wisdom and inner peace.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: const Text('ENTER SACRED SPACE'),
-              ),
-            ],
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -185,7 +178,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     ),
                     onPressed: activeTier == SubscriptionTier.annual
                         ? null
-                        : _isProcessingAnnual ? null : _handleAnnualPurchase,
+                        : _isProcessingAnnual ? null : () => _buyPlan('annual'),
                     child: _isProcessingAnnual
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(activeTier == SubscriptionTier.annual ? 'ACTIVE ANNUAL PATH' : 'EMBARK ON ANNUAL PATH'),
@@ -214,7 +207,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     ),
                     onPressed: activePlan == 'quarterly'
                         ? null
-                        : _isProcessingQuarterly ? null : _handleQuarterlyPurchase,
+                        : _isProcessingQuarterly ? null : () => _buyPlan('quarterly'),
                     child: _isProcessingQuarterly
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(activePlan == 'quarterly' ? 'ACTIVE QUARTERLY PATH' : 'EMBARK ON QUARTERLY PATH'),
@@ -246,7 +239,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     ),
                     onPressed: activePlan == 'monthly'
                         ? null
-                        : _isProcessing ? null : _handlePurchase,
+                        : _isProcessing ? null : () => _buyPlan('monthly'),
                     child: _isProcessing
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(activePlan == 'monthly' ? 'ACTIVE PREMIUM PATH' : 'EMBARK ON PREMIUM PATH'),

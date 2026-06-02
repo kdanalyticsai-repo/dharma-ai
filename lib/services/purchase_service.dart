@@ -19,6 +19,15 @@ class PurchaseService {
     return prefs.getString(_planKey) ?? 'free';
   }
 
+  // Record the plan locally after a web payment (the Worker already wrote the
+  // authoritative subscription to Supabase) so the UI reflects it instantly.
+  Future<void> setLocalPlan(String plan) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tier = plan == 'annual' ? 'annual' : (plan == 'free' ? 'free' : 'sadhaka');
+    await prefs.setString(_planKey, plan);
+    await prefs.setString(_subKey, tier);
+  }
+
   // Check active subscription status.
   // When signed in, the profiles.subscription_tier row is the source of
   // truth (syncs across devices); otherwise fall back to local storage.

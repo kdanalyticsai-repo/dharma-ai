@@ -16,6 +16,12 @@ class PurchaseNotifier extends StateNotifier<SubscriptionTier> {
     state = await _service.getActiveSubscription();
   }
 
+  // Re-read the active tier (e.g. after a web Razorpay payment the Worker
+  // has written the subscription to Supabase).
+  Future<void> refresh() async {
+    state = await _service.getActiveSubscription();
+  }
+
   Future<bool> buySadhaka() async {
     final success = await _service.purchaseSadhaka();
     if (success) state = SubscriptionTier.sadhaka;
