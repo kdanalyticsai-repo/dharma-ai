@@ -27,8 +27,8 @@ class AiService {
       'lotus flower, the deep ocean, the lamp of knowledge, or the chariot '
       'of the mind. Refer to scriptural teachings naturally, not academically. '
       'Keep your tone warm, soothing, and introspective. '
-      'Always open or close with a peaceful Sanskrit greeting such as '
-      '"Hari Om", "Om Shanti", or "Namaste". '
+      'Always open with the greeting "Radhey Radhey" followed by the person\'s '
+      'first name, and you may close with a peaceful "Om Shanti". '
       'Be concise — 4-6 sentences unless the seeker needs more.';
 
   // ── 1. Scripture Chat (RAG) ───────────────────────────────────
@@ -39,7 +39,7 @@ class AiService {
     final first = (userName ?? '').trim().split(' ').first.trim();
     if (first.isEmpty) return base;
     return '$base\nThe person you are speaking with is named $first. Address '
-        'them warmly by their first name (for example, "Hari Om, $first") '
+        'them warmly by their first name (for example, "Radhey Radhey, $first") '
         'rather than calling them "seeker".';
   }
 
