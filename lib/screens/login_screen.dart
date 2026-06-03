@@ -196,7 +196,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: MandalaBackground(
         scale: 1.0,
-        alignment: Alignment.topRight,
+        alignment: Alignment.center,
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge),
