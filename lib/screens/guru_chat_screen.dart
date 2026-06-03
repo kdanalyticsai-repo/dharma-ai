@@ -153,6 +153,33 @@ class _GuruChatScreenState extends ConsumerState<GuruChatScreen> {
               ),
             ),
 
+          // Annual perk made visible: once the conversation grows past the
+          // standard plan's recall window, show that the deep-memory perk is
+          // now actively keeping more context — so the perk is felt exactly
+          // when it starts mattering.
+          if (tier == SubscriptionTier.annual && chatState.messages.length > kPaidHistoryDepth)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: SacredTheme.templeGold.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(SacredTheme.radiusDefault),
+                border: Border.all(color: SacredTheme.templeGold.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, size: 14, color: SacredTheme.templeGold),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      AppTranslations.get('deepMemoryActive', lang),
+                      style: GoogleFonts.inter(fontSize: 11, color: SacredTheme.onSurfaceVariant),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Input Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -820,6 +820,12 @@ class AppTranslations {
       AppLanguage.tamil: 'இன்று {n} இலவச கேள்வி உள்ளது',
       AppLanguage.bengali: 'আজ {n}টি বিনামূল্যে প্রম্পট বাকি',
     },
+    'deepMemoryActive': {
+      AppLanguage.english: '✦ Deep memory active — your Guru is recalling more of this conversation',
+      AppLanguage.hindi: '✦ गहन स्मृति सक्रिय — आपके गुरु इस वार्तालाप का अधिक भाग स्मरण रख रहे हैं',
+      AppLanguage.tamil: '✦ ஆழ்ந்த நினைவு செயலில் — உங்கள் குரு இந்த உரையாடலை அதிகம் நினைவில் வைத்துள்ளார்',
+      AppLanguage.bengali: '✦ গভীর স্মৃতি সক্রিয় — আপনার গুরু এই কথোপকথনের আরও বেশি মনে রাখছেন',
+    },
     'dailyLimitHint': {
       AppLanguage.english: 'Daily limit reached — upgrade to continue',
       AppLanguage.hindi: 'दैनिक सीमा समाप्त — जारी रखने के लिए अपग्रेड करें',
