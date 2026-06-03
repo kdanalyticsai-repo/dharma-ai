@@ -93,6 +93,21 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                         ),
                         const SizedBox(height: 8),
                         _subscriptionBadge(ref.watch(purchaseProvider)),
+                        if (ref.watch(purchaseProvider) != SubscriptionTier.free)
+                          ref.watch(subscriptionEndProvider).maybeWhen(
+                            data: (end) => end == null
+                                ? const SizedBox.shrink()
+                                : Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'Valid until ${_formatDate(end)}',
+                                      style: textTheme.labelSmall?.copyWith(
+                                        color: SacredTheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                            orElse: () => const SizedBox.shrink(),
+                          ),
                       ],
                     ),
                     InkWell(
@@ -377,6 +392,14 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime d) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 
   // Subscription tier pill shown under the greeting (matches the profile badge).
