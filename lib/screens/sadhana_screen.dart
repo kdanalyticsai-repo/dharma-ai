@@ -183,10 +183,45 @@ class SadhanaScreen extends ConsumerWidget {
 
                 const SizedBox(height: 24),
                 
-                // Reset daily stats (useful for demo/testing)
+                // Reset today's progress (with confirmation)
                 Center(
                   child: TextButton(
-                    onPressed: () => notifier.resetToday(),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: SacredTheme.surfaceContainerLow,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
+                          title: Text(
+                            AppTranslations.get('resetTodayProgress', currentLanguage),
+                            style: GoogleFonts.newsreader(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: SacredTheme.headingColor(ctx)),
+                          ),
+                          content: Text(
+                            AppTranslations.get('resetConfirmBody', currentLanguage),
+                            style: Theme.of(ctx).textTheme.bodyMedium,
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: Text(
+                                AppTranslations.get('cancelBtn', currentLanguage),
+                                style: const TextStyle(color: SacredTheme.outline),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: Text(
+                                  AppTranslations.get('resetConfirmBtn', currentLanguage)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) notifier.resetToday();
+                    },
                     child: Text(
                       AppTranslations.get('resetTodayProgress', currentLanguage),
                       style: GoogleFonts.inter(color: SacredTheme.outline, fontSize: 12),

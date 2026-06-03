@@ -448,6 +448,18 @@ class AppTranslations {
       AppLanguage.hindi: 'आज की प्रगति को रीसेट करें',
       AppLanguage.bengali: 'আজকের অগ্রগতি রিসেট করুন',
     },
+    'resetConfirmBody': {
+      AppLanguage.english: "This will set today's meditation, verses and chanting back to zero. Your streak is not affected. Continue?",
+      AppLanguage.tamil: 'இது இன்றைய தியானம், வசனங்கள் மற்றும் ஜபத்தை பூஜ்ஜியமாக்கும். உங்கள் தொடர் பாதிக்கப்படாது. தொடரவா?',
+      AppLanguage.hindi: 'इससे आज का ध्यान, श्लोक और जप शून्य हो जाएगा। आपकी निरंतरता (स्ट्रीक) प्रभावित नहीं होगी। जारी रखें?',
+      AppLanguage.bengali: 'এটি আজকের ধ্যান, শ্লোক ও জপ শূন্যে ফিরিয়ে দেবে। আপনার স্ট্রিক প্রভাবিত হবে না। চালিয়ে যাবেন?',
+    },
+    'resetConfirmBtn': {
+      AppLanguage.english: 'Reset',
+      AppLanguage.tamil: 'மீட்டமை',
+      AppLanguage.hindi: 'रीसेट करें',
+      AppLanguage.bengali: 'রিসেট',
+    },
     'readingOptions': {
       AppLanguage.english: 'Reading Options',
       AppLanguage.tamil: 'வாசிப்பு விருப்பங்கள்',
