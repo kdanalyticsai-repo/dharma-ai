@@ -23,10 +23,16 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
   final TextEditingController _friendNameController = TextEditingController();
   bool _isProcessing = false;
 
-  // Gift = a one-month Sadhaka Premium pass.
-  static const String _giftPlan = 'monthly';
-  static const String _giftLabel = 'Sadhaka Premium Monthly Pass';
-  static const String _giftPrice = '₹199';
+  // Gift plans (keys must match the server PLANS table).
+  static const Map<String, Map<String, String>> _plans = {
+    'monthly': {'label': 'Sadhaka Premium — Monthly', 'price': '₹199'},
+    'quarterly': {'label': 'Sadhaka Premium — Quarterly', 'price': '₹499'},
+    'annual': {'label': 'Sadhaka Annual', 'price': '₹1,499'},
+  };
+  String _selectedPlan = 'monthly';
+
+  String get _giftLabel => _plans[_selectedPlan]!['label']!;
+  String get _giftPrice => _plans[_selectedPlan]!['price']!;
 
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -48,7 +54,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
     String? error;
     try {
       code = await RazorpayService().giftCheckout(
-        plan: _giftPlan,
+        plan: _selectedPlan,
         userId: user.id,
         email: user.email,
         name: user.userMetadata?['full_name'] as String?,
@@ -194,7 +200,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Gift a fellow seeker a $_giftLabel ($_giftPrice). After payment you\'ll receive a code to share — they redeem it in the app to unlock Premium.',
+                  "Gift a fellow seeker a Sadhaka Premium pass. After payment you'll receive a code to share — they redeem it in the app to unlock Premium.",
                   style: textTheme.bodyMedium,
                 ),
                 const FadingDivider(height: 28),
@@ -211,6 +217,31 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusDefault)),
                   ),
                   style: textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 16),
+
+                // Plan selector
+                DropdownButtonFormField<String>(
+                  value: _selectedPlan,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'GIFT PLAN',
+                    labelStyle: textTheme.labelSmall?.copyWith(color: SacredTheme.outline),
+                    filled: true,
+                    fillColor: SacredTheme.surfaceContainerLow,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(SacredTheme.radiusDefault)),
+                  ),
+                  style: textTheme.bodyLarge,
+                  items: _plans.entries
+                      .map((e) => DropdownMenuItem(
+                            value: e.key,
+                            child: Text('${e.value['label']}  •  ${e.value['price']}'),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _selectedPlan = v);
+                  },
                 ),
                 const SizedBox(height: 24),
 
