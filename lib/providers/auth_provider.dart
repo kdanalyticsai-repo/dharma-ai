@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
@@ -98,9 +99,25 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 
   // ── Reset password ──────────────────────────────────────────
+  // Sends a recovery link. On web we redirect back to the current origin
+  // (auto-adapts to dev/prod) so the app can catch the passwordRecovery
+  // event and let the user set a new password.
   Future<String?> resetPassword(String email) async {
     try {
-      await _client.auth.resetPasswordForEmail(email);
+      await _client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: kIsWeb ? Uri.base.origin : null,
+      );
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    }
+  }
+
+  // ── Set a new password (after clicking the recovery link) ───
+  Future<String?> updatePassword(String newPassword) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
       return null;
     } on AuthException catch (e) {
       return e.message;

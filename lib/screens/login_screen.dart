@@ -109,6 +109,86 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  Future<void> _forgotPassword() async {
+    final resetController = TextEditingController(text: _emailController.text.trim());
+    final textTheme = Theme.of(context).textTheme;
+    bool sending = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setLocal) => AlertDialog(
+          backgroundColor: SacredTheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
+          title: Text(
+            'Reset your password',
+            style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: SacredTheme.primary),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter your account email and we\'ll send you a link to set a new password.',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: resetController,
+                keyboardType: TextInputType.emailAddress,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'your@email.com',
+                  filled: true,
+                  fillColor: SacredTheme.surfaceContainerLowest,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusSm)),
+                ),
+                style: textTheme.bodyLarge,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.pop(dialogContext),
+              child: const Text('CANCEL', style: TextStyle(color: SacredTheme.outline)),
+            ),
+            ElevatedButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final email = resetController.text.trim();
+                      final messenger = ScaffoldMessenger.of(context);
+                      final navigator = Navigator.of(dialogContext);
+                      if (email.isEmpty || !email.contains('@')) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Please enter a valid email address.')),
+                        );
+                        return;
+                      }
+                      setLocal(() => sending = true);
+                      final error = await ref.read(authProvider.notifier).resetPassword(email);
+                      if (!mounted) return;
+                      navigator.pop();
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(error ??
+                              'If an account exists for $email, a password reset link is on its way. Check your inbox.'),
+                          backgroundColor: error == null ? SacredTheme.primary : null,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    },
+              child: sending
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('SEND RESET LINK'),
+            ),
+          ],
+        ),
+      ),
+    );
+    resetController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -201,6 +281,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
+
+                if (!_isSignUp)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _isLoading ? null : _forgotPassword,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Forgot password?',
+                        style: textTheme.labelMedium?.copyWith(
+                          color: SacredTheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
 
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 12),

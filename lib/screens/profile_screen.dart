@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/theme/theme.dart';
-import 'package:dharma_ai/models/verse.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/sadhana_provider.dart';
 import 'package:dharma_ai/screens/search_screen.dart';
@@ -12,11 +11,10 @@ import 'package:dharma_ai/screens/subscription_paywall_screen.dart';
 import 'package:dharma_ai/screens/gift_subscription_screen.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
-import 'package:dharma_ai/screens/offline_library_screen.dart';
-import 'package:dharma_ai/screens/offline_reader_screen.dart';
 import 'package:dharma_ai/screens/redeem_code_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/services/supabase_sync.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
 
@@ -36,7 +34,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadSavedJournalNote();
+    _loadPersonalNote();
   }
 
   void _showSanctuarySettings(BuildContext context, {required bool isPaid}) {
@@ -117,28 +115,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                   );
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.download_for_offline, color: SacredTheme.secondary),
-                title: const Text('Offline Download Library'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OfflineLibraryScreen()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.wifi_off, color: SacredTheme.outline),
-                title: const Text('Simulate Offline Reader (Gita 2.47)'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OfflineReaderScreen()),
-                  );
-                },
-              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.redAccent),
@@ -166,22 +142,72 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     );
   }
 
-  Future<void> _loadSavedJournalNote() async {
+  static const String _kNoteKey = 'spiritual_journal_note';
+
+  // Load the personal note. Shows the local cache instantly, then pulls the
+  // authoritative copy from the user's account so it follows them across any
+  // device/browser. If the account has nothing yet but this device does,
+  // migrate the local note up to the cloud.
+  Future<void> _loadPersonalNote() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedNote = prefs.getString('spiritual_journal_note') ?? '';
-    _noteController.text = savedNote;
+    final localNote = prefs.getString(_kNoteKey) ?? '';
+    if (mounted && _noteController.text.isEmpty) {
+      _noteController.text = localNote;
+    }
+
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return; // offline / signed-out → local only
+
+    try {
+      final row = await client
+          .from('profiles')
+          .select('personal_note')
+          .eq('id', uid)
+          .maybeSingle();
+      final cloudNote = (row?['personal_note'] as String?) ?? '';
+
+      if (cloudNote.isNotEmpty) {
+        // Account is the source of truth.
+        if (mounted) _noteController.text = cloudNote;
+        await prefs.setString(_kNoteKey, cloudNote);
+      } else if (localNote.isNotEmpty) {
+        // First sync: back up the existing local note to the account.
+        await client.from('profiles').update({'personal_note': localNote}).eq('id', uid);
+      }
+    } catch (_) {
+      // Network/Supabase issue → keep the local copy already shown.
+    }
   }
 
-  Future<void> _saveJournalNote(String text) async {
+  Future<void> _savePersonalNote(String text) async {
     setState(() => _isSavingNote = true);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('spiritual_journal_note', text);
-    await Future.delayed(const Duration(milliseconds: 500)); // Simulate disk write animation
+    await prefs.setString(_kNoteKey, text); // offline cache
+
+    bool cloudSaved = false;
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client != null && uid != null) {
+      try {
+        await client.from('profiles').update({
+          'personal_note': text,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', uid);
+        cloudSaved = true;
+      } catch (_) {
+        cloudSaved = false; // keep local copy; user can retry when online
+      }
+    }
+
+    await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
       setState(() => _isSavingNote = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Journal note saved to offline vessel.'),
+          content: Text(cloudSaved
+              ? 'Note saved to your account — available on all your devices.'
+              : 'Saved on this device. Sign in or reconnect to sync everywhere.'),
           backgroundColor: SacredTheme.primary,
           duration: const Duration(seconds: 2),
         ),
@@ -332,7 +358,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                 labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
                 tabs: const [
                   Tab(text: 'SAVED WISDOM'),
-                  Tab(text: 'MY JOURNAL'),
+                  Tab(text: 'PERSONAL NOTE'),
                 ],
               ),
             ),
@@ -405,12 +431,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'SPIRITUAL CONTEMPLATIONS',
+                          'YOUR PERSONAL NOTE',
                           style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Write down your reflections, realizations, and personal goals on your path of study.',
+                          'Write down your reflections, realizations and personal goals. Saved to your account, so it stays with you on every device.',
                           style: textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 16),
@@ -439,7 +465,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                           child: ElevatedButton(
                             onPressed: _isSavingNote
                                 ? null
-                                : () => _saveJournalNote(_noteController.text),
+                                : () => _savePersonalNote(_noteController.text),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -451,7 +477,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                                   ),
                                   const SizedBox(width: 12),
                                 ],
-                                const Text('SAVE REFLECTIONS'),
+                                const Text('SAVE NOTE'),
                               ],
                             ),
                           ),

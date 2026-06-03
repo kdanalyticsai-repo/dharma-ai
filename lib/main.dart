@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
+import 'package:dharma_ai/screens/set_new_password_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
@@ -19,6 +20,17 @@ void main() async {
       url: SupabaseConfig.supabaseUrl,
       anonKey: SupabaseConfig.supabaseAnonKey,
     );
+
+    // When the user follows a password-recovery email link, Supabase opens a
+    // temporary recovery session and fires this event — send them to the
+    // "set a new password" screen.
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()),
+        );
+      }
+    });
   }
 
   runApp(ProviderScope(child: DharmaApp(navigatorKey: _navigatorKey)));

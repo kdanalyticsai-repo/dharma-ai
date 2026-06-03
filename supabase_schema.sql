@@ -9,9 +9,12 @@ create table if not exists profiles (
   avatar_url        text,
   subscription_tier text default 'free', -- 'free' | 'sadhaka' | 'annual'
   subscription_end  timestamptz,
+  personal_note     text,                 -- user's private cross-device note
   created_at        timestamptz default now(),
   updated_at        timestamptz default now()
 );
+-- If profiles already exists, add the note column:
+--   alter table profiles add column if not exists personal_note text;
 
 -- ── Bookmarks ────────────────────────────────────────────────
 create table if not exists bookmarks (

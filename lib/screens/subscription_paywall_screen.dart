@@ -272,7 +272,6 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     'Unlimited AI-powered Chat Scholar',
                     'Unlimited introspective AI Guru counseling',
                     'Background Audio Wisdom player (18 chapters)',
-                    'Offline access to your scriptures',
                     'Sangha community pass gifting actions',
                   ],
                   isActive: activePlan == 'monthly',
@@ -301,7 +300,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                   benefits: [
                     'Standard Bhagavad Gita Reader',
                     '6 daily AI Scripture Scholar prompts',
-                    'Offline access to all Gita verses',
+                    'Daily sadhana & streak tracker',
                   ],
                   isActive: activeTier == SubscriptionTier.free,
                   button: activeTier == SubscriptionTier.free
