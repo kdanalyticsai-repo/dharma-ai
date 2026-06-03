@@ -855,9 +855,9 @@ class AppTranslations {
       AppLanguage.bengali: 'ডায়েরি নোট অফলাইনে সংরক্ষিত হয়েছে।',
     },
     'sanctuarySettings': {
-      AppLanguage.english: 'Sanctuary Settings',
-      AppLanguage.tamil: 'புகலிட அமைப்புகள்',
-      AppLanguage.hindi: 'शरणस्थली सेटिंग्स',
+      AppLanguage.english: 'Settings',
+      AppLanguage.tamil: 'அமைப்புகள்',
+      AppLanguage.hindi: 'सेटिंग्स',
       AppLanguage.bengali: 'সেটিংস',
     },
     'upgradeBtn': {

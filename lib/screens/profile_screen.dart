@@ -123,7 +123,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               ),
               const SizedBox(height: 16),
               Text(
-                'Sanctuary Settings',
+                AppTranslations.get('sanctuarySettings', ref.read(languageProvider)),
                 style: textTheme.headlineSmall?.copyWith(
                   color: SacredTheme.headingColor(context),
                 ),
