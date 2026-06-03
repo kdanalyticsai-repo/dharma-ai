@@ -7,6 +7,7 @@ import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/lotus_painter.dart';
+import 'package:dharma_ai/widgets/circle_icon_button.dart';
 
 import 'package:dharma_ai/screens/search_screen.dart';
 import 'package:dharma_ai/screens/audio_wisdom_screen.dart';
@@ -64,7 +65,7 @@ class ScripturesScreen extends ConsumerWidget {
                     ),
                     Row(
                       children: [
-                        _ReaderTopAction(
+                        CircleIconButton(
                           icon: Icons.search_rounded,
                           tooltip: 'Search verses',
                           onPressed: () => Navigator.push(
@@ -72,7 +73,7 @@ class ScripturesScreen extends ConsumerWidget {
                             MaterialPageRoute(builder: (context) => const ScriptureSearchScreen()),
                           ),
                         ),
-                        _ReaderTopAction(
+                        CircleIconButton(
                           icon: Icons.headphones_rounded,
                           tooltip: 'Audio wisdom',
                           onPressed: () => Navigator.push(
@@ -80,7 +81,7 @@ class ScripturesScreen extends ConsumerWidget {
                             MaterialPageRoute(builder: (context) => const AudioWisdomScreen()),
                           ),
                         ),
-                        _ReaderTopAction(
+                        CircleIconButton(
                           icon: Icons.tune_rounded,
                           tooltip: 'Reading settings',
                           onPressed: () => _showSettingsBottomSheet(context),
@@ -437,42 +438,6 @@ class ScripturesScreen extends ConsumerWidget {
       builder: (context) {
         return const ReaderSettingsSheet();
       },
-    );
-  }
-}
-
-/// Friendly, consistent top-bar action: a rounded icon on a soft, saffron-
-/// tinted circle with a tooltip and a comfortable touch target.
-class _ReaderTopAction extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  const _ReaderTopAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: Material(
-        color: SacredTheme.primary.withOpacity(0.08),
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: Tooltip(
-            message: tooltip,
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Center(child: Icon(icon, size: 20, color: SacredTheme.primary)),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

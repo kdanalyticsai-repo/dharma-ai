@@ -17,6 +17,7 @@ import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
+import 'package:dharma_ai/widgets/circle_icon_button.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -243,9 +244,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
         title: Text('My Sanctuary', style: textTheme.headlineMedium),
         centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: SacredTheme.onSurfaceVariant),
-            onPressed: () => _showSanctuarySettings(context, isPaid: isPaid),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: CircleIconButton(
+              icon: Icons.settings_rounded,
+              tooltip: 'Settings',
+              onPressed: () => _showSanctuarySettings(context, isPaid: isPaid),
+            ),
           ),
         ],
       ),
