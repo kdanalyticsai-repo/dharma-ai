@@ -10,6 +10,7 @@ import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/sadhana_provider.dart';
 import 'package:dharma_ai/providers/chat_provider.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/widgets/dharma_logo.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 
@@ -78,6 +79,7 @@ class DharmaApp extends ConsumerWidget {
       ref.invalidate(bookmarksProvider);
       ref.invalidate(sadhanaProvider);
       ref.invalidate(guruChatProvider);
+      ref.invalidate(languageProvider);
     });
 
     return MaterialApp(

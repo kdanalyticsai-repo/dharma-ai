@@ -10,11 +10,13 @@ create table if not exists profiles (
   subscription_tier text default 'free', -- 'free' | 'sadhaka' | 'annual'
   subscription_end  timestamptz,
   personal_note     text,                 -- user's private cross-device note
+  preferred_language text,                 -- 'en' | 'ta' | 'hi' | 'bn' (cross-device)
   created_at        timestamptz default now(),
   updated_at        timestamptz default now()
 );
--- If profiles already exists, add the note column:
+-- If profiles already exists, add the new columns:
 --   alter table profiles add column if not exists personal_note text;
+--   alter table profiles add column if not exists preferred_language text;
 
 -- ── Bookmarks ────────────────────────────────────────────────
 create table if not exists bookmarks (

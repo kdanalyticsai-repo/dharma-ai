@@ -1,10 +1,20 @@
 ﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dharma_ai/services/supabase_sync.dart';
 
 enum AppLanguage {
   english,
   tamil,
   hindi,
   bengali,
+}
+
+AppLanguage? _languageFromCode(String? code) {
+  if (code == null) return null;
+  for (final l in AppLanguage.values) {
+    if (l.code == code) return l;
+  }
+  return null;
 }
 
 extension AppLanguageExt on AppLanguage {
@@ -36,10 +46,52 @@ extension AppLanguageExt on AppLanguage {
 }
 
 class LanguageNotifier extends StateNotifier<AppLanguage> {
-  LanguageNotifier() : super(AppLanguage.english);
+  LanguageNotifier() : super(AppLanguage.english) {
+    _load();
+  }
 
-  void setLanguage(AppLanguage language) {
+  static const _prefKey = 'preferred_language';
+
+  // Restore the saved language: device cache first (instant, survives refresh),
+  // then the account's stored choice so it follows the user across devices.
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final local = _languageFromCode(prefs.getString(_prefKey));
+    if (local != null) state = local;
+
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return;
+    try {
+      final row = await client
+          .from('profiles')
+          .select('preferred_language')
+          .eq('id', uid)
+          .maybeSingle();
+      final remote = _languageFromCode(row?['preferred_language'] as String?);
+      if (remote != null) {
+        state = remote;
+        await prefs.setString(_prefKey, remote.code);
+      }
+    } catch (_) {
+      // offline / not reachable → keep the local choice
+    }
+  }
+
+  // Change language and persist it (device + account).
+  Future<void> setLanguage(AppLanguage language) async {
     state = language;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefKey, language.code);
+
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return;
+    try {
+      await client.from('profiles').update({'preferred_language': language.code}).eq('id', uid);
+    } catch (_) {
+      // best-effort cross-device sync; local copy already saved
+    }
   }
 }
 

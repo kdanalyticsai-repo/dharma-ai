@@ -14,6 +14,7 @@ import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/redeem_code_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
@@ -36,6 +37,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadPersonalNote();
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final current = ref.read(languageProvider);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: SacredTheme.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(SacredTheme.radiusLg),
+          topRight: Radius.circular(SacredTheme.radiusLg),
+        ),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text('Choose Language',
+                    style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context))),
+              ),
+              const SizedBox(height: 8),
+              ...AppLanguage.values.map((lang) {
+                final selected = lang == current;
+                return ListTile(
+                  leading: Icon(
+                    selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    color: selected ? SacredTheme.primary : SacredTheme.outline,
+                  ),
+                  title: Text(lang.displayName),
+                  onTap: () {
+                    ref.read(languageProvider.notifier).setLanguage(lang);
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showSanctuarySettings(BuildContext context, {required bool isPaid}) {
@@ -114,6 +162,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                     context,
                     MaterialPageRoute(builder: (context) => const RedeemCodeScreen()),
                   );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.translate, color: SacredTheme.primary),
+                title: const Text('Language'),
+                subtitle: Text(ref.read(languageProvider).displayName),
+                trailing: const Icon(Icons.chevron_right, color: SacredTheme.outline),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showLanguagePicker(context);
                 },
               ),
               const Divider(),
