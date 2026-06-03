@@ -1025,25 +1025,25 @@ class AppTranslations {
 class LocalizedScripture {
   static final Map<String, Map<AppLanguage, String>> translations = {
     'BG_2_47': {
-      AppLanguage.english: 'You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. Never consider yourself to be the cause of the results of your activities, nor be attached to inactive status.',
+      AppLanguage.english: 'But you have only the right to work, but none to the fruit of it. Let not the fruit of your action be your motive; nor be you enamored of inaction.',
       AppLanguage.tamil: 'உனக்கு கடமையைச் செய்ய மட்டுமே அதிகாரம் உண்டு, அதன் பலன்களில் எப்போதும் இல்லை. செயலின் பலனுக்கு உன்னை காரணியாக்கிக் கொள்ளாதே, அதே சமயம் செயலின்மையில் பற்று கொள்ளாதே.',
       AppLanguage.hindi: 'कर्म करने में ही तुम्हारा अधिकार है, उसके फलों में कभी नहीं। तुम कर्मों के फल की इच्छा वाले मत बनो और तुम्हारी अकर्मण्यता में भी आसक्ति न हो।',
       AppLanguage.bengali: 'কর্মে তোমার অধিকার আছে, কিন্তু ফলে কখনো অধিকার নেই। ফলের আশা করো না, আবার নিষ্ক্রিয়তায়ও আসক্ত হয়ো না।',
     },
     'BG_2_20': {
-      AppLanguage.english: 'For the soul there is neither birth nor death at any time. He has not come into being, does not come into being, and will not come into being. He is unborn, eternal, ever-existing and primeval. He is not slain when the body is slain.',
+      AppLanguage.english: 'It was not born; it will never die, nor, once having been, can it cease to exist. Unborn, eternal, ever-enduring, yet most ancient, the spirit does not die when the body is dead.',
       AppLanguage.tamil: 'ஆத்மாவிற்கு எப்போதும் பிறப்பும் இல்லை, இறப்பும் இல்லை. அது உருவாகவில்லை, உருவாகப்போவதும் இல்லை. அது பிறப்பற்றது, நித்தியமானது, என்றும் நிலைத்திருப்பது, பழமையானது. உடல் கொல்லப்படும் போது அது கொல்லப்படுவதில்லை.',
       AppLanguage.hindi: 'आत्मा के लिए किसी भी समय न तो जन्म है और न ही मृत्यु। वह न तो कभी अस्तित्व में आया है, न आता है, और न ही कभी आएगा। वह अजन्मा, नित्य, शाश्वत और पुरातन है। शरीर के मारे जाने पर भी वह नहीं मारा जाता।',
       AppLanguage.bengali: 'আত্মার কখনও জন্ম বা মৃত্যু হয় না। তিনি পূর্বে ছিলেন না, এখন আছেন, ভবিষ্যতে থাকবেন না—এমন নয়। তিনি জন্মহীন, নিত্য, সনাতন এবং আদিম। শরীর ধ্বংস হলেও তিনি ধ্বংস হন না।',
     },
     'BG_9_22': {
-      AppLanguage.english: 'But those who always worship Me with exclusive devotion, meditating on My transcendental form—to them I carry what they lack, and I preserve what they have.',
+      AppLanguage.english: 'But if a person meditates on Me and Me alone, worships Me always and everywhere, I will take upon Myself the fulfillment of their aspiration, and I will safeguard whatever they attain.',
       AppLanguage.tamil: 'எவன் பிற சிந்தனைகள் இன்றி என்னை மட்டுமே தியானித்து வழிபடுகிறானோ, அந்த நித்திய பக்தர்களின் தேவைகளை நான் சுமக்கிறேன் மற்றும் அவர்கள் பெற்றதை நான் பாதுகாக்கிறேன்.',
       AppLanguage.hindi: 'परन्तु जो अनन्य भक्त मेरा चिन्तन करते हुए मेरी उपासना करते हैं, उन नित्य-युक्त पुरुषों का योगक्षेम (आवश्यकताओं की पूर्ति और सुरक्षा) मैं स्वयं वहन करता हूँ।',
       AppLanguage.bengali: 'কিন্তু যারা অন্য কিছু চিন্তা না করে কেবল আমার ধ্যান করে আমার আরাধনা করে, সেই নিত্য-যুক্ত ভক্তদের প্রয়োজনীয় বস্তু আমি বহন করি এবং তাদের প্রাপ্ত জিনিস আমি রক্ষা করি।',
     },
     'BG_18_66': {
-      AppLanguage.english: 'Abandon all varieties of religion and surrender unto Me alone. I shall deliver you from all sinful reactions. Do not fear.',
+      AppLanguage.english: 'Give up your earthly duties, surrender yourself to Me alone. Do not be anxious; I will absolve you from all your sins.',
       AppLanguage.tamil: 'அனைத்து தர்மங்களையும் துறந்து என்னை மட்டுமே சரணடைவாய். நான் உன்னை அனைத்து பாவ விளைவுகளிலிருந்தும் விடுவிப்பேன். பயப்படாதே.',
       AppLanguage.hindi: 'सभी धर्मों (कर्तव्यों) को छोड़कर केवल मेरी शरण में आओ। मैं तुम्हें सभी पापों के बंधनों से मुक्त कर दूँगा। तुम शोक मत करो।',
       AppLanguage.bengali: 'সব ধর্ম পরিত্যাগ করে কেবল আমারই শরণাপন্ন হও। আমি তোমাকে সমস্ত পাপ থেকে মুক্তি দেব। ভয় পেয়ো না।',
