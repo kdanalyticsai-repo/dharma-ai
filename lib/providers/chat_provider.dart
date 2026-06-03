@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/models/chat_message.dart';
@@ -7,6 +8,7 @@ import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/qa_cache_service.dart';
+import 'package:dharma_ai/services/supabase_sync.dart';
 
 const int kFreePromptLimit = 6;    // Max prompts per day (free tier)
 const int kPaidDailyCap = 101;     // Fair-use soft cap for paid "unlimited" tiers
@@ -289,7 +291,43 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
       ],
       isLoading: false,
     );
+    // Restore the on-device conversation so a page refresh doesn't wipe it.
+    _loadHistory();
     // Daily count loaded by shared dailyPromptCounterProvider
+  }
+
+  // ── Local session persistence (device-only; survives page refresh) ──────────
+  // Scoped per account so a shared browser doesn't mix users' conversations.
+  String get _historyKey => 'guru_chat_history_${SupabaseSync.userId ?? 'anon'}';
+
+  Future<void> _loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_historyKey);
+      if (raw == null || raw.isEmpty) return;
+      final list = (jsonDecode(raw) as List)
+          .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (list.isNotEmpty && mounted) {
+        state = ChatState(messages: list, isLoading: false);
+      }
+    } catch (_) {
+      // Ignore corrupt/incompatible cache — fall back to the welcome message.
+    }
+  }
+
+  Future<void> _persist() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Cap stored history to the most recent 100 messages to bound storage.
+      final msgs = state.messages.length > 100
+          ? state.messages.sublist(state.messages.length - 100)
+          : state.messages;
+      await prefs.setString(
+          _historyKey, jsonEncode(msgs.map((m) => m.toJson()).toList()));
+    } catch (_) {
+      // Best-effort cache; never block the chat on a storage failure.
+    }
   }
 
   Future<void> sendMessage(String text) async {
@@ -367,6 +405,7 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
         messages: [...state.messages, assistantMessage],
         isLoading: false,
       );
+      _persist();
     } catch (e) {
       final currentLanguage = _ref.read(languageProvider);
       final errorMessage = ChatMessage(
@@ -380,6 +419,7 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
         messages: [...state.messages, errorMessage],
         isLoading: false,
       );
+      _persist();
     }
   }
 
@@ -390,6 +430,7 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
       ],
       isLoading: false,
     );
+    _persist();
   }
 
   void _notifyFairUse() {

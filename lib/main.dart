@@ -9,6 +9,7 @@ import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/sadhana_provider.dart';
+import 'package:dharma_ai/providers/chat_provider.dart';
 import 'package:dharma_ai/widgets/dharma_logo.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 
@@ -70,10 +71,13 @@ class DharmaApp extends ConsumerWidget {
         );
       }
 
-      // Reset per-user data providers
+      // Reset per-user data providers. Invalidate the Guru chat too so its
+      // locally-cached conversation reloads under the new account's key
+      // (prevents one user's chat showing for another on a shared browser).
       ref.invalidate(purchaseProvider);
       ref.invalidate(bookmarksProvider);
       ref.invalidate(sadhanaProvider);
+      ref.invalidate(guruChatProvider);
     });
 
     return MaterialApp(
