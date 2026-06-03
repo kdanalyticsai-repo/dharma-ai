@@ -66,6 +66,41 @@ class ScriptureService {
     return MockScriptureData.vedaVerses.where((v) => v.bookName == book).toList();
   }
 
+  // Fetch all Upanishad verses (bookName ends with "Upanishad"), grouped by
+  // book then chapter/verse. Falls back to the curated samples if Supabase is
+  // empty/unavailable.
+  Future<List<Verse>> getUpanishadVerses() async {
+    try {
+      if (_supabase != null) {
+        final response = await _supabase!
+            .from('verses')
+            .select()
+            .like('bookName', '%Upanishad')
+            .order('bookName', ascending: true)
+            .order('chapter', ascending: true)
+            .order('verseNumber', ascending: true)
+            .limit(2000);
+
+        final list = (response as List)
+            .map((item) => Verse.fromJson(item as Map<String, dynamic>))
+            .toList();
+        if (list.isNotEmpty) {
+          // Keep curated samples for any Upanishad not yet imported, so adding
+          // one book (e.g. Kena) doesn't hide the others. No duplicates: skip
+          // any sample whose book is already present in Supabase.
+          final booksPresent = list.map((v) => v.bookName).toSet();
+          for (final s in MockScriptureData.upanishadVerses) {
+            if (!booksPresent.contains(s.bookName)) list.add(s);
+          }
+          return list;
+        }
+      }
+    } catch (e) {
+      print('Supabase Upanishad load failed, falling back to samples: $e');
+    }
+    return MockScriptureData.upanishadVerses;
+  }
+
   // Fetch single verse by ID
   Future<Verse?> getVerseById(String id) async {
     try {

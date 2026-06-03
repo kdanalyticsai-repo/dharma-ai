@@ -19,6 +19,12 @@ final vedaVersesProvider = FutureProvider.family<List<Verse>, String>((ref, book
   return service.getVedaVersesByBook(book);
 });
 
+// All Upanishad verses (across books) — Sanskrit, premium-gated in the reader.
+final upanishadVersesProvider = FutureProvider<List<Verse>>((ref) async {
+  final service = ref.watch(scriptureServiceProvider);
+  return service.getUpanishadVerses();
+});
+
 // Resolves the user's bookmarks into full verses across ALL books
 // (Gita, Vedas, Upanishads) — used by the Saved Wisdom tab.
 final bookmarkedVersesProvider = FutureProvider<List<Verse>>((ref) async {

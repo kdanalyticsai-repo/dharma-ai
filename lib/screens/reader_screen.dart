@@ -230,8 +230,59 @@ class ScripturesScreen extends ConsumerWidget {
       );
     }
 
-    // Upanishads — curated samples for now
-    return _verseList(MockScriptureData.upanishadVerses);
+    // Upanishads — Sanskrit verse text (public domain) from Supabase;
+    // transliteration, translation and commentary are AI-assisted. Curated
+    // samples are the fallback if Supabase is empty/unavailable.
+    Widget upaShell(List<Verse> verses) {
+      return Column(
+        children: [
+          _upanishadNote(context),
+          Expanded(
+            child: verses.isEmpty
+                ? Center(child: Text('No verses found.',
+                    style: Theme.of(context).textTheme.bodyMedium))
+                : _verseList(verses),
+          ),
+        ],
+      );
+    }
+
+    return ref.watch(upanishadVersesProvider).when(
+      data: (verses) => upaShell(verses),
+      loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
+      error: (_, __) => upaShell(MockScriptureData.upanishadVerses),
+    );
+  }
+
+  Widget _upanishadNote(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(SacredTheme.marginEdge, 12, SacredTheme.marginEdge, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: SacredTheme.templeGold.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+        border: Border.all(color: SacredTheme.templeGold.withOpacity(0.3), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.auto_awesome, size: 14, color: SacredTheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Sanskrit verses are the public-domain original; transliteration, '
+              'translation and commentary are AI-assisted — please verify against '
+              'traditional scholarly sources.',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: SacredTheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _aiAssistedBanner(BuildContext context) {
@@ -308,7 +359,9 @@ class ScripturesScreen extends ConsumerWidget {
       child: Text(
         'Note: The library includes the Rig, Yajur and Atharva Veda. The '
         'Sama Veda is the melodic (sāman) arrangement of Rig Veda hymns for '
-        'chanting — its verses are largely drawn from the Rig Veda already here.',
+        'chanting — its verses are largely drawn from the Rig Veda already here.\n\n'
+        'Sanskrit source: DharmicData (Open Database License). Translations are '
+        'AI-assisted and provided by DharmaAI.',
         style: GoogleFonts.inter(
           fontSize: 11,
           fontStyle: FontStyle.italic,
@@ -524,6 +577,19 @@ class VerseCard extends ConsumerWidget {
                     fontSize: (textTheme.bodyMedium?.fontSize ?? 14) * textScale,
                     color: SacredTheme.onSurfaceVariant,
                     height: 1.5,
+                  ),
+                ),
+              ],
+
+              // Discreet source credit (Bhagavad Gita only)
+              if (verse.bookName == 'Bhagavad Gita') ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Translation: Shri Purohit Swami (public domain) · Commentary: AI-assisted',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: SacredTheme.outline,
+                    fontSize: (textTheme.labelSmall?.fontSize ?? 11) * 0.9 * textScale,
+                    height: 1.3,
                   ),
                 ),
               ],

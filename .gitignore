@@ -57,3 +57,12 @@ gita_audio/
 
 # Flutter temp logs
 C:/Users/user/AppData/Local/Temp/fr*.log
+
+# AI-generated Gita commentary cache (tools/import_gita.mjs)
+tools/.gita_commentary_cache.json
+
+# AI-assisted Upanishad enrichment cache (tools/import_upanishads.mjs)
+tools/.upanishad_cache.json
+
+# Wrangler local build artifacts
+cloudflare_worker/.wrangler/
