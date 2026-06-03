@@ -32,31 +32,16 @@ class AiService {
 
   // ── 1. Scripture Chat (RAG) ───────────────────────────────────
 
-  // The "Radhey Radhey" greeting in the script of the chosen language.
-  static String _greetingFor(AppLanguage language) {
-    switch (language) {
-      case AppLanguage.hindi:
-        return 'राधे राधे';
-      case AppLanguage.tamil:
-        return 'ராதே ராதே';
-      case AppLanguage.bengali:
-        return 'রাধে রাধে';
-      default:
-        return 'Radhey Radhey';
-    }
-  }
-
-  // Appends a personalisation line so the AI opens with the language-appropriate
-  // "Radhey Radhey" greeting and addresses the user by their first name.
-  static String _withName(String base, String? userName, AppLanguage language) {
-    final greeting = _greetingFor(language);
+  // Appends a personalisation line so the AI addresses the user by their first
+  // name — but does NOT repeat the opening "Radhey Radhey" greeting in every
+  // reply (the conversation already opens with it), to avoid monotony.
+  static String _withName(String base, String? userName) {
     final first = (userName ?? '').trim().split(' ').first.trim();
-    if (first.isEmpty) {
-      return '$base\nOpen your reply with the greeting "$greeting".';
-    }
-    return '$base\nThe person you are speaking with is named $first. Open your '
-        'reply with "$greeting $first" and address them warmly by their first '
-        'name rather than calling them "seeker".';
+    if (first.isEmpty) return base;
+    return '$base\nThe person you are speaking with is named $first. Address '
+        'them warmly by their first name when it feels natural, but do NOT '
+        'begin your replies with "Radhey Radhey" or repeat any greeting — the '
+        'conversation has already opened with that greeting.';
   }
 
   Future<Map<String, dynamic>> generateScriptureResponse(
@@ -156,7 +141,7 @@ class AiService {
         : 'Respond in ${language.displayName} if possible, otherwise English.';
 
     final messages = [
-      {'role': 'system', 'content': _withName(_scriptureSystemPrompt, userName, language)},
+      {'role': 'system', 'content': _withName(_scriptureSystemPrompt, userName)},
       {
         'role': 'user',
         'content': 'Verse context:\n$contextBlock\n\nQuestion: $prompt\n\n$languageNote'
@@ -190,7 +175,7 @@ class AiService {
 
     // Build messages: system + history + current message
     final messages = <Map<String, String>>[
-      {'role': 'system', 'content': _withName(_guruSystemPrompt, userName, language)},
+      {'role': 'system', 'content': _withName(_guruSystemPrompt, userName)},
     ];
 
     // Add conversation history (skip welcome message at index 0)

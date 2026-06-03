@@ -11,6 +11,25 @@ import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/qa_cache_service.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 
+// First name for the chat welcome greeting, with a localized fallback when the
+// user has no name on their profile.
+String _welcomeName(Ref ref, AppLanguage lang) {
+  final fullName =
+      ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?;
+  final first = (fullName ?? '').trim().split(' ').first.trim();
+  if (first.isNotEmpty) return first;
+  switch (lang) {
+    case AppLanguage.hindi:
+      return 'प्रिय साधक';
+    case AppLanguage.tamil:
+      return 'அன்பான தேடுபவரே';
+    case AppLanguage.bengali:
+      return 'প্রিয় অন্বেষক';
+    default:
+      return 'dear seeker';
+  }
+}
+
 const int kFreePromptLimit = 6;    // Max prompts per day (free tier)
 const int kPaidDailyCap = 101;     // Fair-use soft cap for paid "unlimited" tiers
 const int kRateLimitPerMinute = 3; // Max prompts per 60 seconds (all tiers)
@@ -133,7 +152,8 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       messages: [
         ChatMessage(
           id: 'welcome_scripture',
-          text: AppTranslations.get('welcomeScripture', currentLanguage),
+          text: AppTranslations.get('welcomeScripture', currentLanguage)
+              .replaceAll('{name}', _welcomeName(_ref, currentLanguage)),
           role: 'assistant',
           timestamp: DateTime.now(),
           isGuruMode: false,
@@ -282,7 +302,8 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
       messages: [
         ChatMessage(
           id: 'welcome_guru',
-          text: AppTranslations.get('welcomeGuru', currentLanguage),
+          text: AppTranslations.get('welcomeGuru', currentLanguage)
+              .replaceAll('{name}', _welcomeName(_ref, currentLanguage)),
           role: 'assistant',
           timestamp: DateTime.now(),
           isGuruMode: true,

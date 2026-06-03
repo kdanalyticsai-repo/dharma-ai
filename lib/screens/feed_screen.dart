@@ -203,12 +203,12 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          dailyVerse.sanskritText,
-                          style: GoogleFonts.newsreader(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w400,
+                          _formatSanskrit(dailyVerse.sanskritText),
+                          style: GoogleFonts.notoSansDevanagari(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
                             color: Colors.white.withOpacity(0.95),
-                            height: 1.6,
+                            height: 1.8,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -394,6 +394,18 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
         ),
       ),
     );
+  }
+
+  // Lay out a Sanskrit verse for comfortable reading: each pāda on its own
+  // line (break after the daṇḍa "।" / double-daṇḍa "॥"), trimmed of blanks.
+  String _formatSanskrit(String s) {
+    return s
+        .replaceAll(RegExp(r'\s*[\r\n]+\s*'), '\n') // normalise existing breaks
+        .replaceAllMapped(RegExp(r'[।॥]'), (m) => '${m.group(0)}\n')
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .join('\n');
   }
 
   // Subscription tier pill shown under the greeting (matches the profile badge).

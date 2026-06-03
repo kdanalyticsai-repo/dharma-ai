@@ -281,16 +281,16 @@ class AppTranslations {
 
     // Chat
     'welcomeScripture': {
-      AppLanguage.english: 'Radhey Radhey. I am your AI Scripture Scholar. Ask me anything about the Bhagavad Gita or other scriptures, and I will cross-reference them to give you precise philosophical context and verse citations.',
-      AppLanguage.tamil: 'ராதே ராதே. நான் உங்கள் AI வேத அறிஞர். பகவத் கீதை அல்லது பிற புனித நூல்களைப் பற்றி என்னிடம் எதையும் கேளுங்கள், துல்லியமான தத்துவ பின்னணி மற்றும் வசன மேற்கோள்களை உங்களுக்கு வழங்க நான் அவற்றை ஒப்பிடுவேன்.',
-      AppLanguage.hindi: 'राधे राधे। मैं आपका एआई शास्त्र विद्वान हूँ। मुझसे भगवद्गीता या अन्य ग्रंथों के बारे में कुछ भी पूछें, और मैं आपको सटीक दार्शनिक संदर्भ और श्लोक संदर्भ देने के लिए उनका मिलान करूँगा।',
-      AppLanguage.bengali: 'রাধে রাধে। আমি আপনার এআই শাস্ত্র পণ্ডিত। আমাকে ভগবদ্গীতা বা অন্যান্য শাস্ত্র সম্পর্কে যেকোনো প্রশ্ন জিজ্ঞাসা করুন এবং আমি আপনাকে সঠিক দার্শনিক প্রসঙ্গ এবং শ্লোক উদ্ধৃতি দেওয়ার জন্য সেগুলি যাচাই করব।',
+      AppLanguage.english: 'Radhey Radhey, {name}. I am your AI Scripture Scholar. Ask me anything about the Bhagavad Gita or other scriptures, and I will cross-reference them to give you precise philosophical context and verse citations.',
+      AppLanguage.tamil: 'ராதே ராதே, {name}. நான் உங்கள் AI வேத அறிஞர். பகவத் கீதை அல்லது பிற புனித நூல்களைப் பற்றி என்னிடம் எதையும் கேளுங்கள், துல்லியமான தத்துவ பின்னணி மற்றும் வசன மேற்கோள்களை உங்களுக்கு வழங்க நான் அவற்றை ஒப்பிடுவேன்.',
+      AppLanguage.hindi: 'राधे राधे, {name}। मैं आपका एआई शास्त्र विद्वान हूँ। मुझसे भगवद्गीता या अन्य ग्रंथों के बारे में कुछ भी पूछें, और मैं आपको सटीक दार्शनिक संदर्भ और श्लोक संदर्भ देने के लिए उनका मिलान करूँगा।',
+      AppLanguage.bengali: 'রাধে রাধে, {name}। আমি আপনার এআই শাস্ত্র পণ্ডিত। আমাকে ভগবদ্গীতা বা অন্যান্য শাস্ত্র সম্পর্কে যেকোনো প্রশ্ন জিজ্ঞাসা করুন এবং আমি আপনাকে সঠিক দার্শনিক প্রসঙ্গ এবং শ্লোক উদ্ধৃতি দেওয়ার জন্য সেগুলি যাচাই করব।',
     },
     'welcomeGuru': {
-      AppLanguage.english: 'Radhey Radhey, dear seeker. I am here to walk beside you on your path. Tell me what is in your heart, or what doubts cloud your mind, and let us seek clarity together.',
-      AppLanguage.tamil: 'ராதே ராதே, அன்பான தேடுபவரே. உங்கள் பாதையில் உங்களுடன் நடக்க நான் இங்கே இருக்கிறேன். உங்கள் இதயத்தில் என்ன இருக்கிறது, அல்லது உங்கள் மனதை என்ன சந்தேகங்கள் மேகமூட்டுகின்றன என்று எனக்குச் சொல்லுங்கள், நாம் சேர்ந்து தெளிவு தேடுவோம்.',
-      AppLanguage.hindi: 'राधे राधे, प्रिय साधक। मैं आपकी यात्रा में आपके साथ चलने के लिए यहाँ हूँ। मुझे बताएं कि आपके दिल में क्या है, या कौन से संदेह आपके दिमाग को बादलों की तरह घेरे हुए हैं, और आइए मिलकर स्पष्टता खोजें।',
-      AppLanguage.bengali: 'রাধে রাধে, প্রিয় অন্বেষক। আমি আপনার পথে আপনার পাশে হাঁটার জন্য এখানে আছি। আপনার হৃদয়ে কী আছে বা কী ধরণের সন্দেহ আপনার মনকে মেঘাচ্ছন্ন করেছে তা আমাকে বলুন এবং আসুন একসাথে স্বচ্ছতা সন্ধান করি।',
+      AppLanguage.english: 'Radhey Radhey, {name}. I am here to walk beside you on your path. Tell me what is in your heart, or what doubts cloud your mind, and let us seek clarity together.',
+      AppLanguage.tamil: 'ராதே ராதே, {name}. உங்கள் பாதையில் உங்களுடன் நடக்க நான் இங்கே இருக்கிறேன். உங்கள் இதயத்தில் என்ன இருக்கிறது, அல்லது உங்கள் மனதை என்ன சந்தேகங்கள் மேகமூட்டுகின்றன என்று எனக்குச் சொல்லுங்கள், நாம் சேர்ந்து தெளிவு தேடுவோம்.',
+      AppLanguage.hindi: 'राधे राधे, {name}। मैं आपकी यात्रा में आपके साथ चलने के लिए यहाँ हूँ। मुझे बताएं कि आपके दिल में क्या है, या कौन से संदेह आपके दिमाग को बादलों की तरह घेरे हुए हैं, और आइए मिलकर स्पष्टता खोजें।',
+      AppLanguage.bengali: 'রাধে রাধে, {name}। আমি আপনার পথে আপনার পাশে হাঁটার জন্য এখানে আছি। আপনার হৃদয়ে কী আছে বা কী ধরণের সন্দেহ আপনার মনকে মেঘাচ্ছন্ন করেছে তা আমাকে বলুন এবং আসুন একসাথে স্বচ্ছতা সন্ধান করি।',
     },
     'errorScripture': {
       AppLanguage.english: 'I apologize, dear seeker. A connection issue occurred. Please try again.',
