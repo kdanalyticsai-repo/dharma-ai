@@ -310,7 +310,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: CircleIconButton(
-              icon: Icons.settings_rounded,
+              icon: Icons.tune_rounded,
               tooltip: 'Settings',
               onPressed: () => _showSanctuarySettings(context, isPaid: isPaid),
             ),
