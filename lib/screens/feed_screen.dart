@@ -412,7 +412,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
             ? '★ Sadhaka Premium'
             : 'Free Seeker';
     final accent = isAnnual
-        ? SacredTheme.templeGold
+        ? SacredTheme.deepGold
         : isSadhaka
             ? SacredTheme.primary
             : SacredTheme.outline;
@@ -421,7 +421,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: isAnnual
-            ? SacredTheme.templeGold.withOpacity(0.12)
+            ? SacredTheme.deepGold.withOpacity(0.12)
             : isSadhaka
                 ? SacredTheme.primary.withOpacity(0.1)
                 : SacredTheme.outlineVariant.withOpacity(0.3),

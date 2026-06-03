@@ -358,14 +358,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: tier == SubscriptionTier.annual
-                                    ? SacredTheme.templeGold.withOpacity(0.2)
+                                    ? SacredTheme.deepGold.withOpacity(0.18)
                                     : tier == SubscriptionTier.sadhaka
                                         ? SacredTheme.primary.withOpacity(0.12)
                                         : SacredTheme.outlineVariant.withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
                                 border: Border.all(
                                   color: tier == SubscriptionTier.annual
-                                      ? SacredTheme.templeGold.withOpacity(0.5)
+                                      ? SacredTheme.deepGold.withOpacity(0.5)
                                       : tier == SubscriptionTier.sadhaka
                                           ? SacredTheme.primary.withOpacity(0.3)
                                           : SacredTheme.outlineVariant,
@@ -382,7 +382,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                   color: tier == SubscriptionTier.annual
-                                      ? SacredTheme.templeGold
+                                      ? SacredTheme.deepGold
                                       : tier == SubscriptionTier.sadhaka
                                           ? SacredTheme.primary
                                           : SacredTheme.outline,

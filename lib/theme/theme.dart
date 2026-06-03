@@ -40,6 +40,9 @@ class SacredTheme {
   static const Color deepMeditativeIndigo = Color(0xFF0D1A38);
   static const Color parchmentCream = Color(0xFFFDF5E6);
   static const Color templeGold = Color(0xFFD4AF37);
+  // Darker, saffron-leaning gold used for subscription badges (more contrast
+  // than templeGold on light surfaces).
+  static const Color deepGold = Color(0xFFA85A07);
 
   // Dark mode surface colors
   static const Color surfaceDark = Color(0xFF1A1210);

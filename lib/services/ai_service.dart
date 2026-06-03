@@ -33,14 +33,25 @@ class AiService {
 
   // ── 1. Scripture Chat (RAG) ───────────────────────────────────
 
+  // Appends a personalisation line so the AI addresses the user by their first
+  // name instead of "seeker".
+  static String _withName(String base, String? userName) {
+    final first = (userName ?? '').trim().split(' ').first.trim();
+    if (first.isEmpty) return base;
+    return '$base\nThe person you are speaking with is named $first. Address '
+        'them warmly by their first name (for example, "Hari Om, $first") '
+        'rather than calling them "seeker".';
+  }
+
   Future<Map<String, dynamic>> generateScriptureResponse(
     String prompt,
     List<Verse> contextVerses,
-    AppLanguage language,
-  ) async {
+    AppLanguage language, {
+    String? userName,
+  }) async {
     if (OpenAIConfig.isConfigured) {
       try {
-        return await _callOpenAIScripture(prompt, contextVerses, language);
+        return await _callOpenAIScripture(prompt, contextVerses, language, userName);
       } catch (e) {
         debugPrint('⚠️  OpenAI Scripture error: $e');
         return {'text': '⚠️ AI error: $e', 'citations': <String>[]};
@@ -55,11 +66,12 @@ class AiService {
   Future<String> generateGuruResponse(
     String prompt,
     List<ChatMessage> history,
-    AppLanguage language,
-  ) async {
+    AppLanguage language, {
+    String? userName,
+  }) async {
     if (OpenAIConfig.isConfigured) {
       try {
-        return await _callOpenAIGuru(prompt, history, language);
+        return await _callOpenAIGuru(prompt, history, language, userName);
       } catch (e) {
         debugPrint('⚠️  OpenAI Guru error: $e');
         return '⚠️ AI error: $e';
@@ -112,6 +124,7 @@ class AiService {
     String prompt,
     List<Verse> contextVerses,
     AppLanguage language,
+    String? userName,
   ) async {
     final contextBlock = contextVerses.isNotEmpty
         ? contextVerses.map((v) =>
@@ -127,7 +140,7 @@ class AiService {
         : 'Respond in ${language.displayName} if possible, otherwise English.';
 
     final messages = [
-      {'role': 'system', 'content': _scriptureSystemPrompt},
+      {'role': 'system', 'content': _withName(_scriptureSystemPrompt, userName)},
       {
         'role': 'user',
         'content': 'Verse context:\n$contextBlock\n\nQuestion: $prompt\n\n$languageNote'
@@ -153,6 +166,7 @@ class AiService {
     String prompt,
     List<ChatMessage> history,
     AppLanguage language,
+    String? userName,
   ) async {
     final languageNote = language == AppLanguage.english
         ? 'Respond in English.'
@@ -160,7 +174,7 @@ class AiService {
 
     // Build messages: system + history + current message
     final messages = <Map<String, String>>[
-      {'role': 'system', 'content': _guruSystemPrompt},
+      {'role': 'system', 'content': _withName(_guruSystemPrompt, userName)},
     ];
 
     // Add conversation history (skip welcome message at index 0)

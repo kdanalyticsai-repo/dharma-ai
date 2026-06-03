@@ -6,6 +6,7 @@ import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/services/ai_service.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
+import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/qa_cache_service.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
@@ -203,7 +204,10 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       if (result == null) {
         // Cache miss — perform RAG search, call the AI, then cache the answer.
         final contextVerses = await scriptureService.searchScriptures(text);
-        result = await aiService.generateScriptureResponse(text, contextVerses, currentLanguage);
+        result = await aiService.generateScriptureResponse(
+          text, contextVerses, currentLanguage,
+          userName: _ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?,
+        );
         await cache.put(text, currentLanguage, result);
       }
 
@@ -386,7 +390,10 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
               : state.messages;
 
       // Request AI response with tier-appropriate history
-      final responseText = await aiService.generateGuruResponse(text, contextMessages, currentLanguage);
+      final responseText = await aiService.generateGuruResponse(
+        text, contextMessages, currentLanguage,
+        userName: _ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?,
+      );
 
       final assistantMessage = ChatMessage(
         id: DateTime.now().toString(),
