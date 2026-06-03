@@ -4,8 +4,11 @@ import 'package:dharma_ai/services/supabase_sync.dart';
 enum SubscriptionTier { free, sadhaka, annual }
 
 class PurchaseService {
-  static const String _subKey = 'dharma_sub_tier';
-  static const String _planKey = 'dharma_plan'; // free|monthly|quarterly|annual
+  // Per-account local cache keys so a free user on a shared device can never
+  // inherit another account's tier/plan. The cloud profiles.subscription_tier
+  // remains the authoritative source when signed in.
+  String get _subKey => 'dharma_sub_tier_${SupabaseSync.userId ?? 'anon'}';
+  String get _planKey => 'dharma_plan_${SupabaseSync.userId ?? 'anon'}'; // free|monthly|quarterly|annual
 
   // Pricing (INR) — matches the paywall screen.
   static const int _sadhakaInr = 199;

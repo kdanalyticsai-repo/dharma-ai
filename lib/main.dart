@@ -76,9 +76,12 @@ class DharmaApp extends ConsumerWidget {
       // locally-cached conversation reloads under the new account's key
       // (prevents one user's chat showing for another on a shared browser).
       ref.invalidate(purchaseProvider);
+      ref.invalidate(activePlanProvider);
+      ref.invalidate(subscriptionEndProvider);
       ref.invalidate(bookmarksProvider);
       ref.invalidate(sadhanaProvider);
       ref.invalidate(guruChatProvider);
+      ref.invalidate(dailyPromptCounterProvider);
       ref.invalidate(languageProvider);
     });
 

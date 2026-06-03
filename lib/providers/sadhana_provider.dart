@@ -54,6 +54,10 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     _load();
   }
 
+  // Per-account key prefix so a shared device never shows one user's streak
+  // or daily progress to another (cloud sadhana_records is per-user too).
+  String _pk(String base) => '${base}_${SupabaseSync.userId ?? 'anon'}';
+
   String get _today => DateTime.now().toIso8601String().substring(0, 10);
   String get _yesterday => DateTime.now()
       .subtract(const Duration(days: 1))
@@ -62,12 +66,12 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    int streak = prefs.getInt('sadhana_streak') ?? 0;
-    int meditation = prefs.getInt('today_meditation') ?? 0;
-    int verses = prefs.getInt('today_verses') ?? 0;
-    int chanting = prefs.getInt('today_chanting') ?? 0;
-    final lastActive = prefs.getString('sadhana_last_active');
-    final lastCompleted = prefs.getString('sadhana_last_completed');
+    int streak = prefs.getInt(_pk('sadhana_streak')) ?? 0;
+    int meditation = prefs.getInt(_pk('today_meditation')) ?? 0;
+    int verses = prefs.getInt(_pk('today_verses')) ?? 0;
+    int chanting = prefs.getInt(_pk('today_chanting')) ?? 0;
+    final lastActive = prefs.getString(_pk('sadhana_last_active'));
+    final lastCompleted = prefs.getString(_pk('sadhana_last_completed'));
 
     // Day rollover: it's a new calendar day since the goals were last touched.
     if (lastActive != null && lastActive != _today) {
@@ -75,17 +79,17 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
       meditation = 0;
       verses = 0;
       chanting = 0;
-      await prefs.setInt('today_meditation', 0);
-      await prefs.setInt('today_verses', 0);
-      await prefs.setInt('today_chanting', 0);
+      await prefs.setInt(_pk('today_meditation'), 0);
+      await prefs.setInt(_pk('today_verses'), 0);
+      await prefs.setInt(_pk('today_chanting'), 0);
       // Break the streak if at least one full day was missed (last completed
       // day is neither today nor yesterday).
       if (lastCompleted != _today && lastCompleted != _yesterday) {
         streak = 0;
-        await prefs.setInt('sadhana_streak', 0);
+        await prefs.setInt(_pk('sadhana_streak'), 0);
       }
     }
-    await prefs.setString('sadhana_last_active', _today);
+    await prefs.setString(_pk('sadhana_last_active'), _today);
 
     state = state.copyWith(
       streak: streak,
@@ -142,7 +146,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
   Future<void> incrementMeditation(int minutes) async {
     final prefs = await SharedPreferences.getInstance();
     final newVal = state.todayMeditation + minutes;
-    await prefs.setInt('today_meditation', newVal);
+    await prefs.setInt(_pk('today_meditation'), newVal);
     state = state.copyWith(todayMeditation: newVal);
     await _checkAndUpdateStreak();
     await _syncRemote();
@@ -151,7 +155,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
   Future<void> incrementVerses() async {
     final prefs = await SharedPreferences.getInstance();
     final newVal = state.todayVerses + 1;
-    await prefs.setInt('today_verses', newVal);
+    await prefs.setInt(_pk('today_verses'), newVal);
     state = state.copyWith(todayVerses: newVal);
     await _checkAndUpdateStreak();
     await _syncRemote();
@@ -160,7 +164,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
   Future<void> incrementChanting(int rounds) async {
     final prefs = await SharedPreferences.getInstance();
     final newVal = state.todayChanting + rounds;
-    await prefs.setInt('today_chanting', newVal);
+    await prefs.setInt(_pk('today_chanting'), newVal);
     state = state.copyWith(todayChanting: newVal);
     await _checkAndUpdateStreak();
     await _syncRemote();
@@ -168,9 +172,9 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
 
   Future<void> resetToday() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('today_meditation', 0);
-    await prefs.setInt('today_verses', 0);
-    await prefs.setInt('today_chanting', 0);
+    await prefs.setInt(_pk('today_meditation'), 0);
+    await prefs.setInt(_pk('today_verses'), 0);
+    await prefs.setInt(_pk('today_chanting'), 0);
     state = state.copyWith(
       todayMeditation: 0,
       todayVerses: 0,
@@ -187,14 +191,14 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     if (!goalsMet) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final lastCompleted = prefs.getString('sadhana_last_completed');
+    final lastCompleted = prefs.getString(_pk('sadhana_last_completed'));
     if (lastCompleted == _today) return; // already counted today
 
     // Continue the streak if yesterday counted; otherwise start fresh at 1.
     final newStreak = (lastCompleted == _yesterday) ? state.streak + 1 : 1;
-    await prefs.setInt('sadhana_streak', newStreak);
-    await prefs.setString('sadhana_last_completed', _today);
-    await prefs.setString('sadhana_last_active', _today);
+    await prefs.setInt(_pk('sadhana_streak'), newStreak);
+    await prefs.setString(_pk('sadhana_last_completed'), _today);
+    await prefs.setString(_pk('sadhana_last_active'), _today);
     state = state.copyWith(streak: newStreak);
   }
 }

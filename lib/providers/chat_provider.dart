@@ -24,8 +24,10 @@ const int kPaidHistoryDepth = 10;
 class DailyPromptCounter extends StateNotifier<int> {
   DailyPromptCounter() : super(0) { _load(); }
 
-  static const _countKey = _kSharedCountKey;
-  static const _dateKey  = _kSharedDateKey;
+  // Per-account daily pool so users on a shared device don't consume each
+  // other's free prompts.
+  String get _countKey => 'ai_daily_count_${SupabaseSync.userId ?? 'anon'}';
+  String get _dateKey  => 'ai_daily_date_${SupabaseSync.userId ?? 'anon'}';
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -119,15 +121,10 @@ class ChatState {
   }
 }
 
-// State notifier for Scripture Chat (RAG-based)
-// Shared keys — both chat modes draw from the same 11-prompt daily pool
-const _kSharedCountKey = 'ai_daily_count';
-const _kSharedDateKey  = 'ai_daily_date';
-
+// State notifier for Scripture Chat (RAG-based). Both chat modes draw from the
+// same per-account daily pool via dailyPromptCounterProvider.
 class ScriptureChatNotifier extends StateNotifier<ChatState> {
   final Ref _ref;
-  static const _prefKeyCount = _kSharedCountKey;
-  static const _prefKeyDate  = _kSharedDateKey;
 
   ScriptureChatNotifier(this._ref) : super(const ChatState(messages: [], isLoading: false)) {
     final currentLanguage = _ref.read(languageProvider);
@@ -274,8 +271,6 @@ final scriptureChatProvider = StateNotifierProvider<ScriptureChatNotifier, ChatS
 // State notifier for Guru Mode (Conversation Memory)
 class GuruChatNotifier extends StateNotifier<ChatState> {
   final Ref _ref;
-  static const _prefKeyCount = _kSharedCountKey; // same pool as Scripture Scholar
-  static const _prefKeyDate  = _kSharedDateKey;
 
   GuruChatNotifier(this._ref) : super(const ChatState(messages: [], isLoading: false)) {
     final currentLanguage = _ref.read(languageProvider);

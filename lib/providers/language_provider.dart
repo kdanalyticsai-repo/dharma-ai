@@ -50,7 +50,9 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
     _load();
   }
 
-  static const _prefKey = 'preferred_language';
+  // Per-account key so a shared device doesn't carry one user's language to
+  // another (cloud profiles.preferred_language is the cross-device source).
+  String get _prefKey => 'preferred_language_${SupabaseSync.userId ?? 'anon'}';
 
   // Restore the saved language: device cache first (instant, survives refresh),
   // then the account's stored choice so it follows the user across devices.
