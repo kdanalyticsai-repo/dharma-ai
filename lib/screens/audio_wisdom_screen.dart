@@ -24,6 +24,8 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
   late AudioPlayer _audioPlayer;
   int _selectedTrackIndex = 0;
   bool _isBuffering = false;
+  // Real track lengths, fetched from the audio metadata (replaces estimates).
+  final Map<int, Duration> _durations = {};
 
   @override
   void initState() {
@@ -39,6 +41,23 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
         });
       }
     });
+
+    _loadDurations();
+  }
+
+  // Fetch each track's true duration (metadata only) so the UI never shows a
+  // hardcoded estimate. Runs in the background; durations fill in as they load.
+  Future<void> _loadDurations() async {
+    for (int i = 0; i < bgAudioTracks.length; i++) {
+      try {
+        final probe = AudioPlayer();
+        final d = await probe.setUrl(bgAudioTracks[i].audioUrl);
+        await probe.dispose();
+        if (d != null && mounted) setState(() => _durations[i] = d);
+      } catch (_) {
+        // skip tracks that fail to probe
+      }
+    }
   }
 
   Future<void> _initTrack(int index, {required bool play}) async {
@@ -245,10 +264,13 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                                         Text(_fmt(pos),
                                             style: textTheme.labelSmall),
                                         Text(
-                                          // show real duration once loaded, else catalogue estimate
-                                          total == Duration.zero
-                                              ? track.duration
-                                              : _fmt(total),
+                                          // real duration once loaded; else the
+                                          // pre-probed length, else a placeholder
+                                          total != Duration.zero
+                                              ? _fmt(total)
+                                              : _durations[_selectedTrackIndex] != null
+                                                  ? _fmt(_durations[_selectedTrackIndex]!)
+                                                  : '--:--',
                                           style: textTheme.labelSmall,
                                         ),
                                       ],
@@ -394,7 +416,7 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                                   style: textTheme.labelSmall,
                                 ),
                                 trailing: Text(
-                                  t.duration,
+                                  _durations[i] != null ? _fmt(_durations[i]!) : '--:--',
                                   style: textTheme.labelSmall,
                                 ),
                                 onTap: () => _initTrack(i, play: true),
