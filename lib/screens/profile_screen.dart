@@ -17,6 +17,7 @@ import 'package:dharma_ai/screens/offline_reader_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
+import 'package:dharma_ai/widgets/legal_footer.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -142,6 +143,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                   }
                 },
               ),
+              const Divider(),
+              const LegalFooter(),
               const SizedBox(height: 12),
             ],
           ),

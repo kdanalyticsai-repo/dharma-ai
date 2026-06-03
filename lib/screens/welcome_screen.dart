@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/dharma_logo.dart';
+import 'package:dharma_ai/widgets/legal_footer.dart';
 import 'package:dharma_ai/screens/login_screen.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 
@@ -213,6 +214,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         textAlign: TextAlign.center,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    const LegalFooter(),
                     const SizedBox(height: SacredTheme.safeAreaBottom),
                   ],
                 ),
