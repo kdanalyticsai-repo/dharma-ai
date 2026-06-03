@@ -7,6 +7,7 @@ import 'package:dharma_ai/providers/community_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/subscription_paywall_screen.dart';
+import 'package:dharma_ai/screens/gift_subscription_screen.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
@@ -20,88 +21,10 @@ class SanghaScreen extends ConsumerStatefulWidget {
 
 class _SanghaScreenState extends ConsumerState<SanghaScreen> {
   final TextEditingController _postController = TextEditingController();
-  final TextEditingController _giftFriendController = TextEditingController();
-
-  void _showGiftDialog(BuildContext context) {
-    final currentLanguage = ref.read(languageProvider);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: SacredTheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(SacredTheme.radiusMd),
-          ),
-          title: Text(
-            AppTranslations.get('giftWisdomPassTitle', currentLanguage),
-            style: GoogleFonts.newsreader(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: SacredTheme.headingColor(context),
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppTranslations.get('giftWisdomPassDesc', currentLanguage),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _giftFriendController,
-                decoration: InputDecoration(
-                  labelText: AppTranslations.get('friendNameLabel', currentLanguage),
-                  hintText: 'e.g. Ramesh, Anand',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(SacredTheme.radiusDefault),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _giftFriendController.clear();
-                Navigator.pop(context);
-              },
-              child: Text(
-                AppTranslations.get('cancelBtn', currentLanguage),
-                style: const TextStyle(color: SacredTheme.outline),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final friend = _giftFriendController.text;
-                if (friend.trim().isNotEmpty) {
-                  // Log the gift in the community feed
-                  ref.read(communityProvider.notifier).logGift(friend);
-                  _giftFriendController.clear();
-                  Navigator.pop(context);
-                  
-                  // Show success snackbar
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${AppTranslations.get('giftSuccessPrefix', currentLanguage)} $friend${AppTranslations.get('giftSuccessSuffix', currentLanguage)}'),
-                      backgroundColor: SacredTheme.deepSaffron,
-                    ),
-                  );
-                }
-              },
-              child: Text(AppTranslations.get('giftPassBtn', currentLanguage)),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   @override
   void dispose() {
     _postController.dispose();
-    _giftFriendController.dispose();
     super.dispose();
   }
 
@@ -148,11 +71,14 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
                         style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                       onPressed: () {
-                        if (isPaid) {
-                          _showGiftDialog(context);
-                        } else {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionPaywallScreen()));
-                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => isPaid
+                                ? const GiftSubscriptionScreen()
+                                : const SubscriptionPaywallScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
