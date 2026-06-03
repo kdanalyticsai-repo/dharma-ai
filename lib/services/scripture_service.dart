@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/models/verse.dart';
@@ -39,6 +40,38 @@ class ScriptureService {
 
     await Future.delayed(const Duration(milliseconds: 200));
     return MockScriptureData.gitaVerses;
+  }
+
+  // Pick ONE random verse across ALL books (Gita, Vedas, Upanishads) for the
+  // Feed's Daily Reflection. Efficient: counts the table, then fetches just the
+  // single verse at a random offset (no full-table download).
+  Future<Verse?> getRandomReflection() async {
+    try {
+      if (_supabase != null) {
+        final count = await _supabase!.from('verses').count(CountOption.exact);
+        if (count > 0) {
+          final offset = Random().nextInt(count);
+          final response = await _supabase!
+              .from('verses')
+              .select()
+              .order('id', ascending: true)
+              .range(offset, offset);
+          final list = (response as List)
+              .map((item) => Verse.fromJson(item as Map<String, dynamic>))
+              .toList();
+          if (list.isNotEmpty) return list.first;
+        }
+      }
+    } catch (e) {
+      print('Random reflection load failed, falling back to samples: $e');
+    }
+    // Offline / unavailable → random from the bundled samples (all books).
+    final pool = [
+      ...MockScriptureData.gitaVerses,
+      ...MockScriptureData.upanishadVerses,
+      ...MockScriptureData.vedaVerses,
+    ];
+    return pool.isEmpty ? null : pool[Random().nextInt(pool.length)];
   }
 
   // Fetch one Veda (Rig / Yajur / Atharva) by name. Queries per-book with a

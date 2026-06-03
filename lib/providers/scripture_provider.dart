@@ -25,6 +25,13 @@ final upanishadVersesProvider = FutureProvider<List<Verse>>((ref) async {
   return service.getUpanishadVerses();
 });
 
+// One random verse across ALL books for the Feed's Daily Reflection. Computed
+// once per app launch, so it rotates on every page refresh.
+final dailyReflectionProvider = FutureProvider<Verse?>((ref) async {
+  final service = ref.watch(scriptureServiceProvider);
+  return service.getRandomReflection();
+});
+
 // Resolves the user's bookmarks into full verses across ALL books
 // (Gita, Vedas, Upanishads) — used by the Saved Wisdom tab.
 final bookmarkedVersesProvider = FutureProvider<List<Verse>>((ref) async {

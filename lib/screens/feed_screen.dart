@@ -49,14 +49,11 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                 .valueOrNull ??
             firstName);
 
-    // Rotate the daily verse by day-of-year across the full Gita from
-    // Supabase; fall back to the bundled samples while loading / offline.
-    final allVerses = ref.watch(versesProvider).valueOrNull;
-    final List<Verse> versePool = (allVerses != null && allVerses.isNotEmpty)
-        ? allVerses
-        : MockScriptureData.gitaVerses;
-    final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
-    final Verse dailyVerse = versePool[dayOfYear % versePool.length];
+    // Daily Reflection: one random verse drawn from ALL books (Gita, Vedas,
+    // Upanishads). Recomputed each app launch, so it rotates on every refresh.
+    // While loading, show a bundled sample so the card never appears empty.
+    final Verse dailyVerse = ref.watch(dailyReflectionProvider).valueOrNull ??
+        MockScriptureData.gitaVerses.first;
 
     return Scaffold(
       body: MandalaBackground(
@@ -227,7 +224,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                         Align(
                           alignment: Alignment.bottomRight,
                           child: Text(
-                            '${AppTranslations.get('bhagavadGita', currentLanguage)} ${dailyVerse.chapter}.${dailyVerse.verseNumber} ➔',
+                            '${dailyVerse.bookName == 'Bhagavad Gita' ? AppTranslations.get('bhagavadGita', currentLanguage) : dailyVerse.bookName} ${dailyVerse.chapter}.${dailyVerse.verseNumber} ➔',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
