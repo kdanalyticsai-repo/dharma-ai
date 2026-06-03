@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/sadhana_provider.dart';
@@ -202,77 +201,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     );
   }
 
-  // Per-account key so a shared device/browser never shows one user's note
-  // to another. (A previous global key leaked notes between users.)
-  String get _noteKey => 'personal_note_${SupabaseSync.userId ?? 'anon'}';
-
-  // Load the personal note: the account is the source of truth; the per-user
-  // local cache is just for instant paint / offline.
+  // Load the personal note straight from the account — the ONLY source of
+  // truth. No local cache: a device-local cache previously leaked notes between
+  // users on a shared browser, so the note is now strictly per-account
+  // (Supabase row + RLS).
   Future<void> _loadPersonalNote() async {
-    final prefs = await SharedPreferences.getInstance();
-    final localNote = prefs.getString(_noteKey) ?? '';
-    if (mounted && _noteController.text.isEmpty) {
-      _noteController.text = localNote;
-    }
-
     final client = SupabaseSync.client;
     final uid = SupabaseSync.userId;
-    if (client == null || uid == null) return; // offline / signed-out → local only
-
+    if (client == null || uid == null) {
+      if (mounted) _noteController.text = '';
+      return;
+    }
     try {
       final row = await client
           .from('profiles')
           .select('personal_note')
           .eq('id', uid)
           .maybeSingle();
-      final cloudNote = (row?['personal_note'] as String?) ?? '';
-
-      if (cloudNote.isNotEmpty) {
-        // Account has a note → it's the source of truth.
-        if (mounted) _noteController.text = cloudNote;
-        await prefs.setString(_noteKey, cloudNote);
-      } else if (localNote.isNotEmpty) {
-        // Account is empty but this user has a local note (e.g. saved offline).
-        // Safe to push up: the key is per-user, so it's this user's own note.
-        await client.from('profiles').update({'personal_note': localNote}).eq('id', uid);
-      } else {
-        // Both empty → ensure the field shows nothing for this account.
-        if (mounted) _noteController.text = '';
-      }
+      final note = (row?['personal_note'] as String?) ?? '';
+      if (mounted) _noteController.text = note;
     } catch (_) {
-      // Network/Supabase issue → keep the local (per-user) copy already shown.
+      // Offline / unreachable → leave empty; the note lives in the account
+      // and loads when back online.
     }
   }
 
   Future<void> _savePersonalNote(String text) async {
-    setState(() => _isSavingNote = true);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_noteKey, text); // per-user offline cache
-
-    bool cloudSaved = false;
     final client = SupabaseSync.client;
     final uid = SupabaseSync.userId;
-    if (client != null && uid != null) {
-      try {
-        await client.from('profiles').update({
-          'personal_note': text,
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', uid);
-        cloudSaved = true;
-      } catch (_) {
-        cloudSaved = false; // keep local copy; user can retry when online
-      }
+    if (client == null || uid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to save your note.')),
+      );
+      return;
     }
-
+    setState(() => _isSavingNote = true);
+    bool saved = false;
+    try {
+      await client.from('profiles').update({
+        'personal_note': text,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', uid);
+      saved = true;
+    } catch (_) {
+      saved = false;
+    }
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
       setState(() => _isSavingNote = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(cloudSaved
+          content: Text(saved
               ? 'Note saved to your account — available on all your devices.'
-              : 'Saved on this device. Sign in or reconnect to sync everywhere.'),
-          backgroundColor: SacredTheme.primary,
+              : 'Could not save. Please check your connection and try again.'),
+          backgroundColor: saved ? SacredTheme.primary : null,
           duration: const Duration(seconds: 2),
         ),
       );
