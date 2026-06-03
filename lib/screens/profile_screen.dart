@@ -202,15 +202,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     );
   }
 
-  static const String _kNoteKey = 'spiritual_journal_note';
+  // Per-account key so a shared device/browser never shows one user's note
+  // to another. (A previous global key leaked notes between users.)
+  String get _noteKey => 'personal_note_${SupabaseSync.userId ?? 'anon'}';
 
-  // Load the personal note. Shows the local cache instantly, then pulls the
-  // authoritative copy from the user's account so it follows them across any
-  // device/browser. If the account has nothing yet but this device does,
-  // migrate the local note up to the cloud.
+  // Load the personal note: the account is the source of truth; the per-user
+  // local cache is just for instant paint / offline.
   Future<void> _loadPersonalNote() async {
     final prefs = await SharedPreferences.getInstance();
-    final localNote = prefs.getString(_kNoteKey) ?? '';
+    final localNote = prefs.getString(_noteKey) ?? '';
     if (mounted && _noteController.text.isEmpty) {
       _noteController.text = localNote;
     }
@@ -228,22 +228,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
       final cloudNote = (row?['personal_note'] as String?) ?? '';
 
       if (cloudNote.isNotEmpty) {
-        // Account is the source of truth.
+        // Account has a note → it's the source of truth.
         if (mounted) _noteController.text = cloudNote;
-        await prefs.setString(_kNoteKey, cloudNote);
+        await prefs.setString(_noteKey, cloudNote);
       } else if (localNote.isNotEmpty) {
-        // First sync: back up the existing local note to the account.
+        // Account is empty but this user has a local note (e.g. saved offline).
+        // Safe to push up: the key is per-user, so it's this user's own note.
         await client.from('profiles').update({'personal_note': localNote}).eq('id', uid);
+      } else {
+        // Both empty → ensure the field shows nothing for this account.
+        if (mounted) _noteController.text = '';
       }
     } catch (_) {
-      // Network/Supabase issue → keep the local copy already shown.
+      // Network/Supabase issue → keep the local (per-user) copy already shown.
     }
   }
 
   Future<void> _savePersonalNote(String text) async {
     setState(() => _isSavingNote = true);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kNoteKey, text); // offline cache
+    await prefs.setString(_noteKey, text); // per-user offline cache
 
     bool cloudSaved = false;
     final client = SupabaseSync.client;
@@ -509,6 +513,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                         TextField(
                           controller: _noteController,
                           maxLines: 8,
+                          maxLength: 5000,
                           decoration: InputDecoration(
                             hintText: 'Enter your thoughts here...',
                             hintStyle: textTheme.bodyMedium?.copyWith(color: SacredTheme.outline),
