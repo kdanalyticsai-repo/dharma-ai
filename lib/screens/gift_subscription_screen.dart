@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/providers/community_provider.dart';
-import 'package:dharma_ai/providers/purchase_provider.dart';
-import 'package:dharma_ai/services/purchase_service.dart';
+import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/config/payment_config.dart';
+import 'package:dharma_ai/services/razorpay_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 
@@ -17,106 +21,151 @@ class GiftSubscriptionScreen extends ConsumerStatefulWidget {
 
 class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen> {
   final TextEditingController _friendNameController = TextEditingController();
-  final TextEditingController _friendEmailController = TextEditingController();
-  final TextEditingController _giftMessageController = TextEditingController();
   bool _isProcessing = false;
 
-  Future<void> _handleGiftPurchase() async {
-    final name = _friendNameController.text;
-    final email = _friendEmailController.text;
+  // Gift = a one-month Sadhaka Premium pass.
+  static const String _giftPlan = 'monthly';
+  static const String _giftLabel = 'Sadhaka Premium Monthly Pass';
+  static const String _giftPrice = '₹199';
 
-    if (name.trim().isEmpty || email.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please provide your friend\'s name and email.')),
-      );
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _handleGiftPurchase() async {
+    if (!kIsWeb || !PaymentConfig.isConfigured) {
+      _snack('Gifting is available on the web app (dharma.kdaanalytics.com).');
+      return;
+    }
+    final user = ref.read(authUserProvider).valueOrNull;
+    if (user == null) {
+      _snack('Please sign in to gift a pass.');
       return;
     }
 
     setState(() => _isProcessing = true);
-    
-    // Call service to generate code
-    final code = await ref.read(purchaseServiceProvider).purchaseGiftCode(name);
-    
-    // Log the gift in the Sangha community feed
-    ref.read(communityProvider.notifier).logGift(name);
+    String? code;
+    String? error;
+    try {
+      code = await RazorpayService().giftCheckout(
+        plan: _giftPlan,
+        userId: user.id,
+        email: user.email,
+        name: user.userMetadata?['full_name'] as String?,
+      );
+    } catch (e) {
+      error = e.toString().replaceFirst('Exception: ', '');
+    }
+    if (!mounted) return;
+    setState(() => _isProcessing = false);
 
-    if (mounted) {
-      setState(() => _isProcessing = false);
-      
-      // Clear inputs
-      _friendNameController.clear();
-      _friendEmailController.clear();
-      _giftMessageController.clear();
+    if (code != null) {
+      final friend = _friendNameController.text.trim();
+      ref.read(communityProvider.notifier).logGift(friend.isEmpty ? 'a friend' : friend);
+      _showGiftCodeDialog(code);
+    } else if (error != null) {
+      _snack(error);
+    }
+    // code == null && error == null  →  payment cancelled; do nothing.
+  }
 
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: SacredTheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
-          title: Text(
-            'Gift Pass Generated',
-            style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: SacredTheme.primary),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'You have successfully purchased a Sadhaka Premium Monthly Pass for $name. An email containing their activation code has been sent.',
-                style: Theme.of(context).textTheme.bodyMedium,
+  void _showGiftCodeDialog(String code) {
+    final friend = _friendNameController.text.trim();
+    final shareText =
+        'I\'ve gifted you a DharmaAI Sadhaka Premium pass! 🙏\n\n'
+        'Redeem this code in the app (Profile → Redeem a Gift Code):\n\n$code\n\n'
+        'https://dharma.kdaanalytics.com';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: SacredTheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
+        title: Text(
+          'Gift Pass Ready 🎁',
+          style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: SacredTheme.primary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              friend.isEmpty
+                  ? 'Share this code with your friend. They redeem it in the app under Profile → Redeem a Gift Code.'
+                  : 'Share this code with $friend. They redeem it under Profile → Redeem a Gift Code.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: SacredTheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                border: Border.all(color: SacredTheme.templeGold.withOpacity(0.5)),
               ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: SacredTheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
-                  border: Border.all(color: SacredTheme.templeGold.withOpacity(0.5)),
-                ),
-                child: Center(
-                  child: SelectableText(
-                    code,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: SacredTheme.primary,
-                      letterSpacing: 0.5,
-                    ),
+              child: Center(
+                child: SelectableText(
+                  code,
+                  style: GoogleFonts.robotoMono(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: SacredTheme.primary,
+                    letterSpacing: 1.0,
                   ),
                 ),
               ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Close gift screen
-              },
-              child: const Text('BACK TO SANGHA'),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.copy, size: 16),
+                    label: const Text('Copy'),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: code));
+                      _snack('Code copied');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.share, size: 16),
+                    label: const Text('WhatsApp'),
+                    onPressed: () => launchUrl(
+                      Uri.parse('https://wa.me/?text=${Uri.encodeComponent(shareText)}'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-      );
-    }
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text('DONE'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
     _friendNameController.dispose();
-    _friendEmailController.dispose();
-    _giftMessageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final tier = ref.watch(purchaseProvider);
-    final isAnnual = tier == SubscriptionTier.annual;
-    final giftLabel = isAnnual ? 'Sadhaka Annual Pass' : 'Sadhaka Premium Monthly Pass';
-    final giftPrice = isAnnual ? '₹1,499' : '₹199';
 
     return Scaffold(
       appBar: AppBar(
@@ -141,22 +190,20 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                 const SizedBox(height: 12),
                 Text(
                   'Share the Path of Wisdom',
-                  style: textTheme.headlineMedium?.copyWith(
-                    color: SacredTheme.headingColor(context),
-                  ),
+                  style: textTheme.headlineMedium?.copyWith(color: SacredTheme.headingColor(context)),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Help a fellow seeker study the scriptures and consult the AI spiritual guide by gifting them a $giftLabel ($giftPrice).',
+                  'Gift a fellow seeker a $_giftLabel ($_giftPrice). After payment you\'ll receive a code to share — they redeem it in the app to unlock Premium.',
                   style: textTheme.bodyMedium,
                 ),
                 const FadingDivider(height: 28),
 
-                // Friend's Name
+                // Recipient name (optional — used in the Sangha announcement)
                 TextField(
                   controller: _friendNameController,
                   decoration: InputDecoration(
-                    labelText: 'RECIPIENT NAME',
+                    labelText: "RECIPIENT NAME (OPTIONAL)",
                     labelStyle: textTheme.labelSmall?.copyWith(color: SacredTheme.outline),
                     hintText: 'e.g. Ramesh Devi',
                     filled: true,
@@ -165,41 +212,9 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                   ),
                   style: textTheme.bodyLarge,
                 ),
-                const SizedBox(height: 16),
-
-                // Friend's Email
-                TextField(
-                  controller: _friendEmailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'RECIPIENT EMAIL',
-                    labelStyle: textTheme.labelSmall?.copyWith(color: SacredTheme.outline),
-                    hintText: 'email@seeker.com',
-                    filled: true,
-                    fillColor: SacredTheme.surfaceContainerLow,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusDefault)),
-                  ),
-                  style: textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 16),
-
-                // Optional Message
-                TextField(
-                  controller: _giftMessageController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'GIFT MESSAGE (OPTIONAL)',
-                    labelStyle: textTheme.labelSmall?.copyWith(color: SacredTheme.outline),
-                    hintText: 'e.g. May this guide you on your journey.',
-                    filled: true,
-                    fillColor: SacredTheme.surfaceContainerLow,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusDefault)),
-                  ),
-                  style: textTheme.bodyLarge,
-                ),
                 const SizedBox(height: 24),
 
-                // Gifting price summary
+                // Price summary
                 Card(
                   color: SacredTheme.surfaceContainerLow,
                   child: Padding(
@@ -207,26 +222,21 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(giftLabel, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                        Text(giftPrice, style: textTheme.bodyLarge?.copyWith(color: SacredTheme.primary, fontWeight: FontWeight.bold)),
+                        Text(_giftLabel, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                        Text(_giftPrice, style: textTheme.bodyLarge?.copyWith(color: SacredTheme.primary, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                // Gift Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isProcessing ? null : _handleGiftPurchase,
                     child: _isProcessing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Text('PURCHASE GIFT PASS'),
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('PAY & GET GIFT CODE'),
                   ),
                 ),
                 const SizedBox(height: SacredTheme.safeAreaBottom),

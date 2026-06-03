@@ -12,4 +12,5 @@ class PaymentConfig {
 
   static String get orderUrl => '$workerUrl/razorpay/order';
   static String get verifyUrl => '$workerUrl/razorpay/verify';
+  static String get redeemUrl => '$workerUrl/razorpay/redeem';
 }

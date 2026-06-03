@@ -14,6 +14,7 @@ import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/offline_library_screen.dart';
 import 'package:dharma_ai/screens/offline_reader_screen.dart';
+import 'package:dharma_ai/screens/redeem_code_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
@@ -105,6 +106,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                     );
                   },
                 ),
+              ListTile(
+                leading: const Icon(Icons.redeem, color: SacredTheme.templeGold),
+                title: const Text('Redeem a Gift Code'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const RedeemCodeScreen()),
+                  );
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.download_for_offline, color: SacredTheme.secondary),
                 title: const Text('Offline Download Library'),
