@@ -44,34 +44,42 @@ class ScriptureService {
   }
 
   // Pick ONE random verse across ALL books (Gita, Vedas, Upanishads) for the
-  // Feed's Daily Reflection. Efficient: counts the table, then fetches just the
-  // single verse at a random offset (no full-table download).
+  // Feed's Daily Reflection. Efficient: counts the table, then fetches a single
+  // verse at a random offset. Retries a few times so it only ever returns a
+  // verse that actually HAS a translation (some Veda rows are Sanskrit-only)
+  // and isn't an over-long multi-mantra block.
   Future<Verse?> getRandomReflection() async {
     try {
       if (_supabase != null) {
         final count = await _supabase!.from('verses').count(CountOption.exact);
         if (count > 0) {
-          final offset = Random().nextInt(count);
-          final response = await _supabase!
-              .from('verses')
-              .select()
-              .order('id', ascending: true)
-              .range(offset, offset);
-          final list = (response as List)
-              .map((item) => Verse.fromJson(item as Map<String, dynamic>))
-              .toList();
-          if (list.isNotEmpty) return list.first;
+          for (int attempt = 0; attempt < 10; attempt++) {
+            final offset = Random().nextInt(count);
+            final response = await _supabase!
+                .from('verses')
+                .select()
+                .order('id', ascending: true)
+                .range(offset, offset);
+            final list = (response as List)
+                .map((item) => Verse.fromJson(item as Map<String, dynamic>))
+                .toList();
+            if (list.isEmpty) continue;
+            final v = list.first;
+            if (v.translation.trim().isNotEmpty && v.sanskritText.length <= 600) {
+              return v;
+            }
+          }
         }
       }
     } catch (e) {
       print('Random reflection load failed, falling back to samples: $e');
     }
-    // Offline / unavailable → random from the bundled samples (all books).
+    // Offline / unavailable / no match → bundled samples (all have translations).
     final pool = [
       ...MockScriptureData.gitaVerses,
       ...MockScriptureData.upanishadVerses,
       ...MockScriptureData.vedaVerses,
-    ];
+    ].where((v) => v.translation.trim().isNotEmpty).toList();
     return pool.isEmpty ? null : pool[Random().nextInt(pool.length)];
   }
 
