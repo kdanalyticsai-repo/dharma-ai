@@ -147,21 +147,28 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
   final Ref _ref;
 
   ScriptureChatNotifier(this._ref) : super(const ChatState(messages: [], isLoading: false)) {
-    final currentLanguage = _ref.read(languageProvider);
-    state = ChatState(
-      messages: [
-        ChatMessage(
-          id: 'welcome_scripture',
-          text: AppTranslations.get('welcomeScripture', currentLanguage)
-              .replaceAll('{name}', _welcomeName(_ref, currentLanguage)),
-          role: 'assistant',
-          timestamp: DateTime.now(),
-          isGuruMode: false,
-        ),
-      ],
-      isLoading: false,
-    );
+    state = ChatState(messages: [_buildWelcome()], isLoading: false);
+    // Re-render the welcome (name + language) whenever the language changes.
+    _ref.listen(languageProvider, (_, __) => _refreshWelcome());
     // Daily count loaded by shared dailyPromptCounterProvider
+  }
+
+  ChatMessage _buildWelcome() {
+    final lang = _ref.read(languageProvider);
+    return ChatMessage(
+      id: 'welcome_scripture',
+      text: AppTranslations.get('welcomeScripture', lang)
+          .replaceAll('{name}', _welcomeName(_ref, lang)),
+      role: 'assistant',
+      timestamp: DateTime.now(),
+      isGuruMode: false,
+    );
+  }
+
+  void _refreshWelcome() {
+    if (!mounted) return;
+    final rest = state.messages.where((m) => m.id != 'welcome_scripture').toList();
+    state = state.copyWith(messages: [_buildWelcome(), ...rest]);
   }
 
   // Load the daily count from SharedPreferences on startup
@@ -297,23 +304,30 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
   final Ref _ref;
 
   GuruChatNotifier(this._ref) : super(const ChatState(messages: [], isLoading: false)) {
-    final currentLanguage = _ref.read(languageProvider);
-    state = ChatState(
-      messages: [
-        ChatMessage(
-          id: 'welcome_guru',
-          text: AppTranslations.get('welcomeGuru', currentLanguage)
-              .replaceAll('{name}', _welcomeName(_ref, currentLanguage)),
-          role: 'assistant',
-          timestamp: DateTime.now(),
-          isGuruMode: true,
-        ),
-      ],
-      isLoading: false,
-    );
+    state = ChatState(messages: [_buildWelcome()], isLoading: false);
     // Restore the on-device conversation so a page refresh doesn't wipe it.
     _loadHistory();
+    // Re-render the welcome (name + language) whenever the language changes.
+    _ref.listen(languageProvider, (_, __) => _refreshWelcome());
     // Daily count loaded by shared dailyPromptCounterProvider
+  }
+
+  ChatMessage _buildWelcome() {
+    final lang = _ref.read(languageProvider);
+    return ChatMessage(
+      id: 'welcome_guru',
+      text: AppTranslations.get('welcomeGuru', lang)
+          .replaceAll('{name}', _welcomeName(_ref, lang)),
+      role: 'assistant',
+      timestamp: DateTime.now(),
+      isGuruMode: true,
+    );
+  }
+
+  void _refreshWelcome() {
+    if (!mounted) return;
+    final rest = state.messages.where((m) => m.id != 'welcome_guru').toList();
+    state = state.copyWith(messages: [_buildWelcome(), ...rest]);
   }
 
   // ── Local session persistence (device-only; survives page refresh) ──────────
@@ -325,11 +339,14 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_historyKey);
       if (raw == null || raw.isEmpty) return;
-      final list = (jsonDecode(raw) as List)
+      // Drop any saved welcome — it's always regenerated fresh (current name +
+      // language) so it never goes stale.
+      final saved = (jsonDecode(raw) as List)
           .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+          .where((m) => m.id != 'welcome_guru')
           .toList();
-      if (list.isNotEmpty && mounted) {
-        state = ChatState(messages: list, isLoading: false);
+      if (saved.isNotEmpty && mounted) {
+        state = ChatState(messages: [_buildWelcome(), ...saved], isLoading: false);
       }
     } catch (_) {
       // Ignore corrupt/incompatible cache — fall back to the welcome message.
@@ -339,10 +356,9 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
   Future<void> _persist() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      // Cap stored history to the most recent 100 messages to bound storage.
-      final msgs = state.messages.length > 100
-          ? state.messages.sublist(state.messages.length - 100)
-          : state.messages;
+      // Persist only the conversation (not the welcome), capped to 100 messages.
+      final convo = state.messages.where((m) => m.id != 'welcome_guru').toList();
+      final msgs = convo.length > 100 ? convo.sublist(convo.length - 100) : convo;
       await prefs.setString(
           _historyKey, jsonEncode(msgs.map((m) => m.toJson()).toList()));
     } catch (_) {
