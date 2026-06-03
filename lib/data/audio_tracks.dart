@@ -6,8 +6,10 @@ import 'package:dharma_ai/config/r2_config.dart';
 //  MP3 files to upload to Cloudflare R2 bucket:
 //    bg_ch01.mp3  …  bg_ch18.mp3  (already downloaded to gita_audio/)
 //
-//  Audio source: archive.org/details/bhagavad-gita-chanting
-//  (personal/private listening use, non-commercial)
+//  Audio courtesy: Sri Radhe-Krishn Mandir, Derveshpur (Uttar Pradesh),
+//  used with the temple's kind permission. Public Domain Mark 1.0.
+//  Website: https://sriradhekrishnmandir.blogspot.com/
+//  Facebook: https://www.facebook.com/Sriradhekrishnmandirderveshpur
 // ─────────────────────────────────────────────────────────────
 
 class BgAudioTrack {
@@ -47,11 +49,12 @@ class BgAudioTrack {
     return _archiveFallbackUrl;
   }
 
-  // Verified archive.org source — collection: "bhagavad-gita-chanting"
-  // Real filenames: 03_CHAPTER-1.mp3 … 20_CHAPTER-18.mp3 (track# = chapter+2)
+  // Public-domain source — courtesy Sri Radhe-Krishn Mandir, Derveshpur (UP),
+  // used with the temple's permission. archive.org item: 03-chapter-2_202505
+  // Filenames: 02Chapter1.mp3 … 19Chapter18.mp3 (track# = chapter+1)
   String get _archiveFallbackUrl {
-    final trackNum = (chapter + 2).toString().padLeft(2, '0');
-    return 'https://archive.org/download/bhagavad-gita-chanting/${trackNum}_CHAPTER-$chapter.mp3';
+    final trackNum = (chapter + 1).toString().padLeft(2, '0');
+    return 'https://archive.org/download/03-chapter-2_202505/${trackNum}Chapter$chapter.mp3';
   }
 
   String get chapterLabel => 'Gita Chapter $chapter • $verseCount verses';

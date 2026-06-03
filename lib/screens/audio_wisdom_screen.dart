@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
@@ -402,6 +403,10 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                           );
                         },
                       ),
+                      const SizedBox(height: 20),
+
+                      // Audio credit (required by the temple's permission terms)
+                      _audioCredit(context),
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -409,6 +414,68 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _audioCredit(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SacredTheme.templeGold.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(SacredTheme.radiusMd),
+        border: Border.all(color: SacredTheme.templeGold.withOpacity(0.3), width: 0.5),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'ऑडियो सौजन्य',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: SacredTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'श्री राधे-कृष्ण मंदिर, दरवेशपुर (उत्तर प्रदेश)',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.notoSansDevanagari(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: SacredTheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _creditLink('Website', 'https://sriradhekrishnmandir.blogspot.com/'),
+              const SizedBox(width: 8),
+              Text('·', style: textTheme.labelSmall),
+              const SizedBox(width: 8),
+              _creditLink('Facebook', 'https://www.facebook.com/Sriradhekrishnmandirderveshpur'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _creditLink(String label, String url) {
+    return InkWell(
+      onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: SacredTheme.primary,
+          decoration: TextDecoration.underline,
         ),
       ),
     );
