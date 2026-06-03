@@ -97,6 +97,26 @@ create policy "qa read"   on qa_cache for select using (auth.role() = 'authentic
 create policy "qa insert" on qa_cache for insert with check (auth.role() = 'authenticated');
 create policy "qa update" on qa_cache for update using (auth.role() = 'authenticated');
 
+-- ── Gift Codes (a paid subscription gifted to a friend) ──────
+-- Created server-side after a verified gift payment; redeemed by a friend
+-- to receive the subscription. Only the service role writes these.
+create table if not exists gift_codes (
+  code         text primary key,        -- e.g. 'DHARMA-AB12-CD34'
+  plan         text not null,           -- monthly | quarterly | annual
+  tier         text not null,           -- sadhaka | annual
+  amount_inr   int,
+  razorpay_id  text,
+  purchased_by uuid references profiles(id) on delete set null,
+  redeemed_by  uuid references profiles(id) on delete set null,
+  status       text default 'active',   -- active | redeemed
+  created_at   timestamptz default now(),
+  redeemed_at  timestamptz
+);
+alter table gift_codes enable row level security;
+-- A buyer can see the codes they purchased (to re-share); writes are
+-- service-role only (the payment / redeem Worker).
+create policy "see own gift codes" on gift_codes for select using (auth.uid() = purchased_by);
+
 -- ── Row Level Security ────────────────────────────────────────
 alter table profiles         enable row level security;
 alter table bookmarks        enable row level security;

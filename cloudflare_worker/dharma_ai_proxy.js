@@ -38,6 +38,7 @@ export default {
     try {
       if (path === '/razorpay/order')  return await createOrder(request, env, origin);
       if (path === '/razorpay/verify') return await verifyPayment(request, env, origin);
+      if (path === '/razorpay/redeem') return await redeemGift(request, env, origin);
       return await openaiProxy(request, env, origin); // default
     } catch (e) {
       return cors(j({ error: 'Worker error', detail: e.message }), 500, origin);
@@ -64,7 +65,7 @@ async function openaiProxy(request, env, origin) {
 // Body: { plan: 'monthly'|'quarterly'|'annual', user_id }
 // The amount comes from the server PLANS table, so it can't be tampered with.
 async function createOrder(request, env, origin) {
-  const { plan, user_id } = await request.json();
+  const { plan, user_id, gift } = await request.json();
   const p = PLANS[plan];
   if (!p) return cors(j({ error: 'Invalid plan' }), 400, origin);
   if (!user_id) return cors(j({ error: 'Missing user_id' }), 400, origin);
@@ -78,7 +79,8 @@ async function createOrder(request, env, origin) {
       currency: 'INR',
       receipt: `dharma_${plan}_${Date.now()}`,
       // Plan + user are stored on the order so verify() trusts the server, not the client.
-      notes: { plan, user_id },
+      // 'gift' marks this as a gift purchase (creates a code instead of granting the buyer).
+      notes: { plan, user_id, gift: gift ? '1' : '' },
     }),
   });
   const order = await res.json();
@@ -131,13 +133,80 @@ async function verifyPayment(request, env, origin) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
     return cors(j({ valid: false, error: 'Supabase secrets not set on Worker' }), 500, origin);
   }
+  const sb = sbFetch(env);
 
-  // 3. Write the subscription server-side (service role). Source of truth.
-  const now = new Date();
-  const expires = new Date(now.getTime() + p.days * 86400000);
-  let base = env.SUPABASE_URL.replace(/\/+$/, ''); // strip trailing slash
-  if (!/^https?:\/\//i.test(base)) base = 'https://' + base; // ensure scheme
-  const sb = (path, init) => fetch(`${base}/rest/v1/${path}`, {
+  try {
+    // Gift purchase → create a shareable code instead of granting the buyer.
+    if (order.notes?.gift === '1') {
+      const code = makeGiftCode();
+      const insRes = await sb('gift_codes', {
+        method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          code, plan, tier: p.tier, amount_inr: p.amount / 100,
+          razorpay_id: razorpay_payment_id, purchased_by: userId, status: 'active',
+        }),
+      });
+      if (!insRes.ok) {
+        const detail = await insRes.text();
+        return cors(j({ valid: false, error: 'Gift code save failed', detail }), 500, origin);
+      }
+      return cors(j({ valid: true, gift: true, code, plan, tier: p.tier }), 200, origin);
+    }
+
+    // Normal purchase → grant the subscription to the buyer.
+    const grant = await grantSubscription(sb, userId, p, razorpay_payment_id);
+    if (!grant.ok) {
+      return cors(j({ valid: false, error: 'Subscription insert failed', status: grant.status, detail: grant.detail }), 500, origin);
+    }
+    return cors(j({ valid: true, tier: p.tier, plan, expires_at: grant.expires_at }), 200, origin);
+  } catch (e) {
+    return cors(j({ valid: false, error: 'Supabase write error', detail: e.message }), 500, origin);
+  }
+}
+
+// ── Razorpay: redeem a gift code → grant the subscription to the redeemer ────
+// Body: { code, user_id }
+async function redeemGift(request, env, origin) {
+  const { code, user_id } = await request.json();
+  if (!code || !user_id) return cors(j({ valid: false, error: 'Missing fields' }), 400, origin);
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+    return cors(j({ valid: false, error: 'Supabase secrets not set on Worker' }), 500, origin);
+  }
+  const sb = sbFetch(env);
+  try {
+    const res = await sb(`gift_codes?code=eq.${encodeURIComponent(code.trim())}&select=*`, { method: 'GET' });
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return cors(j({ valid: false, error: 'Invalid gift code.' }), 404, origin);
+    }
+    const gc = rows[0];
+    if (gc.status !== 'active') {
+      return cors(j({ valid: false, error: 'This code has already been redeemed.' }), 409, origin);
+    }
+    const p = PLANS[gc.plan];
+    if (!p) return cors(j({ valid: false, error: 'Unknown plan on code.' }), 400, origin);
+
+    const grant = await grantSubscription(sb, user_id, p, gc.razorpay_id);
+    if (!grant.ok) {
+      return cors(j({ valid: false, error: 'Could not grant subscription', detail: grant.detail }), 500, origin);
+    }
+    await sb(`gift_codes?code=eq.${encodeURIComponent(code.trim())}`, {
+      method: 'PATCH', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ status: 'redeemed', redeemed_by: user_id, redeemed_at: new Date().toISOString() }),
+    });
+    return cors(j({ valid: true, tier: p.tier, plan: gc.plan, expires_at: grant.expires_at }), 200, origin);
+  } catch (e) {
+    return cors(j({ valid: false, error: 'Redeem error', detail: e.message }), 500, origin);
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+// Supabase REST helper using the service role (bypasses RLS).
+function sbFetch(env) {
+  let base = (env.SUPABASE_URL || '').replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+  return (path, init) => fetch(`${base}/rest/v1/${path}`, {
     ...init,
     headers: {
       apikey: env.SUPABASE_SERVICE_KEY,
@@ -146,36 +215,42 @@ async function verifyPayment(request, env, origin) {
       ...(init.headers || {}),
     },
   });
-
-  try {
-    await sb(`subscriptions?user_id=eq.${userId}&status=eq.active`, {
-      method: 'PATCH', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ status: 'expired' }),
-    });
-    const insRes = await sb('subscriptions', {
-      method: 'POST', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id: userId, tier: p.tier, status: 'active',
-        amount_inr: p.amount / 100, razorpay_id: razorpay_payment_id,
-        started_at: now.toISOString(), expires_at: expires.toISOString(),
-      }),
-    });
-    if (!insRes.ok) {
-      const detail = await insRes.text();
-      return cors(j({ valid: false, error: 'Subscription insert failed', status: insRes.status, detail }), 500, origin);
-    }
-    await sb(`profiles?id=eq.${userId}`, {
-      method: 'PATCH', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),
-    });
-  } catch (e) {
-    return cors(j({ valid: false, error: 'Supabase write error', detail: e.message }), 500, origin);
-  }
-
-  return cors(j({ valid: true, tier: p.tier, plan, expires_at: expires.toISOString() }), 200, origin);
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// Grant a subscription to a user: expire old active rows, insert new, set tier.
+async function grantSubscription(sb, userId, p, razorpayId) {
+  const now = new Date();
+  const expires = new Date(now.getTime() + p.days * 86400000);
+  await sb(`subscriptions?user_id=eq.${userId}&status=eq.active`, {
+    method: 'PATCH', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ status: 'expired' }),
+  });
+  const insRes = await sb('subscriptions', {
+    method: 'POST', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      user_id: userId, tier: p.tier, status: 'active',
+      amount_inr: p.amount / 100, razorpay_id: razorpayId,
+      started_at: now.toISOString(), expires_at: expires.toISOString(),
+    }),
+  });
+  if (!insRes.ok) {
+    return { ok: false, status: insRes.status, detail: await insRes.text() };
+  }
+  await sb(`profiles?id=eq.${userId}`, {
+    method: 'PATCH', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),
+  });
+  return { ok: true, expires_at: expires.toISOString() };
+}
+
+// Generate a friendly gift code (no ambiguous chars).
+function makeGiftCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const seg = (n) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `DHARMA-${seg(4)}-${seg(4)}`;
+}
+
+
 async function hmacHex(secret, message) {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(secret),
