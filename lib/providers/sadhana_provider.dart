@@ -12,7 +12,7 @@ class SadhanaState {
   final int targetChanting;
 
   const SadhanaState({
-    this.streak = 5, // Starts with a 5-day streak for motivation
+    this.streak = 0, // Earned by completing all daily goals on consecutive days
     this.todayMeditation = 0,
     this.targetMeditation = 20,
     this.todayVerses = 0,
@@ -55,14 +55,43 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
   }
 
   String get _today => DateTime.now().toIso8601String().substring(0, 10);
+  String get _yesterday => DateTime.now()
+      .subtract(const Duration(days: 1))
+      .toIso8601String()
+      .substring(0, 10);
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
+    int streak = prefs.getInt('sadhana_streak') ?? 0;
+    int meditation = prefs.getInt('today_meditation') ?? 0;
+    int verses = prefs.getInt('today_verses') ?? 0;
+    int chanting = prefs.getInt('today_chanting') ?? 0;
+    final lastActive = prefs.getString('sadhana_last_active');
+    final lastCompleted = prefs.getString('sadhana_last_completed');
+
+    // Day rollover: it's a new calendar day since the goals were last touched.
+    if (lastActive != null && lastActive != _today) {
+      // Fresh day → reset today's goals.
+      meditation = 0;
+      verses = 0;
+      chanting = 0;
+      await prefs.setInt('today_meditation', 0);
+      await prefs.setInt('today_verses', 0);
+      await prefs.setInt('today_chanting', 0);
+      // Break the streak if at least one full day was missed (last completed
+      // day is neither today nor yesterday).
+      if (lastCompleted != _today && lastCompleted != _yesterday) {
+        streak = 0;
+        await prefs.setInt('sadhana_streak', 0);
+      }
+    }
+    await prefs.setString('sadhana_last_active', _today);
+
     state = state.copyWith(
-      streak: prefs.getInt('sadhana_streak') ?? 5,
-      todayMeditation: prefs.getInt('today_meditation') ?? 0,
-      todayVerses: prefs.getInt('today_verses') ?? 0,
-      todayChanting: prefs.getInt('today_chanting') ?? 0,
+      streak: streak,
+      todayMeditation: meditation,
+      todayVerses: verses,
+      todayChanting: chanting,
     );
     await _loadRemoteToday();
   }
@@ -151,20 +180,22 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
   }
 
   Future<void> _checkAndUpdateStreak() async {
-    // If user achieves all goals, increase streak
-    if (state.todayMeditation >= state.targetMeditation &&
+    // Streak advances only when ALL of today's goals are met.
+    final goalsMet = state.todayMeditation >= state.targetMeditation &&
         state.todayVerses >= state.targetVerses &&
-        state.todayChanting >= state.targetChanting) {
-      final prefs = await SharedPreferences.getInstance();
-      // Only increment streak if not already done today
-      final streakUpdatedToday = prefs.getBool('streak_updated_today') ?? false;
-      if (!streakUpdatedToday) {
-        final newStreak = state.streak + 1;
-        await prefs.setInt('sadhana_streak', newStreak);
-        await prefs.setBool('streak_updated_today', true);
-        state = state.copyWith(streak: newStreak);
-      }
-    }
+        state.todayChanting >= state.targetChanting;
+    if (!goalsMet) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final lastCompleted = prefs.getString('sadhana_last_completed');
+    if (lastCompleted == _today) return; // already counted today
+
+    // Continue the streak if yesterday counted; otherwise start fresh at 1.
+    final newStreak = (lastCompleted == _yesterday) ? state.streak + 1 : 1;
+    await prefs.setInt('sadhana_streak', newStreak);
+    await prefs.setString('sadhana_last_completed', _today);
+    await prefs.setString('sadhana_last_active', _today);
+    state = state.copyWith(streak: newStreak);
   }
 }
 

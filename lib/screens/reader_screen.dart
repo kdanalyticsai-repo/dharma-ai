@@ -64,26 +64,25 @@ class ScripturesScreen extends ConsumerWidget {
                     ),
                     Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.search, color: SacredTheme.onSurfaceVariant),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const ScriptureSearchScreen()),
-                            );
-                          },
+                        _ReaderTopAction(
+                          icon: Icons.search_rounded,
+                          tooltip: 'Search verses',
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ScriptureSearchScreen()),
+                          ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.music_note, color: SacredTheme.onSurfaceVariant),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const AudioWisdomScreen()),
-                            );
-                          },
+                        _ReaderTopAction(
+                          icon: Icons.headphones_rounded,
+                          tooltip: 'Audio wisdom',
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AudioWisdomScreen()),
+                          ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.settings, color: SacredTheme.onSurfaceVariant),
+                        _ReaderTopAction(
+                          icon: Icons.tune_rounded,
+                          tooltip: 'Reading settings',
                           onPressed: () => _showSettingsBottomSheet(context),
                         ),
                       ],
@@ -438,6 +437,42 @@ class ScripturesScreen extends ConsumerWidget {
       builder: (context) {
         return const ReaderSettingsSheet();
       },
+    );
+  }
+}
+
+/// Friendly, consistent top-bar action: a rounded icon on a soft, saffron-
+/// tinted circle with a tooltip and a comfortable touch target.
+class _ReaderTopAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  const _ReaderTopAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Material(
+        color: SacredTheme.primary.withOpacity(0.08),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Tooltip(
+            message: tooltip,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Center(child: Icon(icon, size: 20, color: SacredTheme.primary)),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
