@@ -43,6 +43,14 @@ class ScriptureService {
     return MockScriptureData.gitaVerses;
   }
 
+  // A verse is suitable for the Feed's Daily Reflection only if it's short
+  // enough to fit cleanly (Sanskrit + translation + source) and actually has a
+  // translation — so reflections are never Sanskrit-only or over-long blocks.
+  bool _fitsReflection(Verse v) =>
+      v.translation.trim().isNotEmpty &&
+      v.sanskritText.trim().length <= 280 &&
+      v.translation.trim().length <= 320;
+
   // Pick ONE random verse across ALL books (Gita, Vedas, Upanishads) for the
   // Feed's Daily Reflection. Efficient: counts the table, then fetches a single
   // verse at a random offset. Retries a few times so it only ever returns a
@@ -65,21 +73,19 @@ class ScriptureService {
                 .toList();
             if (list.isEmpty) continue;
             final v = list.first;
-            if (v.translation.trim().isNotEmpty && v.sanskritText.length <= 600) {
-              return v;
-            }
+            if (_fitsReflection(v)) return v;
           }
         }
       }
     } catch (e) {
       print('Random reflection load failed, falling back to samples: $e');
     }
-    // Offline / unavailable / no match → bundled samples (all have translations).
+    // Offline / unavailable / no match → bundled samples (short + translated).
     final pool = [
       ...MockScriptureData.gitaVerses,
       ...MockScriptureData.upanishadVerses,
       ...MockScriptureData.vedaVerses,
-    ].where((v) => v.translation.trim().isNotEmpty).toList();
+    ].where(_fitsReflection).toList();
     return pool.isEmpty ? null : pool[Random().nextInt(pool.length)];
   }
 

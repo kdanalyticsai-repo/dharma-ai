@@ -82,7 +82,7 @@ class ScripturesScreen extends ConsumerWidget {
                           ),
                         ),
                         CircleIconButton(
-                          icon: Icons.tune_rounded,
+                          icon: Icons.settings_rounded,
                           tooltip: 'Reading settings',
                           onPressed: () => _showSettingsBottomSheet(context),
                         ),
