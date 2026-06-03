@@ -14,8 +14,9 @@ class ScriptureService {
     }
   }
 
-  // Key for local bookmarks list in SharedPreferences
-  static const String _bookmarksKey = 'dharma_bookmarks';
+  // Per-account key for the local bookmarks cache, so a shared device never
+  // shows one user's saved verses to another offline.
+  String get _bookmarksKey => 'dharma_bookmarks_${SupabaseSync.userId ?? 'anon'}';
 
   // Fetch all Bhagavad Gita verses (the Gita reader, feed daily verse and
   // bookmark resolution use this — Vedas/Upanishads are fetched separately).
