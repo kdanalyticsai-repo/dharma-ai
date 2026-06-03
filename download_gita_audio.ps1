@@ -20,7 +20,7 @@ for ($n = 1; $n -le 18; $n++) {
 
 Write-Host ""
 Write-Host "  DharmaAI - Bhagavad Gita Audio Downloader" -ForegroundColor Cyan
-Write-Host "  Source: archive.org/details/bhagavad-gita-chanting" -ForegroundColor DarkGray
+Write-Host "  Source: Sri Radhe-Krishn Mandir, Derveshpur (Public Domain)" -ForegroundColor DarkGray
 Write-Host ""
 
 $success = 0
