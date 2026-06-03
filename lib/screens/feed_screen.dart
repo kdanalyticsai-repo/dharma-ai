@@ -15,6 +15,8 @@ import 'package:dharma_ai/providers/sadhana_provider.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/providers/transliteration_provider.dart';
+import 'package:dharma_ai/providers/purchase_provider.dart';
+import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/profile_screen.dart';
 
 class DailyFeedScreen extends ConsumerStatefulWidget {
@@ -89,6 +91,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                           AppTranslations.get('greetingSubtitle', currentLanguage),
                           style: textTheme.bodyMedium,
                         ),
+                        const SizedBox(height: 8),
+                        _subscriptionBadge(ref.watch(purchaseProvider)),
                       ],
                     ),
                     InkWell(
@@ -371,6 +375,39 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
             Text('$current / $target $unit', style: textTheme.labelSmall),
           ],
         ),
+      ),
+    );
+  }
+
+  // Subscription tier pill shown under the greeting (matches the profile badge).
+  Widget _subscriptionBadge(SubscriptionTier tier) {
+    final isAnnual = tier == SubscriptionTier.annual;
+    final isSadhaka = tier == SubscriptionTier.sadhaka;
+    final label = isAnnual
+        ? '✦ Annual Sadhaka'
+        : isSadhaka
+            ? '★ Sadhaka Premium'
+            : 'Free Seeker';
+    final accent = isAnnual
+        ? SacredTheme.templeGold
+        : isSadhaka
+            ? SacredTheme.primary
+            : SacredTheme.outline;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isAnnual
+            ? SacredTheme.templeGold.withOpacity(0.12)
+            : isSadhaka
+                ? SacredTheme.primary.withOpacity(0.1)
+                : SacredTheme.outlineVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+        border: Border.all(color: accent.withOpacity(0.4), width: 0.5),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: accent),
       ),
     );
   }
