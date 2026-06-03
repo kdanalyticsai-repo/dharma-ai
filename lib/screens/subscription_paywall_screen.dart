@@ -92,10 +92,10 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   // Shown on the Free card when the user is already premium — replaces the
   // (now removed) downgrade button. One-time plans simply lapse, so we
   // reassure the user it won't auto-renew.
-  Widget _premiumStatus(BuildContext context, String planLabel, DateTime? end) {
-    final text = end != null
-        ? '$planLabel active until ${_formatDate(end)} · won\'t auto-renew'
-        : '$planLabel active · won\'t auto-renew';
+  Widget _premiumStatus(BuildContext context, String? planLabel, DateTime? end) {
+    final expired = isSubscriptionExpired(end);
+    final text = subscriptionStatusLine(end, planLabel: planLabel) ??
+        '${planLabel ?? 'Premium'} active · won\'t auto-renew';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -107,7 +107,8 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.verified_outlined, size: 14, color: SacredTheme.primary),
+          Icon(expired ? Icons.info_outline : Icons.verified_outlined,
+              size: 14, color: SacredTheme.primary),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -123,14 +124,6 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 
   void _showWelcomeDialog(String message) {
@@ -303,12 +296,9 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     'Daily sadhana & streak tracker',
                   ],
                   isActive: activeTier == SubscriptionTier.free,
-                  button: activeTier == SubscriptionTier.free
-                      ? OutlinedButton(
-                          onPressed: null,
-                          child: const Text('ACTIVE PATH'),
-                        )
-                      : _premiumStatus(
+                  button: activeTier != SubscriptionTier.free
+                      // Currently subscribed → show "active until …".
+                      ? _premiumStatus(
                           context,
                           activeTier == SubscriptionTier.annual
                               ? 'Sadhaka Annual'
@@ -316,7 +306,14 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                                   ? 'Sadhaka Quarterly'
                                   : 'Sadhaka Premium',
                           subEnd,
-                        ),
+                        )
+                      // Lapsed subscription → notify they've defaulted to Free.
+                      : isSubscriptionExpired(subEnd)
+                          ? _premiumStatus(context, null, subEnd)
+                          : OutlinedButton(
+                              onPressed: null,
+                              child: const Text('ACTIVE PATH'),
+                            ),
                 ),
                 const SizedBox(height: 24),
               ],

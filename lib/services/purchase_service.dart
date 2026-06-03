@@ -149,10 +149,17 @@ class PurchaseService {
     if (client == null || uid == null) return null;
     try {
       final row = await client.from('profiles')
-          .select('subscription_tier')
+          .select('subscription_tier, subscription_end')
           .eq('id', uid)
           .maybeSingle();
       if (row == null) return null;
+      // Expiry enforcement: once access has lapsed, the user is on Free —
+      // regardless of the stored tier (covers failed/forgotten renewals).
+      final endStr = row['subscription_end'] as String?;
+      final end = endStr == null ? null : DateTime.tryParse(endStr);
+      if (end != null && end.isBefore(DateTime.now())) {
+        return SubscriptionTier.free;
+      }
       return _tierFromString(row['subscription_tier'] as String? ?? 'free');
     } catch (_) {
       return null;
