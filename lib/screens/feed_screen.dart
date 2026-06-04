@@ -71,8 +71,10 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                 // Header (Greeting and Subtitle) — at the very top
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
+                    Expanded(
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -82,7 +84,11 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                           style: textTheme.headlineMedium?.copyWith(
                             color: SacredTheme.headingColor(context),
                             fontWeight: FontWeight.w600,
+                            fontSize: 21,
+                            height: 1.2,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           AppTranslations.get('greetingSubtitle', currentLanguage),
@@ -111,7 +117,9 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                           orElse: () => const SizedBox.shrink(),
                         ),
                       ],
+                      ),
                     ),
+                    const SizedBox(width: 10),
                     InkWell(
                       onTap: () {
                         Navigator.push(
@@ -261,7 +269,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                         child: Row(
                           children: [
                             Text(
-                              'Go to Sadhana',
+                              AppTranslations.get('goToSadhana', currentLanguage),
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,

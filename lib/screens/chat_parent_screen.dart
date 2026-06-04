@@ -57,10 +57,16 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
                   const Icon(Icons.auto_awesome,
                       size: 20, color: SacredTheme.templeGold),
                   const SizedBox(width: 10),
-                  Text(
-                    AppTranslations.get('aiSpiritualGuide', lang),
-                    style: textTheme.headlineLarge?.copyWith(
-                      color: SacredTheme.headingColor(context),
+                  Expanded(
+                    child: Text(
+                      AppTranslations.get('aiSpiritualGuide', lang),
+                      style: textTheme.headlineLarge?.copyWith(
+                        color: SacredTheme.headingColor(context),
+                        fontSize: 22,
+                        height: 1.15,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

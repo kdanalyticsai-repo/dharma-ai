@@ -358,6 +358,12 @@ class AppTranslations {
       AppLanguage.hindi: 'दैनिक साधना चेक-इन',
       AppLanguage.bengali: 'দৈনিক সাধনা চেক-ইন',
     },
+    'goToSadhana': {
+      AppLanguage.english: 'Go to Sadhana',
+      AppLanguage.tamil: 'சாதனாவிற்கு செல்லவும்',
+      AppLanguage.hindi: 'साधना पर जाएं',
+      AppLanguage.bengali: 'সাধনায় যান',
+    },
     'readScripture': {
       AppLanguage.english: 'Read Scripture',
       AppLanguage.tamil: 'வேதங்கள் படித்தல்',

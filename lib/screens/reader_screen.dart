@@ -53,14 +53,19 @@ class ScripturesScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      selectedBook == ScriptureBook.gita
-                          ? AppTranslations.get('bhagavadGita', currentLanguage)
-                          : selectedBook == ScriptureBook.upanishads
-                              ? 'Upanishads'
-                              : 'Vedas',
-                      style: textTheme.headlineLarge?.copyWith(
-                        color: SacredTheme.headingColor(context),
+                    Expanded(
+                      child: Text(
+                        selectedBook == ScriptureBook.gita
+                            ? AppTranslations.get('bhagavadGita', currentLanguage)
+                            : selectedBook == ScriptureBook.upanishads
+                                ? 'Upanishads'
+                                : 'Vedas',
+                        style: textTheme.headlineLarge?.copyWith(
+                          color: SacredTheme.headingColor(context),
+                          fontSize: 26,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Row(
