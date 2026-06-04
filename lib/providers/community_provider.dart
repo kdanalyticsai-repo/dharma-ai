@@ -23,6 +23,7 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
         // This replaces seed posts with real community posts.
         state = (rows as List).map((r) => CommunityPost(
               id: r['id'] as String,
+              userId: r['user_id'] as String?,
               authorName: r['author_name'] as String,
               authorAvatar: r['author_avatar'] as String,
               content: r['content'] as String,
@@ -74,15 +75,9 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
 
   // ── Add post ─────────────────────────────────────────────────
 
-  Future<void> addPost(String content) async {
-    if (content.trim().isEmpty) return;
-
-    final client = SupabaseSync.client;
-    final uid = SupabaseSync.userId;
-
-    // Read real author name from profile when signed in
-    String authorName = 'Seeker';
-    String authorAvatar = 'S';
+  // Resolve the signed-in user's display name + avatar letter from their
+  // profile (falls back to a generic Seeker).
+  Future<(String, String)> _currentAuthor(dynamic client, String? uid) async {
     if (client != null && uid != null) {
       try {
         final profile = await client
@@ -92,15 +87,24 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
             .maybeSingle();
         final name = profile?['full_name'] as String? ?? '';
         if (name.isNotEmpty) {
-          authorName = name;
-          authorAvatar = name[0].toUpperCase();
+          return (name, name[0].toUpperCase());
         }
       } catch (_) {}
     }
+    return ('Seeker', 'S');
+  }
+
+  Future<void> addPost(String content) async {
+    if (content.trim().isEmpty) return;
+
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    final (authorName, authorAvatar) = await _currentAuthor(client, uid);
 
     final tempId = 'local_${DateTime.now().millisecondsSinceEpoch}';
     final newPost = CommunityPost(
       id: tempId,
+      userId: uid,
       authorName: authorName,
       authorAvatar: authorAvatar,
       content: content,
@@ -147,11 +151,15 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
     final uid = SupabaseSync.userId;
     const giftLabel = 'Subscription Gifted 🎁';
     final content = 'Gifted a Sadhaka (Premium) monthly pass to seeker $friendName.';
+    // Store the gifter's real name + id (NOT the literal "You (Seeker)"), so
+    // the feed can show "You" only to the gifter and the real name to others.
+    final (authorName, authorAvatar) = await _currentAuthor(client, uid);
 
     final giftPost = CommunityPost(
       id: 'local_gift_${DateTime.now().millisecondsSinceEpoch}',
-      authorName: 'You (Seeker)',
-      authorAvatar: 'U',
+      userId: uid,
+      authorName: authorName,
+      authorAvatar: authorAvatar,
       content: content,
       timestamp: DateTime.now(),
       likes: 0,
@@ -164,8 +172,8 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
       try {
         await client.from('sangha_posts').insert({
           'user_id': uid,
-          'author_name': 'You (Seeker)',
-          'author_avatar': 'U',
+          'author_name': authorName,
+          'author_avatar': authorAvatar,
           'content': content,
           'is_gift': true,
           'gift_label': giftLabel,

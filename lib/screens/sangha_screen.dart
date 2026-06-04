@@ -11,6 +11,7 @@ import 'package:dharma_ai/screens/gift_subscription_screen.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
+import 'package:dharma_ai/providers/auth_provider.dart';
 
 class SanghaScreen extends ConsumerStatefulWidget {
   const SanghaScreen({Key? key}) : super(key: key);
@@ -183,12 +184,18 @@ class CommunityPostCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final currentLanguage = ref.watch(languageProvider);
+    final currentUid = ref.watch(authUserProvider).valueOrNull?.id;
     final timeString = _formatTimeAgo(post.timestamp);
 
-    // Resolve displayed names
+    // Resolve displayed names. Show "You" ONLY for the current user's own posts
+    // (by account id) — never based on the stored name, so other users' posts
+    // never appear as "You".
     String displayName = post.authorName;
-    if (post.authorName == 'You (Seeker)') {
+    if (post.userId != null && post.userId == currentUid) {
       displayName = AppTranslations.get('youSeeker', currentLanguage);
+    } else if (post.authorName == 'You (Seeker)' || post.authorName == 'Seeker') {
+      // Legacy/anonymous posts stored before this fix → show a generic label.
+      displayName = AppTranslations.get('aSeeker', currentLanguage);
     } else if (post.authorName == 'Sangha Bot') {
       displayName = AppTranslations.get('sanghaBot', currentLanguage);
     }

@@ -700,6 +700,12 @@ class AppTranslations {
       AppLanguage.hindi: 'संघ बोट',
       AppLanguage.bengali: 'সংঘ বট',
     },
+    'aSeeker': {
+      AppLanguage.english: 'A Seeker',
+      AppLanguage.tamil: 'ஒரு தேடுபவர்',
+      AppLanguage.hindi: 'एक साधक',
+      AppLanguage.bengali: 'একজন অন্বেষক',
+    },
     'giftPostContentPrefix': {
       AppLanguage.english: 'Gifted a Sadhaka (Premium) monthly pass to seeker',
       AppLanguage.tamil: 'தேடுபவருக்கு சாதகா (பிரீமியம்) மாதாந்திர பாஸ் பரிசளிக்கப்பட்டது:',

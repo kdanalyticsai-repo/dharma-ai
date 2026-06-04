@@ -1,5 +1,6 @@
 class CommunityPost {
   final String id;
+  final String? userId; // author's account id — used to decide "You" vs others
   final String authorName;
   final String authorAvatar;
   final String content;
@@ -10,6 +11,7 @@ class CommunityPost {
 
   const CommunityPost({
     required this.id,
+    this.userId,
     required this.authorName,
     required this.authorAvatar,
     required this.content,
@@ -21,6 +23,7 @@ class CommunityPost {
 
   CommunityPost copyWith({
     String? id,
+    String? userId,
     String? authorName,
     String? authorAvatar,
     String? content,
@@ -31,6 +34,7 @@ class CommunityPost {
   }) {
     return CommunityPost(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       authorName: authorName ?? this.authorName,
       authorAvatar: authorAvatar ?? this.authorAvatar,
       content: content ?? this.content,
