@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/screens/feed_screen.dart';
@@ -8,7 +9,6 @@ import 'package:dharma_ai/screens/chat_parent_screen.dart';
 import 'package:dharma_ai/screens/sadhana_screen.dart';
 import 'package:dharma_ai/screens/sangha_screen.dart';
 import 'package:dharma_ai/screens/subscription_paywall_screen.dart';
-import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
@@ -145,28 +145,28 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             elevation: 0,
             destinations: [
               NavigationDestination(
-                icon: const Icon(Icons.wb_sunny_outlined),
-                selectedIcon: const Icon(Icons.wb_sunny),
+                icon: const Icon(PhosphorIconsRegular.sun),
+                selectedIcon: const Icon(PhosphorIconsFill.sun),
                 label: AppTranslations.get('tabFeed', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.self_improvement_outlined),
-                selectedIcon: const Icon(Icons.self_improvement),
+                icon: const Icon(PhosphorIconsRegular.flowerLotus),
+                selectedIcon: const Icon(PhosphorIconsFill.flowerLotus),
                 label: AppTranslations.get('tabSadhana', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.psychology_outlined),
-                selectedIcon: const Icon(Icons.psychology),
+                icon: const Icon(PhosphorIconsRegular.sparkle),
+                selectedIcon: const Icon(PhosphorIconsFill.sparkle),
                 label: AppTranslations.get('tabAiGuru', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.menu_book_outlined),
-                selectedIcon: const Icon(Icons.menu_book),
+                icon: const Icon(PhosphorIconsRegular.bookOpen),
+                selectedIcon: const Icon(PhosphorIconsFill.bookOpen),
                 label: AppTranslations.get('tabWisdom', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.people_outline),
-                selectedIcon: const Icon(Icons.people),
+                icon: const Icon(PhosphorIconsRegular.usersThree),
+                selectedIcon: const Icon(PhosphorIconsFill.usersThree),
                 label: AppTranslations.get('tabSangha', currentLanguage),
               ),
             ],

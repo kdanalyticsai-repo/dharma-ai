@@ -50,6 +50,8 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
       setState(() => _error = err);
       return;
     }
+    // Recovery complete — leave recovery mode so normal auth routing resumes.
+    isRecoveringPassword = false;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(AppTranslations.get('spUpdated', ref.read(languageProvider))),

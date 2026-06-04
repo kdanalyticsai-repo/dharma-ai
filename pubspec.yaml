@@ -24,6 +24,7 @@ dependencies:
   # UI & Design System
   google_fonts: ^6.1.0
   flutter_svg: ^2.0.9
+  phosphor_flutter: ^2.1.0   # modern icon set (bottom navigation)
 
   # Audio Wisdom
   just_audio: ^0.9.36

@@ -3,6 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 
+// True while the user is in the password-recovery flow (followed a reset link).
+// The recovery link establishes a real session, so the global auth listener
+// would otherwise bounce them to Home — this flag holds them on the
+// "set a new password" screen until they finish. Cleared once the new password
+// is saved (or the app is restarted).
+bool isRecoveringPassword = false;
+
 // Current Supabase user.
 // Yields the already-restored session synchronously (from localStorage,
 // populated by Supabase.initialize()) so page refresh keeps the user

@@ -19,6 +19,21 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
             .select()
             .order('created_at', ascending: false)
             .limit(50);
+
+        // Which of these posts has the current user already liked? (so the
+        // heart shows filled and toggling un-likes correctly).
+        final uid = SupabaseSync.userId;
+        Set<String> myLikes = {};
+        if (uid != null) {
+          try {
+            final likeRows =
+                await client.from('post_likes').select('post_id').eq('user_id', uid);
+            myLikes = (likeRows as List).map((r) => r['post_id'] as String).toSet();
+          } catch (e) {
+            debugPrint('post_likes load error: $e');
+          }
+        }
+
         // Always use Supabase data when configured — even an empty list.
         // This replaces seed posts with real community posts.
         state = (rows as List).map((r) => CommunityPost(
@@ -29,7 +44,7 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
               content: r['content'] as String,
               timestamp: DateTime.parse(r['created_at'] as String),
               likes: r['likes_count'] as int? ?? 0,
-              isLikedByMe: false,
+              isLikedByMe: myLikes.contains(r['id'] as String),
               giftLabel: r['gift_label'] as String?,
             )).toList();
         return;
@@ -132,16 +147,49 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
     }
   }
 
-  // ── Like (local only — no per-user DB tracking yet) ──────────
+  // ── Like (persisted per-user, shared across everyone) ────────
+  // Optimistically flips the heart, then records it in post_likes. A DB trigger
+  // updates sangha_posts.likes_count so the post's author — and every other
+  // seeker — sees the reaction. Reverts the optimistic change if the write fails.
 
-  void toggleLike(String postId) {
-    state = state.map((post) {
-      if (post.id != postId) return post;
-      return post.copyWith(
-        likes: post.isLikedByMe ? post.likes - 1 : post.likes + 1,
-        isLikedByMe: !post.isLikedByMe,
-      );
-    }).toList();
+  Future<void> toggleLike(String postId) async {
+    // Capture the pre-toggle state to know whether to add or remove the like.
+    final existing = state.firstWhere(
+      (p) => p.id == postId,
+      orElse: () => CommunityPost(
+          id: '', authorName: '', authorAvatar: '', content: '',
+          timestamp: DateTime.now(), likes: 0, isLikedByMe: false),
+    );
+    if (existing.id.isEmpty) return;
+    final wasLiked = existing.isLikedByMe;
+
+    void apply(bool liked) {
+      state = state.map((post) {
+        if (post.id != postId) return post;
+        return post.copyWith(
+          likes: (post.likes + (liked ? 1 : -1)).clamp(0, 1 << 31),
+          isLikedByMe: liked,
+        );
+      }).toList();
+    }
+
+    apply(!wasLiked); // optimistic
+
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    // Local/offline posts (not yet in the DB) stay local-only.
+    if (client == null || uid == null || postId.startsWith('local_')) return;
+
+    try {
+      if (wasLiked) {
+        await client.from('post_likes').delete().eq('post_id', postId).eq('user_id', uid);
+      } else {
+        await client.from('post_likes').insert({'post_id': postId, 'user_id': uid});
+      }
+    } catch (e) {
+      debugPrint('toggleLike error: $e');
+      apply(wasLiked); // revert on failure
+    }
   }
 
   // ── Gift post ────────────────────────────────────────────────

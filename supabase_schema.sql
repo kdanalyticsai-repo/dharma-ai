@@ -208,3 +208,47 @@ update public.profiles p
 set avatar_url = coalesce(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture')
 from auth.users u
 where p.id = u.id and p.avatar_url is null;
+
+-- ── Post Likes (Sangha reactions) ────────────────────────────
+-- One row per (post, user) so a like is shared across all devices/users and a
+-- user can't like twice. A trigger keeps sangha_posts.likes_count accurate, so
+-- the post's author sees reactions from everyone. Run this whole block once.
+create table if not exists public.post_likes (
+  id         uuid primary key default gen_random_uuid(),
+  post_id    uuid not null references public.sangha_posts(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (post_id, user_id)
+);
+alter table public.post_likes enable row level security;
+
+-- A user may read, add, and remove only their OWN like rows. (The public like
+-- COUNT lives on sangha_posts.likes_count, which everyone can already read.)
+drop policy if exists "own post likes" on public.post_likes;
+create policy "own post likes" on public.post_likes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Keep sangha_posts.likes_count in sync as likes are added/removed. Runs as
+-- SECURITY DEFINER so a like on someone else's post can still update that
+-- post's count (the liker doesn't own the post row).
+create or replace function public.sync_post_likes_count()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if (tg_op = 'INSERT') then
+    update public.sangha_posts
+      set likes_count = coalesce(likes_count, 0) + 1
+      where id = new.post_id;
+    return new;
+  elsif (tg_op = 'DELETE') then
+    update public.sangha_posts
+      set likes_count = greatest(coalesce(likes_count, 0) - 1, 0)
+      where id = old.post_id;
+    return old;
+  end if;
+  return null;
+end;
+$$;
+drop trigger if exists trg_post_likes_count on public.post_likes;
+create trigger trg_post_likes_count
+  after insert or delete on public.post_likes
+  for each row execute function public.sync_post_likes_count();

@@ -28,8 +28,12 @@ void main() async {
     // "set a new password" screen.
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.passwordRecovery) {
-        _navigatorKey.currentState?.push(
+        // Enter recovery mode and make the set-password screen the only route,
+        // so the auth listener below can't bounce the user to Home first.
+        isRecoveringPassword = true;
+        _navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()),
+          (_) => false,
         );
       }
     });
@@ -52,6 +56,10 @@ class DharmaApp extends ConsumerWidget {
     // MaterialApp.home changes alone don't navigate an already-mounted
     // Navigator — the NavigatorKey + pushAndRemoveUntil is the reliable fix.
     ref.listen(authUserProvider, (prev, next) {
+      // During password recovery the session is live but we must keep the user
+      // on the set-password screen, not route them into the app.
+      if (isRecoveringPassword) return;
+
       final prevId = prev?.valueOrNull?.id;
       final nextId = next.valueOrNull?.id;
       if (prevId == nextId) return;
