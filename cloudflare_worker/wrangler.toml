@@ -13,3 +13,11 @@ compatibility_date = "2024-01-01"
 # Comma-separated list of allowed request origins (no spaces).
 # Add your prod domain here. localhost entry is for local wrangler dev.
 ALLOWED_ORIGINS = "http://localhost:3456,https://dharmaai.kdaanalytics.com,https://apps.kdaanalytics.com,https://dharma-ai-web.kdanalyticsai.workers.dev,https://dharma.kdaanalytics.com"
+
+# KV namespace for the per-user daily AI rate limit (abuse backstop).
+# 1. Create it once:   npx wrangler kv namespace create AI_RATE_LIMIT
+# 2. Paste the printed id below, then deploy.
+# Until a real id is set, the Worker fails OPEN (no rate limit) — AI still works.
+[[kv_namespaces]]
+binding = "AI_RATE_LIMIT"
+id = "PASTE_KV_NAMESPACE_ID_HERE"

@@ -14,6 +14,7 @@
 //   SUPABASE_URL             (e.g. https://xxxx.supabase.co)
 //   SUPABASE_SERVICE_KEY     (service_role key — server only)
 // Vars (wrangler.toml [vars]): ALLOWED_ORIGINS
+// KV binding (wrangler.toml [[kv_namespaces]]): AI_RATE_LIMIT (per-user daily cap)
 
 // ── Server-side price table — the client can NEVER choose the amount ─────────
 // Amounts in paise (₹101 = 10100). tier maps to app feature level.
@@ -55,12 +56,26 @@ export default {
   },
 };
 
+// Per-user DAILY request ceiling (abuse backstop). These sit well ABOVE normal
+// usage — the app's real product limits (free vs paid) are enforced client-side.
+// A bypassed/scripted client can never exceed these, capping the OpenAI bill per
+// account. Tuned so a legitimate user is never affected.
+const DAILY_LIMITS = { free: 40, paid: 250 };
+
 // ── OpenAI proxy ────────────────────────────────────────────────────────────
-// Hardened: requires a valid signed-in Supabase user, and forces a cheap model
-// + token cap so the endpoint can't be abused to run up the OpenAI bill.
+// Hardened: requires a valid signed-in Supabase user, enforces a per-user daily
+// rate limit, and forces a cheap model + token cap so the endpoint can't be
+// abused to run up the OpenAI bill.
 async function openaiProxy(request, env, origin) {
   const user = await validateUser(env, request);
   if (!user) return cors(j({ error: 'Unauthorized' }), 401, origin);
+
+  // Per-user daily ceiling (KV-backed). Fails open if KV isn't bound yet.
+  const tier = await getUserTier(env, user.id);
+  const rl = await enforceRateLimit(env, user.id, tier);
+  if (!rl.ok) {
+    return cors(j({ error: 'Daily request limit reached. Please try again tomorrow.' }), 429, origin);
+  }
 
   const body = await request.json();
   body.model = 'gpt-4o-mini'; // never honour a client-chosen (expensive) model
@@ -92,6 +107,44 @@ async function validateUser(env, request) {
     return u && u.id ? u : null;
   } catch (_) {
     return null;
+  }
+}
+
+// Resolve the caller's effective tier ('free' | 'paid') for rate-limit sizing.
+// Treats a lapsed subscription as free. Fails safe to 'free' on any error.
+async function getUserTier(env, userId) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return 'free';
+  try {
+    const sb = sbFetch(env);
+    const res = await sb(`profiles?id=eq.${userId}&select=subscription_tier,subscription_end`, { method: 'GET' });
+    const rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) return 'free';
+    const row = rows[0];
+    const end = row.subscription_end ? new Date(row.subscription_end) : null;
+    if (end && end.getTime() < Date.now()) return 'free'; // lapsed → free
+    return (row.subscription_tier && row.subscription_tier !== 'free') ? 'paid' : 'free';
+  } catch (_) {
+    return 'free';
+  }
+}
+
+// Per-user daily request counter in Cloudflare KV. Key auto-expires after ~2
+// days so the namespace stays small. KV is eventually consistent, which is fine
+// for a soft daily abuse ceiling. Fails OPEN (allows the request) if the KV
+// binding isn't configured, so AI never breaks on a missing binding.
+async function enforceRateLimit(env, userId, tier) {
+  const kv = env.AI_RATE_LIMIT;
+  if (!kv) return { ok: true };
+  try {
+    const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+    const key = `rl:${userId}:${day}`;
+    const count = parseInt((await kv.get(key)) || '0', 10);
+    const limit = DAILY_LIMITS[tier] || DAILY_LIMITS.free;
+    if (count >= limit) return { ok: false };
+    await kv.put(key, String(count + 1), { expirationTtl: 172800 });
+    return { ok: true };
+  } catch (_) {
+    return { ok: true }; // never block on a KV hiccup
   }
 }
 
