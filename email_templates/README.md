@@ -1,7 +1,14 @@
 # DharmaAI — Branded Auth Email Templates
 
 Custom HTML for the transactional emails Supabase sends. They match the app's
-saffron palette (`#9C3F00` on cream `#FAF7F2`) and use the `ॐ` emblem.
+saffron palette (`#9C3F00` on cream `#FAF7F2`) and show the DharmaAI logo.
+
+## Logo hosting (important)
+The templates load the logo from `https://dharma.kdaanalytics.com/email-logo.png`,
+which is served from `web/email-logo.png` in this repo. That URL only goes live
+**after the app is deployed** (push to `main`). So deploy once before sending
+real emails, or the logo will appear broken. To refresh the logo, replace
+`web/email-logo.png` and redeploy.
 
 ## Where to paste
 Supabase Dashboard → **Authentication → Email Templates**. Select each template,
