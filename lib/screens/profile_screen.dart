@@ -59,7 +59,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text('Choose Language',
+                child: Text(AppTranslations.get('profileChooseLanguage', ref.read(languageProvider)),
                     style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context))),
               ),
               const SizedBox(height: 8),
@@ -131,7 +131,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.star, color: SacredTheme.templeGold),
-                title: const Text('Upgrade Account (Paywall)'),
+                title: Text(AppTranslations.get('profileUpgradeAccount', ref.read(languageProvider))),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -143,7 +143,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               if (isPaid)
                 ListTile(
                   leading: const Icon(Icons.card_giftcard, color: SacredTheme.primary),
-                  title: const Text('Gift a Wisdom Pass'),
+                  title: Text(AppTranslations.get('profileGiftPass', ref.read(languageProvider))),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -154,7 +154,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                 ),
               ListTile(
                 leading: const Icon(Icons.redeem, color: SacredTheme.templeGold),
-                title: const Text('Redeem a Gift Code'),
+                title: Text(AppTranslations.get('profileRedeemCode', ref.read(languageProvider))),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -166,7 +166,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.translate, color: SacredTheme.primary),
-                title: const Text('Language'),
+                title: Text(AppTranslations.get('profileLanguage', ref.read(languageProvider))),
                 subtitle: Text(ref.read(languageProvider).displayName),
                 trailing: const Icon(Icons.chevron_right, color: SacredTheme.outline),
                 onTap: () {
@@ -177,7 +177,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.redAccent),
-                title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent)),
+                title: Text(AppTranslations.get('profileSignOut', ref.read(languageProvider)), style: const TextStyle(color: Colors.redAccent)),
                 onTap: () async {
                   Navigator.pop(context);
                   await ref.read(authProvider.notifier).signOut();
@@ -231,7 +231,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final uid = SupabaseSync.userId;
     if (client == null || uid == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in to save your note.')),
+        SnackBar(content: Text(AppTranslations.get('profileSignInToSave', ref.read(languageProvider)))),
       );
       return;
     }
@@ -252,8 +252,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(saved
-              ? 'Note saved to your account — available on all your devices.'
-              : 'Could not save. Please check your connection and try again.'),
+              ? AppTranslations.get('profileNoteSaved', ref.read(languageProvider))
+              : AppTranslations.get('profileNoteSaveError', ref.read(languageProvider))),
           backgroundColor: saved ? SacredTheme.primary : null,
           duration: const Duration(seconds: 2),
         ),
@@ -275,6 +275,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final tier = ref.watch(purchaseProvider);
     final isPaid = tier != SubscriptionTier.free;
     final textTheme = Theme.of(context).textTheme;
+    final lang = ref.watch(languageProvider);
     final user = ref.watch(authUserProvider).valueOrNull;
     final fullName = (user?.userMetadata?['full_name'] as String?)?.trim();
     final displayName = (fullName != null && fullName.isNotEmpty) ? fullName : 'Seeker of Truth';
@@ -286,7 +287,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('My Sanctuary', style: textTheme.headlineMedium),
+        title: Text(AppTranslations.get('profileMySanctuary', lang), style: textTheme.headlineMedium),
         centerTitle: false,
         actions: [
           Padding(
@@ -333,7 +334,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                           children: [
                             Text(displayName, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
-                            Text('Level: Practitioner', style: textTheme.labelSmall),
+                            Text(AppTranslations.get('profileLevelPractitioner', lang), style: textTheme.labelSmall),
                             const SizedBox(height: 6),
                             // Tier badge
                             Container(
@@ -377,7 +378,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                                 const Icon(Icons.local_fire_department, color: SacredTheme.primary, size: 16),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${sadhana.streak} Day Streak',
+                                  '${sadhana.streak} ' + AppTranslations.get('profileDayStreak', lang),
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -406,9 +407,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                 labelColor: SacredTheme.primary,
                 unselectedLabelColor: SacredTheme.onSurfaceVariant,
                 labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                tabs: const [
-                  Tab(text: 'SAVED WISDOM'),
-                  Tab(text: 'PERSONAL NOTE'),
+                tabs: [
+                  Tab(text: AppTranslations.get('profileSavedWisdom', lang)),
+                  Tab(text: AppTranslations.get('profilePersonalNoteTab', lang)),
                 ],
               ),
             ),
@@ -427,7 +428,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 40.0),
                             child: Text(
-                              'No saved verses yet. Tap the bookmark icon on scripture cards to preserve them in your sanctuary.',
+                              AppTranslations.get('profileNoSavedVerses', lang),
                               style: textTheme.bodyMedium,
                               textAlign: TextAlign.center,
                             ),
@@ -481,12 +482,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'YOUR PERSONAL NOTE',
+                          AppTranslations.get('profileYourPersonalNote', lang),
                           style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Write down your reflections, realizations and personal goals. Saved to your account, so it stays with you on every device.',
+                          AppTranslations.get('profileNoteDescription', lang),
                           style: textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 16),
@@ -497,7 +498,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                           maxLines: 8,
                           maxLength: 5000,
                           decoration: InputDecoration(
-                            hintText: 'Enter your thoughts here...',
+                            hintText: AppTranslations.get('profileNoteHint', lang),
                             hintStyle: textTheme.bodyMedium?.copyWith(color: SacredTheme.outline),
                             filled: true,
                             fillColor: SacredTheme.surfaceContainerLow,
@@ -528,7 +529,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                                   ),
                                   const SizedBox(width: 12),
                                 ],
-                                const Text('SAVE NOTE'),
+                                Text(AppTranslations.get('profileSaveNote', lang)),
                               ],
                             ),
                           ),
