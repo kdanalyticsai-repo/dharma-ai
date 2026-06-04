@@ -6,6 +6,7 @@ import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/config/payment_config.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/razorpay_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
@@ -127,13 +128,14 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   }
 
   void _showWelcomeDialog(String message) {
+    final lang = ref.read(languageProvider);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: SacredTheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
         title: Text(
-          'Welcome, Sadhaka',
+          AppTranslations.get('pwWelcomeSadhaka', lang),
           style: GoogleFonts.newsreader(fontSize: 24, fontWeight: FontWeight.bold, color: SacredTheme.primary),
         ),
         content: Text(message, style: Theme.of(context).textTheme.bodyLarge),
@@ -143,7 +145,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('ENTER SACRED SPACE'),
+            child: Text(AppTranslations.get('pwEnterSacredSpace', lang)),
           ),
         ],
       ),
@@ -156,6 +158,8 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
     final activePlan = ref.watch(activePlanProvider).valueOrNull ?? 'free';
     final subEnd = ref.watch(subscriptionEndProvider).valueOrNull;
     final textTheme = Theme.of(context).textTheme;
+    final lang = ref.watch(languageProvider);
+    String t(String k) => AppTranslations.get(k, lang);
 
     return Scaffold(
       appBar: AppBar(
@@ -179,16 +183,16 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 
                 // Head Title
                 Text(
-                  'Choose Your Path',
+                  t('pwChooseYourPath'),
                   style: textTheme.headlineLarge?.copyWith(
                     color: SacredTheme.headingColor(context),
-                    fontSize: 32,
+                    fontSize: 30,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Choose a membership level to align with your personal sadhana requirements.',
+                  t('pwChooseSubtitle'),
                   style: textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -197,14 +201,14 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 // ── Sadhaka Annual (Recommended) ──────────────────
                 _buildTierCard(
                   context,
-                  title: 'Sadhaka Annual',
-                  price: '₹1499 / Year',
-                  badge: 'RECOMMENDED',
+                  title: t('pwAnnualTitle'),
+                  price: '₹1499 ${t('pwPerYear')}',
+                  badge: t('pwBadgeRecommended'),
                   benefits: [
-                    'Everything in Sadhaka Premium',
-                    'Best value — save ₹889 vs monthly',
-                    'Exclusive annual seeker badge',
-                    '3× longer AI Guru session memory',
+                    t('pwBenefitEverythingPremium'),
+                    t('pwBenefitBestValue'),
+                    t('pwBenefitAnnualBadge'),
+                    t('pwBenefit3xMemory'),
                   ],
                   isActive: activeTier == SubscriptionTier.annual,
                   isPremiumHighlight: true,
@@ -219,7 +223,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                         : _isProcessingAnnual ? null : () => _buyPlan('annual'),
                     child: _isProcessingAnnual
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(activeTier == SubscriptionTier.annual ? 'ACTIVE ANNUAL PATH' : 'EMBARK ON ANNUAL PATH'),
+                        : Text(activeTier == SubscriptionTier.annual ? t('pwActiveAnnual') : t('pwEmbarkAnnual')),
                   ),
                 ),
 
@@ -228,13 +232,13 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 // ── Sadhaka Quarterly ─────────────────────────────
                 _buildTierCard(
                   context,
-                  title: 'Sadhaka Quarterly',
-                  price: '₹499 / 3 Months',
-                  badge: 'QUARTERLY',
+                  title: t('pwQuarterlyTitle'),
+                  price: '₹499 ${t('pwPer3Months')}',
+                  badge: t('pwBadgeQuarterly'),
                   benefits: [
-                    'Everything in Sadhaka Premium',
-                    'Save ₹98 vs paying monthly',
-                    '₹166 / month — an easy commitment',
+                    t('pwBenefitEverythingPremium'),
+                    t('pwBenefitSave98'),
+                    t('pwBenefit166Month'),
                   ],
                   isActive: activePlan == 'quarterly',
                   isPremiumHighlight: true,
@@ -248,7 +252,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                         : _isProcessingQuarterly ? null : () => _buyPlan('quarterly'),
                     child: _isProcessingQuarterly
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(activePlan == 'quarterly' ? 'ACTIVE QUARTERLY PATH' : 'EMBARK ON QUARTERLY PATH'),
+                        : Text(activePlan == 'quarterly' ? t('pwActiveQuarterly') : t('pwEmbarkQuarterly')),
                   ),
                 ),
 
@@ -257,15 +261,15 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 // ── Sadhaka Premium (Monthly) ─────────────────────
                 _buildTierCard(
                   context,
-                  title: 'Sadhaka Premium',
-                  price: '₹199 / Month',
-                  badge: 'MONTHLY',
+                  title: t('pwPremiumTitle'),
+                  price: '₹199 ${t('pwPerMonth')}',
+                  badge: t('pwBadgeMonthly'),
                   benefits: [
-                    'Access all scriptures (Upanishads, Vedas)',
-                    'Unlimited AI-powered Chat Scholar',
-                    'Unlimited introspective AI Guru counseling',
-                    'Background Audio Wisdom player (18 chapters)',
-                    'Sangha community pass gifting actions',
+                    t('pwBenefitAllScriptures'),
+                    t('pwBenefitUnlimitedScholar'),
+                    t('pwBenefitUnlimitedGuru'),
+                    t('pwBenefitAudioPlayer'),
+                    t('pwBenefitGifting'),
                   ],
                   isActive: activePlan == 'monthly',
                   isPremiumHighlight: true,
@@ -279,7 +283,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                         : _isProcessing ? null : () => _buyPlan('monthly'),
                     child: _isProcessing
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(activePlan == 'monthly' ? 'ACTIVE PREMIUM PATH' : 'EMBARK ON PREMIUM PATH'),
+                        : Text(activePlan == 'monthly' ? t('pwActivePremium') : t('pwEmbarkPremium')),
                   ),
                 ),
 
@@ -288,12 +292,12 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 // ── Free Seeker ───────────────────────────────────
                 _buildTierCard(
                   context,
-                  title: 'Free Seeker',
-                  price: '₹0 / Month',
+                  title: t('pwFreeTitle'),
+                  price: '₹0 ${t('pwPerMonth')}',
                   benefits: [
-                    'Standard Bhagavad Gita Reader',
-                    '6 daily AI Scripture Scholar prompts',
-                    'Daily sadhana & streak tracker',
+                    t('pwBenefitStandardReader'),
+                    t('pwBenefit6Prompts'),
+                    t('pwBenefitSadhanaTracker'),
                   ],
                   isActive: activeTier == SubscriptionTier.free,
                   button: activeTier != SubscriptionTier.free
@@ -301,10 +305,10 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                       ? _premiumStatus(
                           context,
                           activeTier == SubscriptionTier.annual
-                              ? 'Sadhaka Annual'
+                              ? t('pwAnnualTitle')
                               : activePlan == 'quarterly'
-                                  ? 'Sadhaka Quarterly'
-                                  : 'Sadhaka Premium',
+                                  ? t('pwQuarterlyTitle')
+                                  : t('pwPremiumTitle'),
                           subEnd,
                         )
                       // Lapsed subscription → notify they've defaulted to Free.
@@ -312,7 +316,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                           ? _premiumStatus(context, null, subEnd)
                           : OutlinedButton(
                               onPressed: null,
-                              child: const Text('ACTIVE PATH'),
+                              child: Text(t('pwActivePath')),
                             ),
                 ),
                 const SizedBox(height: 24),
