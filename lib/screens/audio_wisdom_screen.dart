@@ -98,7 +98,7 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
             icon: const Icon(Icons.arrow_back, color: SacredTheme.onSurface),
             onPressed: () => Navigator.pop(context),
           ),
-          title: Text('Audio Wisdom',
+          title: Text(AppTranslations.get('audioWisdomTitle', lang),
               style: textTheme.headlineMedium?.copyWith(fontSize: 20)),
         ),
         body: Center(
@@ -110,13 +110,13 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                 Icon(Icons.headphones, size: 72,
                     color: SacredTheme.templeGold.withOpacity(0.5)),
                 const SizedBox(height: 24),
-                Text('Audio Wisdom',
+                Text(AppTranslations.get('audioWisdomTitle', lang),
                     style: textTheme.headlineMedium
                         ?.copyWith(color: SacredTheme.headingColor(context)),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 12),
                 Text(
-                  'All 18 Bhagavad Gita chapter chantings are available on Sadhaka Premium and Annual plans.',
+                  AppTranslations.get('audioGateBody', lang),
                   style: textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -125,7 +125,7 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.star),
-                    label: const Text('UPGRADE TO UNLOCK'),
+                    label: Text(AppTranslations.get('upgradeToUnlock', lang)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SacredTheme.primary,
                       foregroundColor: Colors.white,
@@ -167,7 +167,7 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Audio Wisdom',
+                      AppTranslations.get('audioWisdomTitle', lang),
                       style: textTheme.headlineLarge
                           ?.copyWith(color: SacredTheme.headingColor(context)),
                     ),

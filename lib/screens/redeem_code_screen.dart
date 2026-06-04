@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/razorpay_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
@@ -26,12 +27,12 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
   Future<void> _redeem() async {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
-      _snack('Please enter your gift code.');
+      _snack(AppTranslations.get('redeemEnterCode', ref.read(languageProvider)));
       return;
     }
     final user = ref.read(authUserProvider).valueOrNull;
     if (user == null) {
-      _snack('Please sign in to redeem a code.');
+      _snack(AppTranslations.get('redeemSignIn', ref.read(languageProvider)));
       return;
     }
 
@@ -53,11 +54,11 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
           backgroundColor: SacredTheme.surfaceContainerLow,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
           title: Text(
-            'Welcome, Sadhaka 🙏',
+            '${AppTranslations.get('pwWelcomeSadhaka', ref.read(languageProvider))} 🙏',
             style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: SacredTheme.primary),
           ),
           content: Text(
-            'Your gift has been redeemed and Premium is now unlocked. May your path be blessed with wisdom.',
+            AppTranslations.get('redeemSuccessBody', ref.read(languageProvider)),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           actions: [
@@ -66,7 +67,7 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
                 Navigator.pop(context);
                 Navigator.pop(context);
               },
-              child: const Text('ENTER SACRED SPACE'),
+              child: Text(AppTranslations.get('pwEnterSacredSpace', ref.read(languageProvider))),
             ),
           ],
         ),
@@ -87,6 +88,7 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final lang = ref.watch(languageProvider);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -95,7 +97,7 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
           icon: const Icon(Icons.arrow_back, color: SacredTheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Redeem a Gift Code', style: textTheme.headlineMedium?.copyWith(fontSize: 20)),
+        title: Text(AppTranslations.get('redeemTitle', lang), style: textTheme.headlineMedium?.copyWith(fontSize: 20)),
       ),
       body: MandalaBackground(
         scale: 0.9,
@@ -109,12 +111,12 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
               children: [
                 const SizedBox(height: 12),
                 Text(
-                  'Received a Gift?',
+                  AppTranslations.get('redeemReceivedGift', lang),
                   style: textTheme.headlineMedium?.copyWith(color: SacredTheme.headingColor(context)),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Enter the gift code a friend shared with you to unlock your Sadhaka Premium pass.',
+                  AppTranslations.get('redeemDescription', lang),
                   style: textTheme.bodyMedium,
                 ),
                 const FadingDivider(height: 28),
@@ -123,7 +125,7 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
                   controller: _codeController,
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
-                    labelText: 'GIFT CODE',
+                    labelText: AppTranslations.get('redeemCodeLabel', lang),
                     labelStyle: textTheme.labelSmall?.copyWith(color: SacredTheme.outline),
                     hintText: 'DHARMA-XXXX-XXXX',
                     filled: true,
@@ -145,7 +147,7 @@ class _RedeemCodeScreenState extends ConsumerState<RedeemCodeScreen> {
                     onPressed: _isProcessing ? null : _redeem,
                     child: _isProcessing
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('REDEEM'),
+                        : Text(AppTranslations.get('redeemButton', lang)),
                   ),
                 ),
                 const SizedBox(height: SacredTheme.safeAreaBottom),

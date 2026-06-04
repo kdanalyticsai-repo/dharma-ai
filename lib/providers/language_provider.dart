@@ -394,6 +394,248 @@ class AppTranslations {
       AppLanguage.tamil: 'ஞானம் · அறிவு · நோக்கம்',
       AppLanguage.bengali: 'জ্ঞান · বুদ্ধি · উদ্দেশ্য',
     },
+    // ── Shared ──
+    'upgradeToUnlock': {
+      AppLanguage.english: 'UPGRADE TO UNLOCK',
+      AppLanguage.hindi: 'अनलॉक करने के लिए अपग्रेड करें',
+      AppLanguage.tamil: 'திறக்க மேம்படுத்தவும்',
+      AppLanguage.bengali: 'আনলক করতে আপগ্রেড করুন',
+    },
+    // ── Gift subscription ──
+    'giftScreenTitle': {
+      AppLanguage.english: 'Gift a Subscription',
+      AppLanguage.hindi: 'एक सदस्यता उपहार दें',
+      AppLanguage.tamil: 'ஒரு சந்தாவை பரிசளிக்கவும்',
+      AppLanguage.bengali: 'একটি সাবস্ক্রিপশন উপহার দিন',
+    },
+    'giftShareTitle': {
+      AppLanguage.english: 'Share the Path of Wisdom',
+      AppLanguage.hindi: 'ज्ञान का मार्ग साझा करें',
+      AppLanguage.tamil: 'ஞானத்தின் பாதையைப் பகிருங்கள்',
+      AppLanguage.bengali: 'জ্ঞানের পথ ভাগ করুন',
+    },
+    'giftRecipientHint': {
+      AppLanguage.english: 'e.g. Ramesh Devi',
+      AppLanguage.hindi: 'उदा. रमेश देवी',
+      AppLanguage.tamil: 'எ.கா. ரமேஷ் தேவி',
+      AppLanguage.bengali: 'যেমন রমেশ দেবী',
+    },
+    'giftPlanLabel': {
+      AppLanguage.english: 'GIFT PLAN',
+      AppLanguage.hindi: 'उपहार योजना',
+      AppLanguage.tamil: 'பரிசு திட்டம்',
+      AppLanguage.bengali: 'উপহার পরিকল্পনা',
+    },
+    'giftPayButton': {
+      AppLanguage.english: 'PAY & GET GIFT CODE',
+      AppLanguage.hindi: 'भुगतान करें और उपहार कोड पाएं',
+      AppLanguage.tamil: 'பணம் செலுத்தி பரிசு குறியீட்டைப் பெறுங்கள்',
+      AppLanguage.bengali: 'পরিশোধ করুন ও উপহার কোড পান',
+    },
+    'giftCopy': {
+      AppLanguage.english: 'Copy',
+      AppLanguage.hindi: 'कॉपी करें',
+      AppLanguage.tamil: 'நகலெடு',
+      AppLanguage.bengali: 'কপি করুন',
+    },
+    'giftCopied': {
+      AppLanguage.english: 'Code copied',
+      AppLanguage.hindi: 'कोड कॉपी हो गया',
+      AppLanguage.tamil: 'குறியீடு நகலெடுக்கப்பட்டது',
+      AppLanguage.bengali: 'কোড কপি হয়েছে',
+    },
+    'giftDone': {
+      AppLanguage.english: 'DONE',
+      AppLanguage.hindi: 'हो गया',
+      AppLanguage.tamil: 'முடிந்தது',
+      AppLanguage.bengali: 'সম্পন্ন',
+    },
+    'giftSignIn': {
+      AppLanguage.english: 'Please sign in to gift a pass.',
+      AppLanguage.hindi: 'पास उपहार देने के लिए कृपया साइन इन करें।',
+      AppLanguage.tamil: 'பாஸ் பரிசளிக்க உள்நுழையவும்.',
+      AppLanguage.bengali: 'একটি পাস উপহার দিতে সাইন ইন করুন।',
+    },
+    // ── Redeem code ──
+    'redeemTitle': {
+      AppLanguage.english: 'Redeem a Gift Code',
+      AppLanguage.hindi: 'एक उपहार कोड भुनाएं',
+      AppLanguage.tamil: 'பரிசு குறியீட்டை மீட்டெடுக்கவும்',
+      AppLanguage.bengali: 'একটি উপহার কোড রিডিম করুন',
+    },
+    'redeemReceivedGift': {
+      AppLanguage.english: 'Received a Gift?',
+      AppLanguage.hindi: 'एक उपहार मिला?',
+      AppLanguage.tamil: 'பரிசு கிடைத்ததா?',
+      AppLanguage.bengali: 'একটি উপহার পেয়েছেন?',
+    },
+    'redeemDescription': {
+      AppLanguage.english: 'Enter the gift code a friend shared with you to unlock your Sadhaka Premium pass.',
+      AppLanguage.hindi: 'अपना साधक प्रीमियम पास अनलॉक करने के लिए किसी मित्र द्वारा साझा किया गया उपहार कोड दर्ज करें।',
+      AppLanguage.tamil: 'உங்கள் சாதக பிரீமியம் பாஸைத் திறக்க ஒரு நண்பர் பகிர்ந்த பரிசு குறியீட்டை உள்ளிடவும்.',
+      AppLanguage.bengali: 'আপনার সাধক প্রিমিয়াম পাস আনলক করতে একজন বন্ধুর শেয়ার করা উপহার কোড লিখুন।',
+    },
+    'redeemCodeLabel': {
+      AppLanguage.english: 'GIFT CODE',
+      AppLanguage.hindi: 'उपहार कोड',
+      AppLanguage.tamil: 'பரிசு குறியீடு',
+      AppLanguage.bengali: 'উপহার কোড',
+    },
+    'redeemButton': {
+      AppLanguage.english: 'REDEEM',
+      AppLanguage.hindi: 'भुनाएं',
+      AppLanguage.tamil: 'மீட்டெடு',
+      AppLanguage.bengali: 'রিডিম করুন',
+    },
+    'redeemEnterCode': {
+      AppLanguage.english: 'Please enter your gift code.',
+      AppLanguage.hindi: 'कृपया अपना उपहार कोड दर्ज करें।',
+      AppLanguage.tamil: 'உங்கள் பரிசு குறியீட்டை உள்ளிடவும்.',
+      AppLanguage.bengali: 'আপনার উপহার কোড লিখুন।',
+    },
+    'redeemSignIn': {
+      AppLanguage.english: 'Please sign in to redeem a code.',
+      AppLanguage.hindi: 'कोड भुनाने के लिए कृपया साइन इन करें।',
+      AppLanguage.tamil: 'குறியீட்டை மீட்டெடுக்க உள்நுழையவும்.',
+      AppLanguage.bengali: 'একটি কোড রিডিম করতে সাইন ইন করুন।',
+    },
+    'redeemSuccessBody': {
+      AppLanguage.english: 'Your gift has been redeemed and Premium is now unlocked. May your path be blessed with wisdom.',
+      AppLanguage.hindi: 'आपका उपहार भुना लिया गया है और प्रीमियम अब अनलॉक हो गया है। आपका मार्ग ज्ञान से धन्य हो।',
+      AppLanguage.tamil: 'உங்கள் பரிசு மீட்டெடுக்கப்பட்டது, பிரீமியம் இப்போது திறக்கப்பட்டது. உங்கள் பாதை ஞானத்தால் ஆசீர்வதிக்கப்படட்டும்.',
+      AppLanguage.bengali: 'আপনার উপহার রিডিম হয়েছে এবং প্রিমিয়াম এখন আনলক হয়েছে। আপনার পথ জ্ঞানে আশীর্বাদপ্রাপ্ত হোক।',
+    },
+    // ── Audio Wisdom ──
+    'audioGateBody': {
+      AppLanguage.english: 'All 18 Bhagavad Gita chapter chantings are available on Sadhaka Premium and Annual plans.',
+      AppLanguage.hindi: 'सभी 18 भगवद्गीता अध्याय मंत्रोच्चारण साधक प्रीमियम और वार्षिक योजनाओं पर उपलब्ध हैं।',
+      AppLanguage.tamil: 'அனைத்து 18 பகவத் கீதை அத்தியாய பாராயணங்களும் சாதக பிரீமியம் மற்றும் ஆண்டு திட்டங்களில் கிடைக்கும்.',
+      AppLanguage.bengali: 'সমস্ত 18টি ভগবদ্গীতা অধ্যায়ের জপ সাধক প্রিমিয়াম ও বার্ষিক প্ল্যানে উপলব্ধ।',
+    },
+    // ── Reader premium gate ──
+    'gatePremiumScripture': {
+      AppLanguage.english: 'A Premium Scripture',
+      AppLanguage.hindi: 'एक प्रीमियम ग्रंथ',
+      AppLanguage.tamil: 'ஒரு பிரீமியம் வேதம்',
+      AppLanguage.bengali: 'একটি প্রিমিয়াম শাস্ত্র',
+    },
+    'gateAccessBody': {
+      AppLanguage.english: 'Access to this scripture is part of the Sadhaka Premium and Annual paths.',
+      AppLanguage.hindi: 'इस ग्रंथ तक पहुंच साधक प्रीमियम और वार्षिक मार्गों का हिस्सा है।',
+      AppLanguage.tamil: 'இந்த வேதத்திற்கான அணுகல் சாதக பிரீமியம் மற்றும் ஆண்டு பாதைகளின் ஒரு பகுதியாகும்.',
+      AppLanguage.bengali: 'এই শাস্ত্রে প্রবেশ সাধক প্রিমিয়াম ও বার্ষিক পথের অংশ।',
+    },
+    // ── Set new password ──
+    'spSetNewPassword': {
+      AppLanguage.english: 'Set a new password',
+      AppLanguage.hindi: 'एक नया पासवर्ड सेट करें',
+      AppLanguage.tamil: 'புதிய கடவுச்சொல்லை அமைக்கவும்',
+      AppLanguage.bengali: 'একটি নতুন পাসওয়ার্ড সেট করুন',
+    },
+    'spSubtitle': {
+      AppLanguage.english: 'Choose a new password for your account. You\'ll use it to sign in from now on.',
+      AppLanguage.hindi: 'अपने खाते के लिए एक नया पासवर्ड चुनें। अब से आप इसका उपयोग साइन इन करने के लिए करेंगे।',
+      AppLanguage.tamil: 'உங்கள் கணக்கிற்கு புதிய கடவுச்சொல்லைத் தேர்ந்தெடுக்கவும். இனிமேல் உள்நுழைய இதைப் பயன்படுத்துவீர்கள்.',
+      AppLanguage.bengali: 'আপনার অ্যাকাউন্টের জন্য একটি নতুন পাসওয়ার্ড বেছে নিন। এখন থেকে সাইন ইন করতে এটি ব্যবহার করবেন।',
+    },
+    'spNewPassword': {
+      AppLanguage.english: 'New password',
+      AppLanguage.hindi: 'नया पासवर्ड',
+      AppLanguage.tamil: 'புதிய கடவுச்சொல்',
+      AppLanguage.bengali: 'নতুন পাসওয়ার্ড',
+    },
+    'spConfirmPassword': {
+      AppLanguage.english: 'Confirm new password',
+      AppLanguage.hindi: 'नया पासवर्ड पुष्टि करें',
+      AppLanguage.tamil: 'புதிய கடவுச்சொல்லை உறுதிப்படுத்தவும்',
+      AppLanguage.bengali: 'নতুন পাসওয়ার্ড নিশ্চিত করুন',
+    },
+    'spUpdateButton': {
+      AppLanguage.english: 'UPDATE PASSWORD',
+      AppLanguage.hindi: 'पासवर्ड अपडेट करें',
+      AppLanguage.tamil: 'கடவுச்சொல்லைப் புதுப்பிக்கவும்',
+      AppLanguage.bengali: 'পাসওয়ার্ড আপডেট করুন',
+    },
+    'spMinChars': {
+      AppLanguage.english: 'Password must be at least 6 characters.',
+      AppLanguage.hindi: 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।',
+      AppLanguage.tamil: 'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்.',
+      AppLanguage.bengali: 'পাসওয়ার্ড কমপক্ষে 6টি অক্ষরের হতে হবে।',
+    },
+    'spMismatch': {
+      AppLanguage.english: 'The passwords do not match.',
+      AppLanguage.hindi: 'पासवर्ड मेल नहीं खाते।',
+      AppLanguage.tamil: 'கடவுச்சொற்கள் பொருந்தவில்லை.',
+      AppLanguage.bengali: 'পাসওয়ার্ডগুলি মিলছে না।',
+    },
+    'spUpdated': {
+      AppLanguage.english: 'Your password has been updated. Welcome back.',
+      AppLanguage.hindi: 'आपका पासवर्ड अपडेट हो गया है। वापसी पर स्वागत है।',
+      AppLanguage.tamil: 'உங்கள் கடவுச்சொல் புதுப்பிக்கப்பட்டது. மீண்டும் வரவேற்கிறோம்.',
+      AppLanguage.bengali: 'আপনার পাসওয়ার্ড আপডেট হয়েছে। আবার স্বাগতম।',
+    },
+    // ── Forgot password dialog ──
+    'fpTitle': {
+      AppLanguage.english: 'Reset your password',
+      AppLanguage.hindi: 'अपना पासवर्ड रीसेट करें',
+      AppLanguage.tamil: 'உங்கள் கடவுச்சொல்லை மீட்டமைக்கவும்',
+      AppLanguage.bengali: 'আপনার পাসওয়ার্ড রিসেট করুন',
+    },
+    'fpBody': {
+      AppLanguage.english: 'Enter your account email and we\'ll send you a link to set a new password.',
+      AppLanguage.hindi: 'अपना खाता ईमेल दर्ज करें और हम आपको नया पासवर्ड सेट करने के लिए एक लिंक भेजेंगे।',
+      AppLanguage.tamil: 'உங்கள் கணக்கு மின்னஞ்சலை உள்ளிடவும், புதிய கடவுச்சொல்லை அமைக்க ஒரு இணைப்பை அனுப்புவோம்.',
+      AppLanguage.bengali: 'আপনার অ্যাকাউন্ট ইমেল লিখুন এবং আমরা নতুন পাসওয়ার্ড সেট করার একটি লিঙ্ক পাঠাব।',
+    },
+    'fpCancel': {
+      AppLanguage.english: 'CANCEL',
+      AppLanguage.hindi: 'रद्द करें',
+      AppLanguage.tamil: 'ரத்து செய்',
+      AppLanguage.bengali: 'বাতিল করুন',
+    },
+    'fpSend': {
+      AppLanguage.english: 'SEND RESET LINK',
+      AppLanguage.hindi: 'रीसेट लिंक भेजें',
+      AppLanguage.tamil: 'மீட்டமைப்பு இணைப்பை அனுப்பு',
+      AppLanguage.bengali: 'রিসেট লিঙ্ক পাঠান',
+    },
+    'fpInvalidEmail': {
+      AppLanguage.english: 'Please enter a valid email address.',
+      AppLanguage.hindi: 'कृपया एक मान्य ईमेल पता दर्ज करें।',
+      AppLanguage.tamil: 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.',
+      AppLanguage.bengali: 'একটি বৈধ ইমেল ঠিকানা লিখুন।',
+    },
+    'fpSent': {
+      AppLanguage.english: 'If an account exists, a password reset link is on its way. Check your inbox.',
+      AppLanguage.hindi: 'यदि कोई खाता मौजूद है, तो पासवर्ड रीसेट लिंक भेजा जा रहा है। अपना इनबॉक्स देखें।',
+      AppLanguage.tamil: 'ஒரு கணக்கு இருந்தால், கடவுச்சொல் மீட்டமைப்பு இணைப்பு அனுப்பப்படுகிறது. உங்கள் இன்பாக்ஸைச் சரிபார்க்கவும்.',
+      AppLanguage.bengali: 'একটি অ্যাকাউন্ট থাকলে, পাসওয়ার্ড রিসেট লিঙ্ক পাঠানো হচ্ছে। আপনার ইনবক্স দেখুন।',
+    },
+    // ── Subscription expiry dialog ──
+    'expiryTitle': {
+      AppLanguage.english: 'Subscription ended',
+      AppLanguage.hindi: 'सदस्यता समाप्त हो गई',
+      AppLanguage.tamil: 'சந்தா முடிந்தது',
+      AppLanguage.bengali: 'সাবস্ক্রিপশন শেষ হয়েছে',
+    },
+    'expiryUpgradeBenefits': {
+      AppLanguage.english: 'Upgrade to continue benefits.',
+      AppLanguage.hindi: 'लाभ जारी रखने के लिए अपग्रेड करें।',
+      AppLanguage.tamil: 'நன்மைகளைத் தொடர மேம்படுத்தவும்.',
+      AppLanguage.bengali: 'সুবিধা চালিয়ে যেতে আপগ্রেড করুন।',
+    },
+    'expiryMaybeLater': {
+      AppLanguage.english: 'MAYBE LATER',
+      AppLanguage.hindi: 'बाद में',
+      AppLanguage.tamil: 'பிறகு',
+      AppLanguage.bengali: 'পরে',
+    },
+    'expiryUpgrade': {
+      AppLanguage.english: 'UPGRADE',
+      AppLanguage.hindi: 'अपग्रेड करें',
+      AppLanguage.tamil: 'மேம்படுத்து',
+      AppLanguage.bengali: 'আপগ্রেড',
+    },
     // ── Profile / My Sanctuary ──
     'profileMySanctuary': {
       AppLanguage.english: 'My Sanctuary',

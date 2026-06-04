@@ -117,6 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _forgotPassword() async {
     final resetController = TextEditingController(text: _emailController.text.trim());
     final textTheme = Theme.of(context).textTheme;
+    final dlang = ref.read(languageProvider);
     bool sending = false;
 
     await showDialog<void>(
@@ -126,7 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           backgroundColor: SacredTheme.surfaceContainerLow,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
           title: Text(
-            'Reset your password',
+            AppTranslations.get('fpTitle', dlang),
             style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: SacredTheme.primary),
           ),
           content: Column(
@@ -134,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Enter your account email and we\'ll send you a link to set a new password.',
+                AppTranslations.get('fpBody', dlang),
                 style: textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
@@ -155,7 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           actions: [
             TextButton(
               onPressed: sending ? null : () => Navigator.pop(dialogContext),
-              child: const Text('CANCEL', style: TextStyle(color: SacredTheme.outline)),
+              child: Text(AppTranslations.get('fpCancel', dlang), style: const TextStyle(color: SacredTheme.outline)),
             ),
             ElevatedButton(
               onPressed: sending
@@ -166,7 +167,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       final navigator = Navigator.of(dialogContext);
                       if (email.isEmpty || !email.contains('@')) {
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Please enter a valid email address.')),
+                          SnackBar(content: Text(AppTranslations.get('fpInvalidEmail', dlang))),
                         );
                         return;
                       }
@@ -176,8 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       navigator.pop();
                       messenger.showSnackBar(
                         SnackBar(
-                          content: Text(error ??
-                              'If an account exists for $email, a password reset link is on its way. Check your inbox.'),
+                          content: Text(error ?? AppTranslations.get('fpSent', dlang)),
                           backgroundColor: error == null ? SacredTheme.primary : null,
                           duration: const Duration(seconds: 4),
                         ),
@@ -185,7 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
               child: sending
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('SEND RESET LINK'),
+                  : Text(AppTranslations.get('fpSend', dlang)),
             ),
           ],
         ),

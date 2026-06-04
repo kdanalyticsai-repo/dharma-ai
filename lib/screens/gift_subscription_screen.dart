@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/providers/community_provider.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/config/payment_config.dart';
 import 'package:dharma_ai/services/razorpay_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
@@ -45,7 +46,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
     }
     final user = ref.read(authUserProvider).valueOrNull;
     if (user == null) {
-      _snack('Please sign in to gift a pass.');
+      _snack(AppTranslations.get('giftSignIn', ref.read(languageProvider)));
       return;
     }
 
@@ -128,10 +129,10 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.copy, size: 16),
-                    label: const Text('Copy'),
+                    label: Text(AppTranslations.get('giftCopy', ref.read(languageProvider))),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: code));
-                      _snack('Code copied');
+                      _snack(AppTranslations.get('giftCopied', ref.read(languageProvider)));
                     },
                   ),
                 ),
@@ -156,7 +157,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('DONE'),
+            child: Text(AppTranslations.get('giftDone', ref.read(languageProvider))),
           ),
         ],
       ),
@@ -172,6 +173,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -181,7 +183,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
           icon: const Icon(Icons.arrow_back, color: SacredTheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Gift a Subscription', style: textTheme.headlineMedium?.copyWith(fontSize: 20)),
+        title: Text(AppTranslations.get('giftScreenTitle', lang), style: textTheme.headlineMedium?.copyWith(fontSize: 20)),
       ),
       body: MandalaBackground(
         scale: 0.9,
@@ -195,7 +197,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
               children: [
                 const SizedBox(height: 12),
                 Text(
-                  'Share the Path of Wisdom',
+                  AppTranslations.get('giftShareTitle', lang),
                   style: textTheme.headlineMedium?.copyWith(color: SacredTheme.headingColor(context)),
                 ),
                 const SizedBox(height: 6),
@@ -211,7 +213,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                   decoration: InputDecoration(
                     labelText: "RECIPIENT NAME (OPTIONAL)",
                     labelStyle: textTheme.labelSmall?.copyWith(color: SacredTheme.outline),
-                    hintText: 'e.g. Ramesh Devi',
+                    hintText: AppTranslations.get('giftRecipientHint', lang),
                     filled: true,
                     fillColor: SacredTheme.surfaceContainerLow,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusDefault)),
@@ -225,7 +227,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                   value: _selectedPlan,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: 'GIFT PLAN',
+                    labelText: AppTranslations.get('giftPlanLabel', lang),
                     labelStyle: textTheme.labelSmall?.copyWith(color: SacredTheme.outline),
                     filled: true,
                     fillColor: SacredTheme.surfaceContainerLow,
@@ -267,7 +269,7 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                     onPressed: _isProcessing ? null : _handleGiftPurchase,
                     child: _isProcessing
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('PAY & GET GIFT CODE'),
+                        : Text(AppTranslations.get('giftPayButton', lang)),
                   ),
                 ),
                 const SizedBox(height: SacredTheme.safeAreaBottom),

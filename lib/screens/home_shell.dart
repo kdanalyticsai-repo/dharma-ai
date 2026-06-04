@@ -58,9 +58,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   }
 
   void _showExpiryDialog(DateTime end) {
+    final lang = ref.read(languageProvider);
     final message =
-        '${subscriptionStatusLine(end) ?? 'Your subscription has ended.'} '
-        'Upgrade to continue benefits.';
+        '${subscriptionStatusLine(end) ?? ''} '
+        '${AppTranslations.get('expiryUpgradeBenefits', lang)}';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -68,10 +69,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
         title: Row(
-          children: const [
-            Icon(Icons.info_outline, color: SacredTheme.primary),
-            SizedBox(width: 8),
-            Text('Subscription ended'),
+          children: [
+            const Icon(Icons.info_outline, color: SacredTheme.primary),
+            const SizedBox(width: 8),
+            Expanded(child: Text(AppTranslations.get('expiryTitle', lang))),
           ],
         ),
         content: InkWell(
@@ -84,14 +85,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('MAYBE LATER', style: TextStyle(color: SacredTheme.outline)),
+            child: Text(AppTranslations.get('expiryMaybeLater', lang), style: const TextStyle(color: SacredTheme.outline)),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               _openPaywall();
             },
-            child: const Text('UPGRADE'),
+            child: Text(AppTranslations.get('expiryUpgrade', lang)),
           ),
         ],
       ),
@@ -171,110 +172,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ==========================================
-// Placeholder Mocks for Core Tabs (Phase 1)
-// ==========================================
-
-class MockFeedScreen extends StatelessWidget {
-  const MockFeedScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text('Daily Feed', style: textTheme.headlineMedium),
-        centerTitle: false,
-      ),
-      body: const MandalaBackground(
-        scale: 0.8,
-        alignment: Alignment.center,
-        child: Center(
-          child: Text('Screen 6: Daily Spiritual Feed Placeholder'),
-        ),
-      ),
-    );
-  }
-}
-
-class MockScripturesScreen extends StatelessWidget {
-  const MockScripturesScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text('Scriptures', style: textTheme.headlineMedium),
-      ),
-      body: const Center(
-        child: Text('Screen 25 & 32: Scripture Reader & Search Placeholder'),
-      ),
-    );
-  }
-}
-
-class MockAiGuruScreen extends StatelessWidget {
-  const MockAiGuruScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text('AI Guru', style: textTheme.headlineMedium),
-      ),
-      body: const Center(
-        child: Text('Screen 19 & 21: AI Guidance & Guru Mode Placeholder'),
-      ),
-    );
-  }
-}
-
-class MockSadhanaScreen extends StatelessWidget {
-  const MockSadhanaScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text('My Sadhana', style: textTheme.headlineMedium),
-      ),
-      body: const Center(
-        child: Text('Screen 37: Daily Sadhana Dashboard Placeholder'),
-      ),
-    );
-  }
-}
-
-class MockSanghaScreen extends StatelessWidget {
-  const MockSanghaScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text('Sangha Community', style: textTheme.headlineMedium),
-      ),
-      body: const Center(
-        child: Text('Screen 35: Sangha Community Feed Placeholder'),
       ),
     );
   }

@@ -200,7 +200,7 @@ class ScripturesScreen extends ConsumerWidget {
 
     // Upanishads / Vedas — Premium gate
     if (!isPaid) {
-      return _buildPremiumGate(context, book);
+      return _buildPremiumGate(context, book, lang);
     }
 
     // Vedas come from Supabase (full Sanskrit text); samples as fallback.
@@ -385,9 +385,8 @@ class ScripturesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPremiumGate(BuildContext context, ScriptureBook book) {
+  Widget _buildPremiumGate(BuildContext context, ScriptureBook book, AppLanguage currentLanguage) {
     final textTheme = Theme.of(context).textTheme;
-    final name = book == ScriptureBook.upanishads ? 'the Upanishads' : 'the Vedas';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -397,13 +396,13 @@ class ScripturesScreen extends ConsumerWidget {
             Icon(Icons.auto_stories, size: 64,
                 color: SacredTheme.templeGold.withOpacity(0.6)),
             const SizedBox(height: 20),
-            Text('A Premium Scripture',
+            Text(AppTranslations.get('gatePremiumScripture', currentLanguage),
                 style: textTheme.headlineSmall?.copyWith(
                     color: SacredTheme.headingColor(context)),
                 textAlign: TextAlign.center),
             const SizedBox(height: 10),
             Text(
-              'Access to $name is part of the Sadhaka Premium and Annual paths.',
+              AppTranslations.get('gateAccessBody', currentLanguage),
               style: textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -412,7 +411,7 @@ class ScripturesScreen extends ConsumerWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.star),
-                label: const Text('UPGRADE TO UNLOCK'),
+                label: Text(AppTranslations.get('upgradeToUnlock', currentLanguage)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: SacredTheme.primary,
                   foregroundColor: Colors.white,

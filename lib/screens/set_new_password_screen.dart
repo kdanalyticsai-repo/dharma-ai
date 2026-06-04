@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 
@@ -34,11 +35,11 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
     final pass = _passwordController.text;
     final confirm = _confirmController.text;
     if (pass.length < 6) {
-      setState(() => _error = 'Password must be at least 6 characters.');
+      setState(() => _error = AppTranslations.get('spMinChars', ref.read(languageProvider)));
       return;
     }
     if (pass != confirm) {
-      setState(() => _error = 'The passwords do not match.');
+      setState(() => _error = AppTranslations.get('spMismatch', ref.read(languageProvider)));
       return;
     }
     setState(() { _isSaving = true; _error = null; });
@@ -50,8 +51,8 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Your password has been updated. Welcome back.'),
+      SnackBar(
+        content: Text(AppTranslations.get('spUpdated', ref.read(languageProvider))),
         backgroundColor: SacredTheme.primary,
       ),
     );
@@ -65,6 +66,7 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final lang = ref.watch(languageProvider);
     return Scaffold(
       body: MandalaBackground(
         scale: 1.0,
@@ -78,13 +80,13 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
               children: [
                 const SizedBox(height: 20),
                 Text(
-                  'Set a new password',
+                  AppTranslations.get('spSetNewPassword', lang),
                   style: GoogleFonts.newsreader(
                     fontSize: 28, fontWeight: FontWeight.bold, color: SacredTheme.primary),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Choose a new password for your account. You\'ll use it to sign in from now on.',
+                  AppTranslations.get('spSubtitle', lang),
                   style: textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 28),
@@ -93,7 +95,7 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
                   controller: _passwordController,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'New password',
+                    labelText: AppTranslations.get('spNewPassword', lang),
                     hintText: '••••••••',
                     filled: true,
                     fillColor: SacredTheme.surfaceContainerLow,
@@ -111,7 +113,7 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
                   controller: _confirmController,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'Confirm new password',
+                    labelText: AppTranslations.get('spConfirmPassword', lang),
                     hintText: '••••••••',
                     filled: true,
                     fillColor: SacredTheme.surfaceContainerLow,
@@ -141,7 +143,7 @@ class _SetNewPasswordScreenState extends ConsumerState<SetNewPasswordScreen> {
                     onPressed: _isSaving ? null : _save,
                     child: _isSaving
                         ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('UPDATE PASSWORD'),
+                        : Text(AppTranslations.get('spUpdateButton', lang)),
                   ),
                 ),
               ],
