@@ -269,7 +269,6 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     t('pwBenefitUnlimitedScholar'),
                     t('pwBenefitUnlimitedGuru'),
                     t('pwBenefitAudioPlayer'),
-                    t('pwBenefitGifting'),
                   ],
                   isActive: activePlan == 'monthly',
                   isPremiumHighlight: true,

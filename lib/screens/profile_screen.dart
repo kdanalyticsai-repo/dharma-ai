@@ -140,18 +140,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                   );
                 },
               ),
-              if (isPaid)
-                ListTile(
-                  leading: const Icon(Icons.card_giftcard, color: SacredTheme.primary),
-                  title: Text(AppTranslations.get('profileGiftPass', ref.read(languageProvider))),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const GiftSubscriptionScreen()),
-                    );
-                  },
-                ),
+              ListTile(
+                leading: const Icon(Icons.card_giftcard, color: SacredTheme.primary),
+                title: Text(AppTranslations.get('profileGiftPass', ref.read(languageProvider))),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GiftSubscriptionScreen()),
+                  );
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.redeem, color: SacredTheme.templeGold),
                 title: Text(AppTranslations.get('profileRedeemCode', ref.read(languageProvider))),

@@ -27,6 +27,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         alignment: Alignment.center,
         rotate: true,
         child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge),
             child: Column(
@@ -220,6 +226,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   ],
                 ),
               ],
+            ),
+          ),
+                ),
+              ),
             ),
           ),
         ),

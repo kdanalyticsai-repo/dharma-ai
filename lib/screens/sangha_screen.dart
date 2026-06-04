@@ -4,9 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/models/community_post.dart';
 import 'package:dharma_ai/providers/community_provider.dart';
-import 'package:dharma_ai/providers/purchase_provider.dart';
-import 'package:dharma_ai/services/purchase_service.dart';
-import 'package:dharma_ai/screens/subscription_paywall_screen.dart';
 import 'package:dharma_ai/screens/gift_subscription_screen.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
@@ -32,8 +29,6 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
   @override
   Widget build(BuildContext context) {
     final posts = ref.watch(communityProvider);
-    final tier = ref.watch(purchaseProvider);
-    final isPaid = tier != SubscriptionTier.free;
     final textTheme = Theme.of(context).textTheme;
     final currentLanguage = ref.watch(languageProvider);
 
@@ -72,12 +67,13 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
                         style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                       onPressed: () {
+                        // Gifting buys a pass for someone else (it never
+                        // upgrades the buyer), so it's available to everyone —
+                        // free users included.
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => isPaid
-                                ? const GiftSubscriptionScreen()
-                                : const SubscriptionPaywallScreen(),
+                            builder: (_) => const GiftSubscriptionScreen(),
                           ),
                         );
                       },
