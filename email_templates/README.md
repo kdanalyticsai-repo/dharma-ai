@@ -21,10 +21,15 @@ set the **Subject**, and paste the file's HTML into the **Message body** (the
 | **Confirm signup** | `confirm_signup.html` | `Confirm your email to begin your path` |
 
 ## Notes
-- The only dynamic variable used is `{{ .ConfirmationURL }}` — Supabase fills it
-  in. Don't rename it.
+- **Reset Password** links to
+  `https://dharma.kdaanalytics.com/?type=recovery&token_hash={{ .TokenHash }}`
+  (NOT `{{ .ConfirmationURL }}`). The app reads the `token_hash` and calls
+  `verifyOTP()` to open the recovery session — this works in any browser/device,
+  unlike the PKCE `ConfirmationURL` which only works in the browser that
+  requested the reset. Keep `{{ .TokenHash }}` intact.
+- **Confirm signup** still uses `{{ .ConfirmationURL }}` — Supabase fills it in.
 - Templates are table-based with inline styles for broad email-client support
-  (Gmail, Outlook, Apple Mail). The `&#2384;` entity renders the `ॐ` glyph.
+  (Gmail, Outlook, Apple Mail).
 - These only take effect once **Custom SMTP (Resend)** is enabled and the
   `mail.kdaanalytics.com` domain is **Verified** in Resend.
 - If "Confirm email" is disabled in Auth settings, the Confirm-signup template

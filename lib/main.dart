@@ -18,14 +18,16 @@ import 'package:dharma_ai/config/supabase_config.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Detect a password-recovery link BEFORE Supabase.initialize() runs — the SDK
-  // exchanges the code and strips auth params from the URL during init, and the
-  // PKCE flow does not reliably emit a passwordRecovery event. We tag the reset
-  // link with ?type=recovery (see auth_provider.resetPassword) and read it here
-  // so we can hold the user on the set-password screen instead of the feed.
-  if (kIsWeb && Uri.base.queryParameters['type'] == 'recovery') {
-    isRecoveringPassword = true;
-  }
+  // Detect a password-recovery link from the URL. The reset email links to
+  //   https://dharma.kdaanalytics.com/?type=recovery&token_hash=...
+  // We read these BEFORE Supabase.initialize() (the SDK strips auth params from
+  // the URL during init). The token_hash lets us open the recovery session via
+  // verifyOTP() — which works in ANY browser/device, unlike the PKCE code flow
+  // that needs a code_verifier stored only in the browser that requested it.
+  final recoveryParams = kIsWeb ? Uri.base.queryParameters : const <String, String>{};
+  final isRecovery = recoveryParams['type'] == 'recovery';
+  final recoveryTokenHash = recoveryParams['token_hash'];
+  if (isRecovery) isRecoveringPassword = true;
 
   if (SupabaseConfig.isConfigured) {
     await Supabase.initialize(
@@ -33,9 +35,20 @@ void main() async {
       anonKey: SupabaseConfig.supabaseAnonKey,
     );
 
-    // When the user follows a password-recovery email link, Supabase opens a
-    // temporary recovery session and fires this event — send them to the
-    // "set a new password" screen.
+    // Establish the recovery session from the emailed token hash (cross-browser).
+    if (isRecovery && recoveryTokenHash != null && recoveryTokenHash.isNotEmpty) {
+      try {
+        await Supabase.instance.client.auth.verifyOTP(
+          type: OtpType.recovery,
+          tokenHash: recoveryTokenHash,
+        );
+      } catch (e) {
+        debugPrint('recovery verifyOTP failed: $e');
+      }
+    }
+
+    // Belt-and-suspenders: if the SDK does emit a passwordRecovery event, make
+    // the set-password screen the only route so nothing bounces to Home.
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.passwordRecovery) {
         // Enter recovery mode and make the set-password screen the only route,
