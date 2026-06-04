@@ -1,15 +1,18 @@
 // DharmaAI — Cloudflare Worker
-// Two responsibilities, routed by path:
-//   • POST /                → OpenAI chat proxy (key stays server-side)
-//   • POST /razorpay/order  → create a Razorpay order (server sets the price)
-//   • POST /razorpay/verify → verify payment signature + grant the subscription
+// Routed by path:
+//   • POST /                 → OpenAI chat proxy (auth-gated, model-locked)
+//   • POST /razorpay/order   → create a Razorpay order (server sets the price)
+//   • POST /razorpay/verify  → verify payment signature + grant the subscription
+//   • POST /razorpay/redeem  → redeem a gift code
+//   • POST /razorpay/webhook → Razorpay server-to-server callback (reliable grant)
 //
 // Secrets (set via `wrangler secret put <NAME>`):
 //   OPENAI_API_KEY
-//   RAZORPAY_KEY_ID         (test: rzp_test_xxx, live: rzp_live_xxx)
+//   RAZORPAY_KEY_ID          (test: rzp_test_xxx, live: rzp_live_xxx)
 //   RAZORPAY_KEY_SECRET
-//   SUPABASE_URL            (e.g. https://xxxx.supabase.co)
-//   SUPABASE_SERVICE_KEY    (service_role key — server only)
+//   RAZORPAY_WEBHOOK_SECRET  (from Razorpay dashboard → Webhooks)
+//   SUPABASE_URL             (e.g. https://xxxx.supabase.co)
+//   SUPABASE_SERVICE_KEY     (service_role key — server only)
 // Vars (wrangler.toml [vars]): ALLOWED_ORIGINS
 
 // ── Server-side price table — the client can NEVER choose the amount ─────────
@@ -22,19 +25,25 @@ const PLANS = {
 
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get('Origin') || '';
-
-    if (request.method === 'OPTIONS') {
-      return cors('', 204, allowedOrigin(origin, env));
-    }
-    if (request.method !== 'POST') {
-      return cors(j({ error: 'Method not allowed' }), 405, null);
-    }
-    if (!isAllowed(origin, env)) {
-      return cors(j({ error: 'Forbidden' }), 403, null);
-    }
-
     const path = new URL(request.url).pathname;
+
+    // Razorpay webhook is server-to-server (no Origin / no CORS). It is
+    // authenticated by its own HMAC signature, so it bypasses the origin gate.
+    if (path === '/razorpay/webhook') {
+      if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+      try {
+        return await handleWebhook(request, env);
+      } catch (e) {
+        // Always 200 on our errors so Razorpay doesn't hammer retries forever.
+        return new Response('ok', { status: 200 });
+      }
+    }
+
+    const origin = request.headers.get('Origin') || '';
+    if (request.method === 'OPTIONS') return cors('', 204, allowedOrigin(origin, env));
+    if (request.method !== 'POST') return cors(j({ error: 'Method not allowed' }), 405, null);
+    if (!isAllowed(origin, env)) return cors(j({ error: 'Forbidden' }), 403, null);
+
     try {
       if (path === '/razorpay/order')  return await createOrder(request, env, origin);
       if (path === '/razorpay/verify') return await verifyPayment(request, env, origin);
@@ -46,9 +55,17 @@ export default {
   },
 };
 
-// ── OpenAI proxy (unchanged behavior) ───────────────────────────────────────
+// ── OpenAI proxy ────────────────────────────────────────────────────────────
+// Hardened: requires a valid signed-in Supabase user, and forces a cheap model
+// + token cap so the endpoint can't be abused to run up the OpenAI bill.
 async function openaiProxy(request, env, origin) {
+  const user = await validateUser(env, request);
+  if (!user) return cors(j({ error: 'Unauthorized' }), 401, origin);
+
   const body = await request.json();
+  body.model = 'gpt-4o-mini'; // never honour a client-chosen (expensive) model
+  if (!Number.isInteger(body.max_tokens) || body.max_tokens > 1000) body.max_tokens = 1000;
+
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -61,9 +78,25 @@ async function openaiProxy(request, env, origin) {
   return cors(j(data), res.status, origin);
 }
 
+// Validate the caller's Supabase access token (sent as `Authorization: Bearer`).
+// Returns the user object when the token is valid, otherwise null.
+async function validateUser(env, request) {
+  const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  try {
+    const res = await fetch(`${sbBase(env)}/auth/v1/user`, {
+      headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const u = await res.json();
+    return u && u.id ? u : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 // ── Razorpay: create order ──────────────────────────────────────────────────
 // Body: { plan: 'monthly'|'quarterly'|'annual', user_id }
-// The amount comes from the server PLANS table, so it can't be tampered with.
 async function createOrder(request, env, origin) {
   const { plan, user_id, gift } = await request.json();
   const p = PLANS[plan];
@@ -78,15 +111,14 @@ async function createOrder(request, env, origin) {
       amount: p.amount,
       currency: 'INR',
       receipt: `dharma_${plan}_${Date.now()}`,
-      // Plan + user are stored on the order so verify() trusts the server, not the client.
-      // 'gift' marks this as a gift purchase (creates a code instead of granting the buyer).
+      // Plan + user are stored on the order so verify()/webhook trust the
+      // server, not the client. 'gift' marks a gift purchase.
       notes: { plan, user_id, gift: gift ? '1' : '' },
     }),
   });
   const order = await res.json();
   if (!res.ok) return cors(j({ error: 'Order failed', detail: order }), res.status, origin);
 
-  // key_id is the public identifier — safe to return to the browser.
   return cors(j({
     order_id: order.id,
     amount: order.amount,
@@ -96,9 +128,7 @@ async function createOrder(request, env, origin) {
   }), 200, origin);
 }
 
-// ── Razorpay: verify payment + grant subscription ───────────────────────────
-// Body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
-// Everything granted is derived from the ORDER (server-trusted), not the client.
+// ── Razorpay: verify payment (client-driven) + grant ────────────────────────
 async function verifyPayment(request, env, origin) {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await request.json();
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -111,61 +141,100 @@ async function verifyPayment(request, env, origin) {
     return cors(j({ valid: false, error: 'Signature mismatch' }), 400, origin);
   }
 
-  // 2. Re-fetch the order from Razorpay to read the trusted plan/user_id.
-  // The signature above already proves the payment is genuine; we do NOT
-  // hard-require status === 'paid' (capture can lag a moment after success).
-  const auth = btoa(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`);
-  const ordRes = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
-    headers: { 'Authorization': `Basic ${auth}` },
-  });
-  const order = await ordRes.json();
-  if (!ordRes.ok) {
-    return cors(j({ valid: false, error: 'Order fetch failed', detail: order }), 400, origin);
-  }
-
-  const plan = order.notes?.plan;
-  const userId = order.notes?.user_id;
-  const p = PLANS[plan];
-  if (!p || !userId) {
-    return cors(j({ valid: false, error: 'Bad order notes', notes: order.notes }), 400, origin);
-  }
-
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
     return cors(j({ valid: false, error: 'Supabase secrets not set on Worker' }), 500, origin);
   }
+
+  // 2. Re-fetch the order to read the server-trusted plan/user_id, then grant
+  //    (idempotently — the webhook may also grant the same payment).
+  const order = await fetchOrder(env, razorpay_order_id);
+  if (!order || !order.id) {
+    return cors(j({ valid: false, error: 'Order fetch failed', detail: order }), 400, origin);
+  }
+  const r = await grantFromOrder(env, order, razorpay_payment_id);
+  if (!r.ok) return cors(j({ valid: false, error: r.error, detail: r.detail }), r.status || 500, origin);
+  if (r.gift) return cors(j({ valid: true, gift: true, code: r.code, plan: r.plan, tier: r.tier }), 200, origin);
+  return cors(j({ valid: true, tier: r.tier, plan: r.plan, expires_at: r.expires_at }), 200, origin);
+}
+
+// ── Razorpay: webhook (server-to-server) — the reliable grant path ──────────
+// Configure in Razorpay dashboard → Webhooks. Events: order.paid (and/or
+// payment.captured). Signed with RAZORPAY_WEBHOOK_SECRET.
+async function handleWebhook(request, env) {
+  const raw = await request.text();
+  const sig = request.headers.get('X-Razorpay-Signature') || '';
+  const expected = await hmacHex(env.RAZORPAY_WEBHOOK_SECRET || '', raw);
+  if (!sig || expected !== sig) return new Response('Invalid signature', { status: 400 });
+
+  const event = JSON.parse(raw);
+  if (event.event === 'order.paid' || event.event === 'payment.captured') {
+    const payment = event.payload?.payment?.entity;
+    const orderEntity = event.payload?.order?.entity;
+    const orderId = orderEntity?.id || payment?.order_id;
+    const paymentId = payment?.id;
+    if (orderId && paymentId) {
+      // Prefer the order entity from the event; fall back to a fetch for notes.
+      let order = orderEntity && orderEntity.notes ? orderEntity : await fetchOrder(env, orderId);
+      if (order && order.id) {
+        await grantFromOrder(env, order, paymentId); // idempotent
+      }
+    }
+  }
+  // Acknowledge so Razorpay stops retrying — we've processed (or safely ignored) it.
+  return new Response('ok', { status: 200 });
+}
+
+// ── Shared, idempotent grant from a Razorpay order ──────────────────────────
+async function grantFromOrder(env, order, paymentId) {
+  const plan = order?.notes?.plan;
+  const userId = order?.notes?.user_id;
+  const p = PLANS[plan];
+  if (!p || !userId) return { ok: false, status: 400, error: 'Bad order notes' };
   const sb = sbFetch(env);
 
   try {
-    // Gift purchase → create a shareable code instead of granting the buyer.
+    // Gift purchase → one shareable code per payment (idempotent on payment id).
     if (order.notes?.gift === '1') {
+      const exRes = await sb(`gift_codes?razorpay_id=eq.${encodeURIComponent(paymentId)}&select=code`, { method: 'GET' });
+      const ex = await exRes.json();
+      if (Array.isArray(ex) && ex.length) {
+        return { ok: true, gift: true, code: ex[0].code, plan, tier: p.tier };
+      }
       const code = makeGiftCode();
-      const insRes = await sb('gift_codes', {
+      const ins = await sb('gift_codes', {
         method: 'POST', headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
           code, plan, tier: p.tier, amount_inr: p.amount / 100,
-          razorpay_id: razorpay_payment_id, purchased_by: userId, status: 'active',
+          razorpay_id: paymentId, purchased_by: userId, status: 'active',
         }),
       });
-      if (!insRes.ok) {
-        const detail = await insRes.text();
-        return cors(j({ valid: false, error: 'Gift code save failed', detail }), 500, origin);
-      }
-      return cors(j({ valid: true, gift: true, code, plan, tier: p.tier }), 200, origin);
+      if (!ins.ok) return { ok: false, status: 500, error: 'Gift code save failed', detail: await ins.text() };
+      return { ok: true, gift: true, code, plan, tier: p.tier };
     }
 
-    // Normal purchase → grant the subscription to the buyer.
-    const grant = await grantSubscription(sb, userId, p, razorpay_payment_id);
-    if (!grant.ok) {
-      return cors(j({ valid: false, error: 'Subscription insert failed', status: grant.status, detail: grant.detail }), 500, origin);
+    // Normal purchase → grant once per payment (idempotent).
+    const exRes = await sb(`subscriptions?razorpay_id=eq.${encodeURIComponent(paymentId)}&select=expires_at`, { method: 'GET' });
+    const ex = await exRes.json();
+    if (Array.isArray(ex) && ex.length) {
+      return { ok: true, tier: p.tier, plan, expires_at: ex[0].expires_at };
     }
-    return cors(j({ valid: true, tier: p.tier, plan, expires_at: grant.expires_at }), 200, origin);
+    const grant = await grantSubscription(sb, userId, p, paymentId);
+    if (!grant.ok) return { ok: false, status: 500, error: 'Subscription insert failed', detail: grant.detail };
+    return { ok: true, tier: p.tier, plan, expires_at: grant.expires_at };
   } catch (e) {
-    return cors(j({ valid: false, error: 'Supabase write error', detail: e.message }), 500, origin);
+    return { ok: false, status: 500, error: 'Supabase write error', detail: e.message };
   }
 }
 
+async function fetchOrder(env, orderId) {
+  const auth = btoa(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`);
+  const res = await fetch(`https://api.razorpay.com/v1/orders/${orderId}`, {
+    headers: { 'Authorization': `Basic ${auth}` },
+  });
+  return res.ok ? res.json() : null;
+}
+
 // ── Razorpay: redeem a gift code → grant the subscription to the redeemer ────
-// Body: { code, user_id }
 async function redeemGift(request, env, origin) {
   const { code, user_id } = await request.json();
   if (!code || !user_id) return cors(j({ valid: false, error: 'Missing fields' }), 400, origin);
@@ -202,10 +271,15 @@ async function redeemGift(request, env, origin) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-// Supabase REST helper using the service role (bypasses RLS).
-function sbFetch(env) {
+function sbBase(env) {
   let base = (env.SUPABASE_URL || '').replace(/\/+$/, '');
   if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+  return base;
+}
+
+// Supabase REST helper using the service role (bypasses RLS).
+function sbFetch(env) {
+  const base = sbBase(env);
   return (path, init) => fetch(`${base}/rest/v1/${path}`, {
     ...init,
     headers: {
@@ -250,7 +324,6 @@ function makeGiftCode() {
   return `DHARMA-${seg(4)}-${seg(4)}`;
 }
 
-
 async function hmacHex(secret, message) {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(secret),
@@ -273,7 +346,7 @@ function cors(body, status = 200, origin = null) {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
   if (origin) headers['Access-Control-Allow-Origin'] = origin;
   return new Response(body, { status, headers });

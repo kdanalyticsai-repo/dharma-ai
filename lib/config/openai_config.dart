@@ -20,6 +20,10 @@ class OpenAIConfig {
 
   static bool get _workerConfigured => _workerUrl != 'YOUR_CLOUDFLARE_WORKER_URL';
 
+  // True when requests go through the Cloudflare Worker (production). The Worker
+  // requires the caller's Supabase token, so the client attaches it.
+  static bool get usesWorker => _workerConfigured;
+
   // Uses Worker in prod, direct API in dev
   static String get baseUrl => _workerConfigured ? _workerUrl : _directUrl;
 

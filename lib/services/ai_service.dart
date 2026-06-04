@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/models/chat_message.dart';
 import 'package:dharma_ai/models/verse.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
@@ -197,6 +198,16 @@ class AiService {
 
   // ── Shared HTTP call ──────────────────────────────────────────
 
+  // The signed-in user's Supabase access token (null if not signed in /
+  // Supabase not initialised). Safe to call anywhere.
+  String? _supabaseToken() {
+    try {
+      return Supabase.instance.client.auth.currentSession?.accessToken;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<String> _postToOpenAI(List<Map<String, dynamic>> messages) async {
     final body = {
       'model': OpenAIConfig.model,
@@ -205,14 +216,25 @@ class AiService {
       'max_tokens': 600,
     };
 
+    final headers = Map<String, String>.from(OpenAIConfig.headers);
+    // In production the request goes through the Worker, which requires the
+    // caller's Supabase token to confirm a real signed-in user.
+    if (OpenAIConfig.usesWorker) {
+      final token = _supabaseToken();
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+    }
+
     final response = await http
         .post(
           Uri.parse(OpenAIConfig.baseUrl),
-          headers: OpenAIConfig.headers,
+          headers: headers,
           body: jsonEncode(body),
         )
         .timeout(const Duration(seconds: 30));
 
+    if (response.statusCode == 401) {
+      throw Exception('Your session expired. Please sign in again.');
+    }
     if (response.statusCode == 429) {
       throw Exception('Too many requests. Please wait a moment before asking again.');
     }
