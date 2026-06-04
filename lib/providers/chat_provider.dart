@@ -10,23 +10,43 @@ import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/qa_cache_service.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
+import 'package:dharma_ai/providers/transliteration_provider.dart';
 
-// First name for the chat welcome greeting, with a localized fallback when the
-// user has no name on their profile.
+// First name for the chat welcome greeting, written in the selected language's
+// script (transliterated, cached by the Feed), with a localized fallback when
+// the user has no name on their profile.
 String _welcomeName(Ref ref, AppLanguage lang) {
   final fullName =
       ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?;
   final first = (fullName ?? '').trim().split(' ').first.trim();
-  if (first.isNotEmpty) return first;
-  switch (lang) {
-    case AppLanguage.hindi:
-      return 'प्रिय साधक';
-    case AppLanguage.tamil:
-      return 'அன்பான தேடுபவரே';
-    case AppLanguage.bengali:
-      return 'প্রিয় অন্বেষক';
-    default:
-      return 'dear seeker';
+  if (first.isEmpty) {
+    switch (lang) {
+      case AppLanguage.hindi:
+        return 'प्रिय साधक';
+      case AppLanguage.tamil:
+        return 'அன்பான தேடுபவரே';
+      case AppLanguage.bengali:
+        return 'প্রিয় অন্বেষক';
+      default:
+        return 'dear seeker';
+    }
+  }
+  final translit =
+      ref.read(transliteratedNameProvider((name: first, lang: lang))).valueOrNull;
+  return (translit != null && translit.isNotEmpty) ? translit : first;
+}
+
+// Refresh the welcome once the user's name has been transliterated into any
+// language's script (so the greeting shows the localized name as soon as it
+// resolves, in whatever language is selected).
+void _listenWelcomeName(Ref ref, void Function() onResolved) {
+  final fullName =
+      ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?;
+  final first = (fullName ?? '').trim().split(' ').first.trim();
+  if (first.isEmpty) return;
+  for (final l in AppLanguage.values) {
+    if (l == AppLanguage.english) continue;
+    ref.listen(transliteratedNameProvider((name: first, lang: l)), (_, __) => onResolved());
   }
 }
 
@@ -148,8 +168,10 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
 
   ScriptureChatNotifier(this._ref) : super(const ChatState(messages: [], isLoading: false)) {
     state = ChatState(messages: [_buildWelcome()], isLoading: false);
-    // Re-render the welcome (name + language) whenever the language changes.
+    // Re-render the welcome (name + language) whenever the language changes
+    // or the name transliteration resolves.
     _ref.listen(languageProvider, (_, __) => _refreshWelcome());
+    _listenWelcomeName(_ref, _refreshWelcome);
     // Daily count loaded by shared dailyPromptCounterProvider
   }
 
@@ -307,8 +329,10 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
     state = ChatState(messages: [_buildWelcome()], isLoading: false);
     // Restore the on-device conversation so a page refresh doesn't wipe it.
     _loadHistory();
-    // Re-render the welcome (name + language) whenever the language changes.
+    // Re-render the welcome (name + language) whenever the language changes
+    // or the name transliteration resolves.
     _ref.listen(languageProvider, (_, __) => _refreshWelcome());
+    _listenWelcomeName(_ref, _refreshWelcome);
     // Daily count loaded by shared dailyPromptCounterProvider
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 
 /// The DharmaAI brand lockup: the mark + "DharmaAI" wordmark image with a
 /// crisp, separately-rendered tagline beneath it. Rendering the tagline as
@@ -9,7 +11,7 @@ import 'package:dharma_ai/theme/theme.dart';
 ///
 /// [height] is the height of the logo image (mark + wordmark). The tagline
 /// scales proportionally. Falls back to styled text if the asset is missing.
-class DharmaLogo extends StatelessWidget {
+class DharmaLogo extends ConsumerWidget {
   final double height;
   final bool showTagline;
 
@@ -17,7 +19,7 @@ class DharmaLogo extends StatelessWidget {
       : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final image = Image.asset(
       'assets/images/dharma_logo.png',
       height: height,
@@ -44,7 +46,7 @@ class DharmaLogo extends StatelessWidget {
         image,
         SizedBox(height: height * 0.10),
         Text(
-          'Wisdom · Intelligence · Purpose',
+          AppTranslations.get('logoTagline', ref.watch(languageProvider)),
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: height * 0.155,

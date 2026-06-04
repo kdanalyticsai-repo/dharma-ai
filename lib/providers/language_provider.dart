@@ -364,6 +364,12 @@ class AppTranslations {
       AppLanguage.hindi: 'साधना पर जाएं',
       AppLanguage.bengali: 'সাধনায় যান',
     },
+    'logoTagline': {
+      AppLanguage.english: 'Wisdom · Intelligence · Purpose',
+      AppLanguage.hindi: 'ज्ञान · बुद्धि · उद्देश्य',
+      AppLanguage.tamil: 'ஞானம் · அறிவு · நோக்கம்',
+      AppLanguage.bengali: 'জ্ঞান · বুদ্ধি · উদ্দেশ্য',
+    },
     // ── Auth screens (login + signup) ──
     'authBeginPath': {
       AppLanguage.english: 'Begin Your Path',
