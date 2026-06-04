@@ -41,12 +41,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  String _chakraTagline() {
+  String _chakraTagline(AppLanguage lang) {
     final h = DateTime.now().hour;
-    if (h >= 5 && h < 12) return 'The wheel of dharma turns with the dawn.';
-    if (h >= 12 && h < 17) return 'Act without attachment. Serve with love.';
-    if (h >= 17 && h < 21) return 'Reflect with gratitude at dusk.';
-    return 'In stillness, the eternal awakens.';
+    final key = (h >= 5 && h < 12)
+        ? 'chakraDawn'
+        : (h >= 12 && h < 17)
+            ? 'chakraNoon'
+            : (h >= 17 && h < 21)
+                ? 'chakraDusk'
+                : 'chakraNight';
+    return AppTranslations.get(key, lang);
   }
 
   Future<void> _submit() async {
@@ -222,7 +226,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _chakraTagline(),
+                        _chakraTagline(lang),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.newsreader(
                           fontSize: 13,

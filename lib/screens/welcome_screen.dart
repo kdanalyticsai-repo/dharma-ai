@@ -206,7 +206,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         );
                       },
                       child: Text(
-                        'Already on the path? Sign in',
+                        '${AppTranslations.get('authAlreadyPath', currentLanguage)}${AppTranslations.get('authSignInLink', currentLanguage)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: SacredTheme.primary,
                           fontWeight: FontWeight.w500,

@@ -364,6 +364,30 @@ class AppTranslations {
       AppLanguage.hindi: 'साधना पर जाएं',
       AppLanguage.bengali: 'সাধনায় যান',
     },
+    'chakraDawn': {
+      AppLanguage.english: 'The wheel of dharma turns with the dawn.',
+      AppLanguage.hindi: 'धर्म का चक्र भोर के साथ घूमता है।',
+      AppLanguage.tamil: 'அறத்தின் சக்கரம் விடியலுடன் சுழல்கிறது.',
+      AppLanguage.bengali: 'ধর্মের চক্র ভোরের সাথে ঘোরে।',
+    },
+    'chakraNoon': {
+      AppLanguage.english: 'Act without attachment. Serve with love.',
+      AppLanguage.hindi: 'आसक्ति के बिना कर्म करें। प्रेम से सेवा करें।',
+      AppLanguage.tamil: 'பற்றின்றி செயல்படு. அன்புடன் சேவை செய்.',
+      AppLanguage.bengali: 'আসক্তি ছাড়া কর্ম করুন। ভালোবেসে সেবা করুন।',
+    },
+    'chakraDusk': {
+      AppLanguage.english: 'Reflect with gratitude at dusk.',
+      AppLanguage.hindi: 'संध्या के समय कृतज्ञता के साथ चिंतन करें।',
+      AppLanguage.tamil: 'அந்தி வேளையில் நன்றியுடன் சிந்தியுங்கள்.',
+      AppLanguage.bengali: 'সন্ধ্যায় কৃতজ্ঞতার সাথে ধ্যান করুন।',
+    },
+    'chakraNight': {
+      AppLanguage.english: 'In stillness, the eternal awakens.',
+      AppLanguage.hindi: 'स्थिरता में, शाश्वत जागता है।',
+      AppLanguage.tamil: 'அமைதியில், நித்தியம் விழித்தெழுகிறது.',
+      AppLanguage.bengali: 'নিস্তব্ধতায়, চিরন্তন জেগে ওঠে।',
+    },
     'logoTagline': {
       AppLanguage.english: 'Wisdom · Intelligence · Purpose',
       AppLanguage.hindi: 'ज्ञान · बुद्धि · उद्देश्य',
