@@ -113,7 +113,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     try {
       await _client.auth.resetPasswordForEmail(
         email,
-        redirectTo: kIsWeb ? Uri.base.origin : null,
+        // Tag the redirect so the app can recognise a recovery on load. Under
+        // the PKCE flow Supabase does NOT reliably emit a passwordRecovery
+        // event, so this marker is how we know to show the set-password screen
+        // instead of dropping the user on the feed.
+        redirectTo: kIsWeb ? '${Uri.base.origin}/?type=recovery' : null,
       );
       return null;
     } on AuthException catch (e) {

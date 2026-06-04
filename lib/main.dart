@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,6 +17,15 @@ import 'package:dharma_ai/config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Detect a password-recovery link BEFORE Supabase.initialize() runs — the SDK
+  // exchanges the code and strips auth params from the URL during init, and the
+  // PKCE flow does not reliably emit a passwordRecovery event. We tag the reset
+  // link with ?type=recovery (see auth_provider.resetPassword) and read it here
+  // so we can hold the user on the set-password screen instead of the feed.
+  if (kIsWeb && Uri.base.queryParameters['type'] == 'recovery') {
+    isRecoveringPassword = true;
+  }
 
   if (SupabaseConfig.isConfigured) {
     await Supabase.initialize(
@@ -99,11 +109,15 @@ class DharmaApp extends ConsumerWidget {
       theme: SacredTheme.lightTheme,
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
-      home: authState.when(
-        data: (user) => user != null ? const HomeShell() : const WelcomeScreen(),
-        loading: () => const _SplashScreen(),
-        error: (_, __) => const WelcomeScreen(),
-      ),
+      // During password recovery, always show the set-password screen — the
+      // user has a live session but must not be routed into the app first.
+      home: isRecoveringPassword
+          ? const SetNewPasswordScreen()
+          : authState.when(
+              data: (user) => user != null ? const HomeShell() : const WelcomeScreen(),
+              loading: () => const _SplashScreen(),
+              error: (_, __) => const WelcomeScreen(),
+            ),
     );
   }
 }
