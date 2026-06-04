@@ -11,9 +11,9 @@ class PurchaseService {
   String get _planKey => 'dharma_plan_${SupabaseSync.userId ?? 'anon'}'; // free|monthly|quarterly|annual
 
   // Pricing (INR) — matches the paywall screen.
-  static const int _sadhakaInr = 199;
-  static const int _quarterlyInr = 499;
-  static const int _annualInr = 1499;
+  static const int _sadhakaInr = 101;
+  static const int _quarterlyInr = 201;
+  static const int _annualInr = 501;
 
   // The exact billing plan on this device (monthly & quarterly are both the
   // Sadhaka tier feature-wise; this distinguishes them for the paywall UI).

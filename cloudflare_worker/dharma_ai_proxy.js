@@ -13,11 +13,11 @@
 // Vars (wrangler.toml [vars]): ALLOWED_ORIGINS
 
 // ── Server-side price table — the client can NEVER choose the amount ─────────
-// Amounts in paise (₹199 = 19900). tier maps to app feature level.
+// Amounts in paise (₹101 = 10100). tier maps to app feature level.
 const PLANS = {
-  monthly:   { tier: 'sadhaka', amount: 19900,  days: 30,  label: 'Sadhaka Premium (Monthly)' },
-  quarterly: { tier: 'sadhaka', amount: 49900,  days: 90,  label: 'Sadhaka Quarterly' },
-  annual:    { tier: 'annual',  amount: 149900, days: 365, label: 'Sadhaka Annual' },
+  monthly:   { tier: 'sadhaka', amount: 10100,  days: 30,  label: 'Sadhaka Premium (Monthly)' },
+  quarterly: { tier: 'sadhaka', amount: 20100,  days: 90,  label: 'Sadhaka Quarterly' },
+  annual:    { tier: 'annual',  amount: 50100, days: 365, label: 'Sadhaka Annual' },
 };
 
 export default {

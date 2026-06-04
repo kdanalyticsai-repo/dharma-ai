@@ -202,7 +202,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: t('pwAnnualTitle'),
-                  price: '₹1499 ${t('pwPerYear')}',
+                  price: '₹501 ${t('pwPerYear')}',
                   badge: t('pwBadgeRecommended'),
                   benefits: [
                     t('pwBenefitEverythingPremium'),
@@ -233,7 +233,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: t('pwQuarterlyTitle'),
-                  price: '₹499 ${t('pwPer3Months')}',
+                  price: '₹201 ${t('pwPer3Months')}',
                   badge: t('pwBadgeQuarterly'),
                   benefits: [
                     t('pwBenefitEverythingPremium'),
@@ -262,7 +262,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: t('pwPremiumTitle'),
-                  price: '₹199 ${t('pwPerMonth')}',
+                  price: '₹101 ${t('pwPerMonth')}',
                   badge: t('pwBadgeMonthly'),
                   benefits: [
                     t('pwBenefitAllScriptures'),

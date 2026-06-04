@@ -26,9 +26,9 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
 
   // Gift plans (keys must match the server PLANS table).
   static const Map<String, Map<String, String>> _plans = {
-    'monthly': {'label': 'Sadhaka Premium — Monthly', 'price': '₹199'},
-    'quarterly': {'label': 'Sadhaka Premium — Quarterly', 'price': '₹499'},
-    'annual': {'label': 'Sadhaka Annual', 'price': '₹1,499'},
+    'monthly': {'label': 'Sadhaka Premium — Monthly', 'price': '₹101'},
+    'quarterly': {'label': 'Sadhaka Premium — Quarterly', 'price': '₹201'},
+    'annual': {'label': 'Sadhaka Annual', 'price': '₹501'},
   };
   String _selectedPlan = 'monthly';
 
