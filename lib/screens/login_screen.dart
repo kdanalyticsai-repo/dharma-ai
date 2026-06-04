@@ -5,6 +5,7 @@ import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/rotating_chakra.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
 import 'package:dharma_ai/screens/personalize_screen.dart';
 
@@ -192,6 +193,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       body: MandalaBackground(
@@ -235,14 +237,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 20),
 
                 Text(
-                  _isSignUp ? 'Begin Your Path' : 'Welcome Back',
+                  _isSignUp
+                      ? AppTranslations.get('authBeginPath', lang)
+                      : AppTranslations.get('authWelcomeBack', lang),
                   style: textTheme.headlineLarge?.copyWith(color: SacredTheme.headingColor(context)),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _isSignUp
-                      ? 'Create an account to save your progress and practice.'
-                      : 'Sign in to continue your spiritual journey.',
+                      ? AppTranslations.get('authSignupSubtitle', lang)
+                      : AppTranslations.get('authLoginSubtitle', lang),
                   style: textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 32),
@@ -250,7 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 if (_isSignUp) ...[
                   _buildField(
                     controller: _nameController,
-                    label: 'Your Name',
+                    label: AppTranslations.get('authYourName', lang),
                     hint: 'e.g. Arjuna',
                     icon: Icons.person_outline,
                   ),
@@ -259,7 +263,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 _buildField(
                   controller: _emailController,
-                  label: 'Email',
+                  label: AppTranslations.get('authEmail', lang),
                   hint: 'your@email.com',
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
@@ -268,7 +272,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 _buildField(
                   controller: _passwordController,
-                  label: 'Password',
+                  label: AppTranslations.get('authPassword', lang),
                   hint: '••••••••',
                   icon: Icons.lock_outline,
                   obscure: _obscurePassword,
@@ -293,7 +297,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: Text(
-                        'Forgot password?',
+                        AppTranslations.get('authForgotPassword', lang),
                         style: textTheme.labelMedium?.copyWith(
                           color: SacredTheme.primary,
                           fontWeight: FontWeight.w600,
@@ -330,7 +334,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 18,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                        : Text(_isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN'),
+                        : Text(_isSignUp
+                            ? AppTranslations.get('authCreateAccount', lang)
+                            : AppTranslations.get('authSignIn', lang)),
                   ),
                 ),
 
@@ -341,7 +347,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const Expanded(child: Divider()),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('or', style: textTheme.bodySmall?.copyWith(color: SacredTheme.onSurfaceVariant)),
+                      child: Text(AppTranslations.get('authOr', lang), style: textTheme.bodySmall?.copyWith(color: SacredTheme.onSurfaceVariant)),
                     ),
                     const Expanded(child: Divider()),
                   ],
@@ -354,7 +360,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _isLoading ? null : _signInWithGoogle,
                     icon: const Icon(Icons.g_mobiledata, size: 22),
-                    label: const Text('Continue with Google'),
+                    label: Text(AppTranslations.get('authContinueGoogle', lang)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: SacredTheme.outlineVariant),
                       foregroundColor: SacredTheme.onSurface,
@@ -374,9 +380,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       text: TextSpan(
                         style: textTheme.bodyMedium,
                         children: [
-                          TextSpan(text: _isSignUp ? 'Already on the path? ' : 'New seeker? '),
+                          TextSpan(text: _isSignUp
+                              ? AppTranslations.get('authAlreadyPath', lang)
+                              : AppTranslations.get('authNewSeeker', lang)),
                           TextSpan(
-                            text: _isSignUp ? 'Sign in' : 'Create account',
+                            text: _isSignUp
+                                ? AppTranslations.get('authSignInLink', lang)
+                                : AppTranslations.get('authCreateAccountLink', lang),
                             style: GoogleFonts.inter(
                               color: SacredTheme.primary,
                               fontWeight: FontWeight.w600,
