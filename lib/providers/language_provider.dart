@@ -512,6 +512,12 @@ class AppTranslations {
       AppLanguage.tamil: 'அனைத்து 18 பகவத் கீதை அத்தியாய பாராயணங்களும் சாதக பிரீமியம் மற்றும் ஆண்டு திட்டங்களில் கிடைக்கும்.',
       AppLanguage.bengali: 'সমস্ত 18টি ভগবদ্গীতা অধ্যায়ের জপ সাধক প্রিমিয়াম ও বার্ষিক প্ল্যানে উপলব্ধ।',
     },
+    'noVersesFound': {
+      AppLanguage.english: 'No verses found.',
+      AppLanguage.hindi: 'कोई श्लोक नहीं मिला।',
+      AppLanguage.tamil: 'வசனங்கள் எதுவும் இல்லை.',
+      AppLanguage.bengali: 'কোনো শ্লোক পাওয়া যায়নি।',
+    },
     // ── Reader premium gate ──
     'gatePremiumScripture': {
       AppLanguage.english: 'A Premium Scripture',

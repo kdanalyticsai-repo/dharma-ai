@@ -214,7 +214,7 @@ class ScripturesScreen extends ConsumerWidget {
             _samavedaNote(context),
             Expanded(
               child: verses.isEmpty
-                  ? Center(child: Text('No verses found for $selectedVeda.',
+                  ? Center(child: Text(AppTranslations.get('noVersesFound', lang),
                       style: Theme.of(context).textTheme.bodyMedium))
                   : _verseList(verses),
             ),
@@ -244,7 +244,7 @@ class ScripturesScreen extends ConsumerWidget {
           _upanishadNote(context),
           Expanded(
             child: verses.isEmpty
-                ? Center(child: Text('No verses found.',
+                ? Center(child: Text(AppTranslations.get('noVersesFound', lang),
                     style: Theme.of(context).textTheme.bodyMedium))
                 : _verseList(verses),
           ),
