@@ -14,6 +14,7 @@ import 'package:dharma_ai/screens/redeem_code_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
+import 'package:dharma_ai/providers/transliteration_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
@@ -277,8 +278,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final lang = ref.watch(languageProvider);
     final user = ref.watch(authUserProvider).valueOrNull;
     final fullName = (user?.userMetadata?['full_name'] as String?)?.trim();
-    final displayName = (fullName != null && fullName.isNotEmpty) ? fullName : 'Seeker of Truth';
-    final avatarLetter = displayName[0].toUpperCase();
+    final hasName = fullName != null && fullName.isNotEmpty;
+    final rawName = hasName ? fullName : 'Seeker of Truth';
+    final avatarLetter = rawName[0].toUpperCase();
+    // Render the name in the selected script (e.g. अर्जुन in Hindi); falls back
+    // to the Latin name while the transliteration loads or for English.
+    final displayName = (hasName && lang != AppLanguage.english)
+        ? (ref.watch(transliteratedNameProvider((name: rawName, lang: lang))).valueOrNull ?? rawName)
+        : rawName;
     final avatarUrl = (user?.userMetadata?['avatar_url'] ??
         user?.userMetadata?['picture']) as String?;
 
