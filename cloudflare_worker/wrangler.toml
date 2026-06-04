@@ -20,4 +20,4 @@ ALLOWED_ORIGINS = "http://localhost:3456,https://dharmaai.kdaanalytics.com,https
 # Until a real id is set, the Worker fails OPEN (no rate limit) — AI still works.
 [[kv_namespaces]]
 binding = "AI_RATE_LIMIT"
-id = "PASTE_KV_NAMESPACE_ID_HERE"
+id = "181c669da44f4f9f8dddea917d30480b"
