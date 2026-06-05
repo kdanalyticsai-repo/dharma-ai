@@ -34,7 +34,7 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ensureLoaded(ref.read(dailyAudioIndexProvider));
+      _load(ref.read(dailyAudioIndexProvider));
     });
   }
 
@@ -44,12 +44,15 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
     super.dispose();
   }
 
-  Future<void> _ensureLoaded(int index) async {
+  Future<void> _load(int index, {bool autoplay = false}) async {
     if (_loadedIndex == index) return;
     _loadedIndex = index;
     if (mounted) setState(() => _buffering = true);
     try {
       await _player.setUrl(bgAudioTracks[index].audioUrl);
+      // Start playing as soon as it's ready so shuffle is one smooth action
+      // (the player streams while it buffers the rest of the 28 MB file).
+      if (autoplay && mounted) _player.play();
     } catch (e) {
       debugPrint('feed audio load error: $e');
     }
@@ -57,6 +60,7 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
   }
 
   void _shuffle() {
+    final wasPlaying = _player.playing;
     final n = bgAudioTracks.length;
     final cur = ref.read(dailyAudioIndexProvider);
     int next = Random().nextInt(n);
@@ -65,8 +69,8 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
         next = Random().nextInt(n);
       }
     }
-    _player.stop();
     ref.read(dailyAudioIndexProvider.notifier).state = next;
+    _load(next, autoplay: wasPlaying);
   }
 
   void _openAll() {
@@ -85,9 +89,6 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
     final tier = ref.watch(purchaseProvider);
     final index = ref.watch(dailyAudioIndexProvider);
     final track = bgAudioTracks[index];
-
-    // Reload the player whenever the featured chapter changes (shuffle).
-    ref.listen<int>(dailyAudioIndexProvider, (_, next) => _ensureLoaded(next));
 
     return Container(
       width: double.infinity,
