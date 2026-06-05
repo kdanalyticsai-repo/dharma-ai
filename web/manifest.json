@@ -1,11 +1,11 @@
 {
-    "name": "dharma",
-    "short_name": "dharma",
+    "name": "DharmaAI",
+    "short_name": "DharmaAI",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FAF7F2",
+    "theme_color": "#FAF7F2",
+    "description": "Read the Bhagavad Gita, Vedas and Upanishads, receive personalised AI spiritual guidance, and track your daily sadhana.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
