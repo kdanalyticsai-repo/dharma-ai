@@ -105,7 +105,7 @@ class VerseShareCard extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            'https://dharma.kdaanalytics.com/',
+            'https://dharma.kdaanalytics.com/welcome',
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,

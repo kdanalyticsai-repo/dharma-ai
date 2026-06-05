@@ -98,7 +98,7 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
     final bytes = _bytes;
     if (bytes == null) return;
     final caption =
-        '${AppTranslations.get('shareVerseCaption', widget.lang)}\nhttps://dharma.kdaanalytics.com';
+        '${AppTranslations.get('shareVerseCaption', widget.lang)}\nhttps://dharma.kdaanalytics.com/welcome';
     Share.shareXFiles(
       [XFile.fromData(bytes, mimeType: 'image/png', name: 'dharma-verse.png')],
       text: caption,
