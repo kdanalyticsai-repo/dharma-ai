@@ -1485,6 +1485,12 @@ class AppTranslations {
       AppLanguage.hindi: 'ऑडियो ज्ञान',
       AppLanguage.bengali: 'অডিও জ্ঞান',
     },
+    'audioExploreAll': {
+      AppLanguage.english: 'Explore all 18 chapters',
+      AppLanguage.tamil: 'அனைத்து 18 அத்தியாயங்களையும் காண்க',
+      AppLanguage.hindi: 'सभी 18 अध्याय सुनें',
+      AppLanguage.bengali: 'সব ১৮টি অধ্যায় শুনুন',
+    },
     'wisdomChannels': {
       AppLanguage.english: 'WISDOM CHANNELS',
       AppLanguage.tamil: 'ஞான அலைவரிசைகள்',

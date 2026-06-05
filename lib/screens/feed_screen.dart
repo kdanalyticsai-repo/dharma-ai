@@ -7,6 +7,7 @@ import 'package:dharma_ai/screens/search_screen.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/dharma_logo.dart';
+import 'package:dharma_ai/widgets/feed_audio_card.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
@@ -249,6 +250,12 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: SacredTheme.stackLg),
+
+                // Audio of the Day — one Gita chapter, playable by everyone;
+                // "Explore all 18" routes free users to upgrade.
+                const FeedAudioCard(),
 
                 const SizedBox(height: SacredTheme.stackLg),
 
