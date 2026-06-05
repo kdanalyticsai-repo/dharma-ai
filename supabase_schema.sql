@@ -252,3 +252,51 @@ drop trigger if exists trg_post_likes_count on public.post_likes;
 create trigger trg_post_likes_count
   after insert or delete on public.post_likes
   for each row execute function public.sync_post_likes_count();
+
+-- ── Post Comments (Sangha replies) ───────────────────────────
+-- Threaded replies to a Sangha post, shared across all users. A trigger keeps
+-- sangha_posts.comments_count accurate. Run this whole block once.
+alter table public.sangha_posts add column if not exists comments_count int default 0;
+
+create table if not exists public.post_comments (
+  id            uuid primary key default gen_random_uuid(),
+  post_id       uuid not null references public.sangha_posts(id) on delete cascade,
+  user_id       uuid references public.profiles(id) on delete set null,
+  author_name   text not null,
+  author_avatar text not null,        -- single initial letter
+  content       text not null,
+  created_at    timestamptz not null default now()
+);
+alter table public.post_comments enable row level security;
+
+-- Anyone authenticated can read replies; a user can post only as themselves.
+drop policy if exists "read post comments" on public.post_comments;
+create policy "read post comments" on public.post_comments
+  for select using (auth.role() = 'authenticated');
+drop policy if exists "insert post comments" on public.post_comments;
+create policy "insert post comments" on public.post_comments
+  for insert with check (auth.uid() = user_id);
+
+-- Keep sangha_posts.comments_count in sync (SECURITY DEFINER so a reply on
+-- someone else's post can update that post's count).
+create or replace function public.sync_post_comments_count()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if (tg_op = 'INSERT') then
+    update public.sangha_posts
+      set comments_count = coalesce(comments_count, 0) + 1
+      where id = new.post_id;
+    return new;
+  elsif (tg_op = 'DELETE') then
+    update public.sangha_posts
+      set comments_count = greatest(coalesce(comments_count, 0) - 1, 0)
+      where id = old.post_id;
+    return old;
+  end if;
+  return null;
+end;
+$$;
+drop trigger if exists trg_post_comments_count on public.post_comments;
+create trigger trg_post_comments_count
+  after insert or delete on public.post_comments
+  for each row execute function public.sync_post_comments_count();

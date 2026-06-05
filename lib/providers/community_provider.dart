@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dharma_ai/models/community_post.dart';
+import 'package:dharma_ai/models/community_comment.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 
 class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
@@ -45,6 +46,7 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
               timestamp: DateTime.parse(r['created_at'] as String),
               likes: r['likes_count'] as int? ?? 0,
               isLikedByMe: myLikes.contains(r['id'] as String),
+              commentsCount: r['comments_count'] as int? ?? 0,
               giftLabel: r['gift_label'] as String?,
             )).toList();
         return;
@@ -231,9 +233,79 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
       }
     }
   }
+
+  // ── Comments / replies ───────────────────────────────────────
+
+  // Fetch the replies for a post, oldest first.
+  Future<List<CommunityComment>> loadComments(String postId) async {
+    final client = SupabaseSync.client;
+    if (client == null || postId.startsWith('local_')) return [];
+    try {
+      final rows = await client
+          .from('post_comments')
+          .select()
+          .eq('post_id', postId)
+          .order('created_at', ascending: true);
+      return (rows as List).map((r) => CommunityComment(
+            id: r['id'] as String,
+            userId: r['user_id'] as String?,
+            authorName: r['author_name'] as String,
+            authorAvatar: r['author_avatar'] as String,
+            content: r['content'] as String,
+            timestamp: DateTime.parse(r['created_at'] as String),
+          )).toList();
+    } catch (e) {
+      debugPrint('post_comments load error: $e');
+      return [];
+    }
+  }
+
+  // Post a reply. Returns the saved comment (or null on failure). Bumps the
+  // post's comment count in feed state so the Reply pill updates instantly.
+  Future<CommunityComment?> addComment(String postId, String content) async {
+    final text = content.trim();
+    if (text.isEmpty) return null;
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null || postId.startsWith('local_')) return null;
+
+    final (authorName, authorAvatar) = await _currentAuthor(client, uid);
+    try {
+      final inserted = await client.from('post_comments').insert({
+        'post_id': postId,
+        'user_id': uid,
+        'author_name': authorName,
+        'author_avatar': authorAvatar,
+        'content': text,
+      }).select().single();
+
+      // Reflect the new count immediately in the feed.
+      state = state.map((p) => p.id == postId
+          ? p.copyWith(commentsCount: p.commentsCount + 1)
+          : p).toList();
+
+      return CommunityComment(
+        id: inserted['id'] as String,
+        userId: uid,
+        authorName: authorName,
+        authorAvatar: authorAvatar,
+        content: text,
+        timestamp: DateTime.parse(inserted['created_at'] as String),
+      );
+    } catch (e) {
+      debugPrint('post_comments insert error: $e');
+      return null;
+    }
+  }
 }
 
 final communityProvider =
     StateNotifierProvider<CommunityNotifier, List<CommunityPost>>(
   (ref) => CommunityNotifier(),
 );
+
+// Replies for a single post (re-fetched when invalidated after a new reply).
+final commentsProvider =
+    FutureProvider.family<List<CommunityComment>, String>((ref, postId) {
+  return ref.read(communityProvider.notifier).loadComments(postId);
+});

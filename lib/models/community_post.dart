@@ -7,6 +7,7 @@ class CommunityPost {
   final DateTime timestamp;
   final int likes;
   final bool isLikedByMe;
+  final int commentsCount;
   final String? giftLabel; // e.g. "Gifted a subscription to seeker Anand"
 
   const CommunityPost({
@@ -18,6 +19,7 @@ class CommunityPost {
     required this.timestamp,
     required this.likes,
     this.isLikedByMe = false,
+    this.commentsCount = 0,
     this.giftLabel,
   });
 
@@ -30,6 +32,7 @@ class CommunityPost {
     DateTime? timestamp,
     int? likes,
     bool? isLikedByMe,
+    int? commentsCount,
     String? giftLabel,
   }) {
     return CommunityPost(
@@ -41,6 +44,7 @@ class CommunityPost {
       timestamp: timestamp ?? this.timestamp,
       likes: likes ?? this.likes,
       isLikedByMe: isLikedByMe ?? this.isLikedByMe,
+      commentsCount: commentsCount ?? this.commentsCount,
       giftLabel: giftLabel ?? this.giftLabel,
     );
   }

@@ -1377,6 +1377,42 @@ class AppTranslations {
       AppLanguage.hindi: 'संघ की टिप्पणियां सर्वर के साथ सिंक हो रही हैं।',
       AppLanguage.bengali: 'সংঘের মন্তব্যসমূহ সার্ভারের সাথে সিঙ্ক হচ্ছে।',
     },
+    'sanghaRepliesTitle': {
+      AppLanguage.english: 'Replies',
+      AppLanguage.tamil: 'பதில்கள்',
+      AppLanguage.hindi: 'उत्तर',
+      AppLanguage.bengali: 'উত্তর',
+    },
+    'sanghaNoReplies': {
+      AppLanguage.english: 'No replies yet. Be the first to share a thought.',
+      AppLanguage.tamil: 'இன்னும் பதில்கள் இல்லை. முதலில் உங்கள் கருத்தைப் பகிருங்கள்.',
+      AppLanguage.hindi: 'अभी तक कोई उत्तर नहीं। सबसे पहले अपना विचार साझा करें।',
+      AppLanguage.bengali: 'এখনও কোনো উত্তর নেই। প্রথম হয়ে আপনার ভাবনা শেয়ার করুন।',
+    },
+    'sanghaReplyHint': {
+      AppLanguage.english: 'Write a reply…',
+      AppLanguage.tamil: 'பதில் எழுதுங்கள்…',
+      AppLanguage.hindi: 'उत्तर लिखें…',
+      AppLanguage.bengali: 'একটি উত্তর লিখুন…',
+    },
+    'sanghaReplyError': {
+      AppLanguage.english: "Couldn't post your reply. Please try again.",
+      AppLanguage.tamil: 'உங்கள் பதிலை இட முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+      AppLanguage.hindi: 'आपका उत्तर पोस्ट नहीं हो सका। कृपया पुनः प्रयास करें।',
+      AppLanguage.bengali: 'আপনার উত্তর পোস্ট করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।',
+    },
+    'sanghaYou': {
+      AppLanguage.english: 'You',
+      AppLanguage.tamil: 'நீங்கள்',
+      AppLanguage.hindi: 'आप',
+      AppLanguage.bengali: 'আপনি',
+    },
+    'sanghaSend': {
+      AppLanguage.english: 'Send',
+      AppLanguage.tamil: 'அனுப்பு',
+      AppLanguage.hindi: 'भेजें',
+      AppLanguage.bengali: 'পাঠান',
+    },
     'post_1': {
       AppLanguage.english: 'Just finished studying Gita Chapter 2 Verse 47. It is such a deep reminder to focus entirely on the quality of our actions and surrender the expectations of success or failure. Completely transformed my work mindset this morning.',
       AppLanguage.tamil: 'பகவத் கீதை அத்தியாயம் 2 ஸ்லோகம் 47 ஐ படித்து முடித்தேன். செயல்களின் தரத்தில் மட்டுமே கவனம் செலுத்தி, வெற்றி தோல்விகளை இறைவனிடம் ஒப்படைக்க வேண்டும் என்பதை இது நினைவூட்டுகிறது.',
