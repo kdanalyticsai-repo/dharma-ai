@@ -236,7 +236,8 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
 
   // ── Comments / replies ───────────────────────────────────────
 
-  // Fetch the replies for a post, oldest first.
+  // Fetch the replies for a post, oldest first, with like counts and whether
+  // the current user has liked each one.
   Future<List<CommunityComment>> loadComments(String postId) async {
     final client = SupabaseSync.client;
     if (client == null || postId.startsWith('local_')) return [];
@@ -246,6 +247,20 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
           .select()
           .eq('post_id', postId)
           .order('created_at', ascending: true);
+
+      // Which replies has the current user liked?
+      final uid = SupabaseSync.userId;
+      Set<String> myLikes = {};
+      if (uid != null) {
+        try {
+          final likeRows =
+              await client.from('comment_likes').select('comment_id').eq('user_id', uid);
+          myLikes = (likeRows as List).map((r) => r['comment_id'] as String).toSet();
+        } catch (e) {
+          debugPrint('comment_likes load error: $e');
+        }
+      }
+
       return (rows as List).map((r) => CommunityComment(
             id: r['id'] as String,
             userId: r['user_id'] as String?,
@@ -253,10 +268,32 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
             authorAvatar: r['author_avatar'] as String,
             content: r['content'] as String,
             timestamp: DateTime.parse(r['created_at'] as String),
+            likes: r['likes_count'] as int? ?? 0,
+            isLikedByMe: myLikes.contains(r['id'] as String),
           )).toList();
     } catch (e) {
       debugPrint('post_comments load error: $e');
       return [];
+    }
+  }
+
+  // Like / un-like a reply. Persists to comment_likes; a DB trigger updates the
+  // reply's likes_count so everyone (incl. the replier) sees it. The sheet does
+  // the optimistic UI flip and reverts via reload if this returns false.
+  Future<bool> toggleCommentLike(String commentId, bool currentlyLiked) async {
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return false;
+    try {
+      if (currentlyLiked) {
+        await client.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', uid);
+      } else {
+        await client.from('comment_likes').insert({'comment_id': commentId, 'user_id': uid});
+      }
+      return true;
+    } catch (e) {
+      debugPrint('toggleCommentLike error: $e');
+      return false;
     }
   }
 
@@ -303,9 +340,3 @@ final communityProvider =
     StateNotifierProvider<CommunityNotifier, List<CommunityPost>>(
   (ref) => CommunityNotifier(),
 );
-
-// Replies for a single post (re-fetched when invalidated after a new reply).
-final commentsProvider =
-    FutureProvider.family<List<CommunityComment>, String>((ref, postId) {
-  return ref.read(communityProvider.notifier).loadComments(postId);
-});

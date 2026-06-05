@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/models/community_post.dart';
+import 'package:dharma_ai/models/community_comment.dart';
 import 'package:dharma_ai/providers/community_provider.dart';
 import 'package:dharma_ai/screens/gift_subscription_screen.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
@@ -384,6 +385,19 @@ class _CommentsSheet extends ConsumerStatefulWidget {
 class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
   final TextEditingController _controller = TextEditingController();
   bool _sending = false;
+  List<CommunityComment>? _comments; // null = still loading
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final list = await ref.read(communityProvider.notifier).loadComments(widget.post.id);
+    if (!mounted) return;
+    setState(() => _comments = list);
+  }
 
   @override
   void dispose() {
@@ -408,7 +422,31 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     }
     _controller.clear();
     FocusScope.of(context).unfocus();
-    ref.invalidate(commentsProvider(widget.post.id)); // reload the thread
+    setState(() => _comments = [...?_comments, result]);
+  }
+
+  // Optimistically flip the heart on a reply, then persist. Revert on failure.
+  Future<void> _toggleLike(CommunityComment c) async {
+    final wasLiked = c.isLikedByMe;
+    setState(() {
+      _comments = _comments
+          ?.map((x) => x.id == c.id
+              ? x.copyWith(likes: x.likes + (wasLiked ? -1 : 1), isLikedByMe: !wasLiked)
+              : x)
+          .toList();
+    });
+    final ok = await ref
+        .read(communityProvider.notifier)
+        .toggleCommentLike(c.id, wasLiked);
+    if (!ok && mounted) {
+      setState(() {
+        _comments = _comments
+            ?.map((x) => x.id == c.id
+                ? x.copyWith(likes: c.likes, isLikedByMe: c.isLikedByMe)
+                : x)
+            .toList();
+      });
+    }
   }
 
   @override
@@ -416,7 +454,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     final textTheme = Theme.of(context).textTheme;
     final lang = ref.watch(languageProvider);
     final currentUid = ref.watch(authUserProvider).valueOrNull?.id;
-    final commentsAsync = ref.watch(commentsProvider(widget.post.id));
+    final comments = _comments;
 
     return Padding(
       // Lift the sheet above the on-screen keyboard.
@@ -453,69 +491,93 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
             ),
             const Divider(height: 1),
             Expanded(
-              child: commentsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, __) => Center(
-                  child: Text(AppTranslations.get('sanghaReplyError', lang),
-                      style: textTheme.bodyMedium),
-                ),
-                data: (comments) {
-                  if (comments.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          AppTranslations.get('sanghaNoReplies', lang),
-                          textAlign: TextAlign.center,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(color: SacredTheme.onSurfaceVariant),
-                        ),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                    itemCount: comments.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
-                    itemBuilder: (_, i) {
-                      final c = comments[i];
-                      final isMine = c.userId != null && c.userId == currentUid;
-                      final name = isMine
-                          ? AppTranslations.get('sanghaYou', lang)
-                          : c.authorName;
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 15,
-                            backgroundColor: SacredTheme.secondary,
-                            child: Text(c.authorAvatar,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(name,
-                                    style: textTheme.bodyMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 2),
-                                Text(c.content,
-                                    style: textTheme.bodyMedium?.copyWith(height: 1.35)),
-                              ],
+              child: comments == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : comments.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Text(
+                              AppTranslations.get('sanghaNoReplies', lang),
+                              textAlign: TextAlign.center,
+                              style: textTheme.bodyMedium
+                                  ?.copyWith(color: SacredTheme.onSurfaceVariant),
                             ),
                           ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
+                        )
+                      : ListView.separated(
+                          controller: scrollController,
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                          itemCount: comments.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 16),
+                          itemBuilder: (_, i) {
+                            final c = comments[i];
+                            final isMine = c.userId != null && c.userId == currentUid;
+                            final name = isMine
+                                ? AppTranslations.get('sanghaYou', lang)
+                                : c.authorName;
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CircleAvatar(
+                                  radius: 15,
+                                  backgroundColor: SacredTheme.secondary,
+                                  child: Text(c.authorAvatar,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(name,
+                                          style: textTheme.bodyMedium
+                                              ?.copyWith(fontWeight: FontWeight.bold)),
+                                      const SizedBox(height: 2),
+                                      Text(c.content,
+                                          style: textTheme.bodyMedium
+                                              ?.copyWith(height: 1.35)),
+                                      const SizedBox(height: 6),
+                                      // Like a reply
+                                      InkWell(
+                                        onTap: () => _toggleLike(c),
+                                        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 2),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                c.isLikedByMe
+                                                    ? Icons.favorite
+                                                    : Icons.favorite_border,
+                                                size: 15,
+                                                color: c.isLikedByMe
+                                                    ? SacredTheme.primary
+                                                    : SacredTheme.outline,
+                                              ),
+                                              if (c.likes > 0) ...[
+                                                const SizedBox(width: 4),
+                                                Text('${c.likes}',
+                                                    style: textTheme.labelSmall?.copyWith(
+                                                        color: c.isLikedByMe
+                                                            ? SacredTheme.primary
+                                                            : SacredTheme.onSurfaceVariant)),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
             ),
             const Divider(height: 1),
             // Reply input
