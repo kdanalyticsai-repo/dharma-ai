@@ -343,3 +343,17 @@ drop trigger if exists trg_comment_likes_count on public.comment_likes;
 create trigger trg_comment_likes_count
   after insert or delete on public.comment_likes
   for each row execute function public.sync_comment_likes_count();
+
+-- ── One subscription per payment (race-safe grants) ──────────
+-- The webhook and the browser verify can grant the same payment near-
+-- simultaneously, creating duplicate subscription rows. Dedupe existing rows,
+-- then enforce one row per razorpay_id so the Worker's insert is idempotent.
+delete from public.subscriptions a
+using public.subscriptions b
+where a.razorpay_id = b.razorpay_id
+  and a.razorpay_id is not null
+  and a.ctid > b.ctid;
+
+create unique index if not exists subscriptions_razorpay_id_uniq
+  on public.subscriptions (razorpay_id)
+  where razorpay_id is not null;

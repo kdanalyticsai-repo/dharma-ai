@@ -348,14 +348,14 @@ function sbFetch(env) {
   });
 }
 
-// Grant a subscription to a user: expire old active rows, insert new, set tier.
+// Grant a subscription to a user. Insert-first so a UNIQUE index on razorpay_id
+// makes it race-safe: if the webhook and verify grant the same payment at once,
+// the second insert returns 409 and we treat it as already-granted (no dupe).
 async function grantSubscription(sb, userId, p, razorpayId) {
   const now = new Date();
   const expires = new Date(now.getTime() + p.days * 86400000);
-  await sb(`subscriptions?user_id=eq.${userId}&status=eq.active`, {
-    method: 'PATCH', headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify({ status: 'expired' }),
-  });
+
+  // 1) Insert the new subscription first.
   const insRes = await sb('subscriptions', {
     method: 'POST', headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({
@@ -364,9 +364,25 @@ async function grantSubscription(sb, userId, p, razorpayId) {
       started_at: now.toISOString(), expires_at: expires.toISOString(),
     }),
   });
+  // Duplicate payment (concurrent grant) → already done, idempotent success.
+  if (insRes.status === 409) {
+    return { ok: true, expires_at: expires.toISOString() };
+  }
   if (!insRes.ok) {
     return { ok: false, status: insRes.status, detail: await insRes.text() };
   }
+
+  // 2) Expire any OTHER active subscriptions for this user (e.g. a previous plan
+  //    on renewal) — never the row we just inserted.
+  const otherActive = razorpayId
+    ? `subscriptions?user_id=eq.${userId}&status=eq.active&razorpay_id=neq.${encodeURIComponent(razorpayId)}`
+    : `subscriptions?user_id=eq.${userId}&status=eq.active`;
+  await sb(otherActive, {
+    method: 'PATCH', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ status: 'expired' }),
+  });
+
+  // 3) Profile is the quick-lookup source of truth.
   await sb(`profiles?id=eq.${userId}`, {
     method: 'PATCH', headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),
