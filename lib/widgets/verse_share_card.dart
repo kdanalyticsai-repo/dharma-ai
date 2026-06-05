@@ -21,7 +21,9 @@ class VerseShareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 380,
+      // Fills the available width (no parent scale transform), so the capture
+      // boundary renders 1:1 and toImage stays reliable on mobile.
+      width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topCenter,

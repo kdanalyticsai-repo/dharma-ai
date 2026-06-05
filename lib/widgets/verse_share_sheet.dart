@@ -67,17 +67,23 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
   }
 
   Future<void> _captureOnce() async {
-    // Give the logo image + Devanagari fonts a frame or two to paint.
-    await Future.delayed(const Duration(milliseconds: 400));
+    // Retry until the boundary has actually painted (mobile is slower, and
+    // toImage throws if it runs before paint). Up to ~1.7s of attempts.
     Uint8List? bytes;
-    try {
-      final boundary =
-          _cardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      bytes = data?.buffer.asUint8List();
-    } catch (e) {
-      debugPrint('verse share capture error: $e');
+    for (var attempt = 0; attempt < 8 && bytes == null; attempt++) {
+      await WidgetsBinding.instance.endOfFrame;
+      await Future.delayed(const Duration(milliseconds: 120));
+      if (!mounted) return;
+      try {
+        final boundary =
+            _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+        if (boundary == null) continue;
+        final image = await boundary.toImage(pixelRatio: 3.0);
+        final data = await image.toByteData(format: ui.ImageByteFormat.png);
+        bytes = data?.buffer.asUint8List();
+      } catch (e) {
+        debugPrint('verse share capture attempt $attempt: $e');
+      }
     }
     if (!mounted) return;
     setState(() {
@@ -133,19 +139,12 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
                     fontWeight: FontWeight.bold, color: SacredTheme.primary),
               ),
               const SizedBox(height: 16),
-              // Preview — scaled to fit width; captured at full resolution.
+              // Preview — card fills width, captured 1:1 (no scale transform).
               Flexible(
                 child: SingleChildScrollView(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.topCenter,
-                      child: RepaintBoundary(
-                        key: _cardKey,
-                        child: VerseShareCard(verse: widget.verse, lang: lang),
-                      ),
-                    ),
+                  child: RepaintBoundary(
+                    key: _cardKey,
+                    child: VerseShareCard(verse: widget.verse, lang: lang),
                   ),
                 ),
               ),
