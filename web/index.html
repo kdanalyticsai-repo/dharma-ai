@@ -91,6 +91,20 @@
   </script>
 </head>
 <body>
+  <!-- When a new build's service worker activates, reload once so users always
+       land on the latest version (prevents getting stuck on a stale build).
+       Guarded against reload loops; skips the very first install. -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      var __hadController = !!navigator.serviceWorker.controller;
+      var __refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (__refreshing || !__hadController) return; // first install → no reload
+        __refreshing = true;
+        window.location.reload();
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

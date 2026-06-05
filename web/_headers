@@ -1,0 +1,20 @@
+# Cache strategy for the Flutter web app.
+# Always revalidate the entry points, app bundle, and service worker so a new
+# deploy reaches users immediately instead of leaving them on a stale cached
+# build. Hashed/static assets (canvaskit, fonts, images) keep normal caching.
+# Revalidation is cheap: Cloudflare returns 304 when the file is unchanged.
+
+/
+  Cache-Control: no-cache, must-revalidate
+/index.html
+  Cache-Control: no-cache, must-revalidate
+/flutter_bootstrap.js
+  Cache-Control: no-cache, must-revalidate
+/flutter_service_worker.js
+  Cache-Control: no-cache, must-revalidate
+/main.dart.js
+  Cache-Control: no-cache, must-revalidate
+/manifest.json
+  Cache-Control: no-cache, must-revalidate
+/version.json
+  Cache-Control: no-cache, must-revalidate
