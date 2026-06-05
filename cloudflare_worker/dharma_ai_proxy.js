@@ -305,6 +305,10 @@ async function redeemGift(request, env, origin) {
     if (gc.status !== 'active') {
       return cors(j({ valid: false, error: 'This code has already been redeemed.' }), 409, origin);
     }
+    // A gift is for someone else — the buyer can't redeem their own code.
+    if (gc.purchased_by && gc.purchased_by === user_id) {
+      return cors(j({ valid: false, error: 'This is your own gift code — please share it with a friend to redeem.' }), 403, origin);
+    }
     const p = PLANS[gc.plan];
     if (!p) return cors(j({ valid: false, error: 'Unknown plan on code.' }), 400, origin);
 
