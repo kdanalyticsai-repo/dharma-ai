@@ -39,6 +39,7 @@ dependencies:
   firebase_analytics: ^11.3.3   # cross-platform analytics (web + Android)
 
   # Utility
+  share_plus: ^10.1.1   # share branded verse images to social / WhatsApp
   shared_preferences: ^2.2.2
   path_provider: ^2.1.1
   crypto: ^3.0.3   # SHA-256 for privacy-preserving Q&A cache keys

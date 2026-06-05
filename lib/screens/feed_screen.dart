@@ -8,6 +8,7 @@ import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/dharma_logo.dart';
 import 'package:dharma_ai/widgets/feed_audio_card.dart';
+import 'package:dharma_ai/widgets/verse_share_sheet.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
@@ -203,10 +204,23 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                                 letterSpacing: 0.1,
                               ),
                             ),
-                            const Icon(
-                              Icons.menu_book,
-                              color: SacredTheme.templeGold,
-                              size: 16,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: () => openVerseShareSheet(
+                                      context, dailyVerse, currentLanguage),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(3),
+                                    child: Icon(Icons.ios_share_rounded,
+                                        color: SacredTheme.templeGold, size: 16),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                const Icon(Icons.menu_book,
+                                    color: SacredTheme.templeGold, size: 16),
+                              ],
                             ),
                           ],
                         ),

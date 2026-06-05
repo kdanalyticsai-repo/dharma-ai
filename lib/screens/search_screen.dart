@@ -6,6 +6,7 @@ import 'package:dharma_ai/models/verse.dart';
 import 'package:dharma_ai/screens/reader_screen.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/lotus_painter.dart';
+import 'package:dharma_ai/widgets/verse_share_sheet.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 
 class ScriptureSearchScreen extends ConsumerWidget {
@@ -219,6 +220,14 @@ class SingleVerseDetailScreen extends ConsumerWidget {
           '${AppTranslations.get('chapterLabel', currentLanguage)} ${verse.chapter}, ${AppTranslations.get('verseLabel', currentLanguage)} ${verse.verseNumber}',
           style: textTheme.headlineMedium?.copyWith(fontSize: 20),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share_rounded, color: SacredTheme.primary),
+            tooltip: AppTranslations.get('shareVerseShare', currentLanguage),
+            onPressed: () => openVerseShareSheet(context, verse, currentLanguage),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(

@@ -1497,6 +1497,36 @@ class AppTranslations {
       AppLanguage.hindi: 'दैनिक ऑडियो ज्ञान चिंतन',
       AppLanguage.bengali: 'দৈনিক অডিও জ্ঞান প্রতিফলন',
     },
+    'shareVerseTitle': {
+      AppLanguage.english: 'Share this verse',
+      AppLanguage.tamil: 'இந்த ஸ்லோகத்தைப் பகிருங்கள்',
+      AppLanguage.hindi: 'इस श्लोक को साझा करें',
+      AppLanguage.bengali: 'এই শ্লোকটি শেয়ার করুন',
+    },
+    'shareVerseCaption': {
+      AppLanguage.english: 'A timeless verse from DharmaAI 🪔 — explore the Gita, Vedas & Upanishads with AI.',
+      AppLanguage.tamil: 'DharmaAI இலிருந்து ஒரு காலத்தால் அழியாத ஸ்லோகம் 🪔 — கீதை, வேதங்கள் & உபநிடதங்களை AI உடன் அறியுங்கள்.',
+      AppLanguage.hindi: 'DharmaAI से एक कालातीत श्लोक 🪔 — गीता, वेद और उपनिषदों को AI के साथ जानें।',
+      AppLanguage.bengali: 'DharmaAI থেকে একটি কালজয়ী শ্লোক 🪔 — গীতা, বেদ ও উপনিষদ AI-এর সাথে জানুন।',
+    },
+    'shareVerseShare': {
+      AppLanguage.english: 'Share',
+      AppLanguage.tamil: 'பகிர்',
+      AppLanguage.hindi: 'साझा करें',
+      AppLanguage.bengali: 'শেয়ার করুন',
+    },
+    'shareVerseSave': {
+      AppLanguage.english: 'Save image',
+      AppLanguage.tamil: 'படத்தைச் சேமி',
+      AppLanguage.hindi: 'छवि सहेजें',
+      AppLanguage.bengali: 'ছবি সংরক্ষণ করুন',
+    },
+    'shareVerseFailed': {
+      AppLanguage.english: "Couldn't create the image. Please try again.",
+      AppLanguage.tamil: 'படத்தை உருவாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+      AppLanguage.hindi: 'छवि नहीं बन सकी। कृपया पुनः प्रयास करें।',
+      AppLanguage.bengali: 'ছবি তৈরি করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।',
+    },
     'wisdomChannels': {
       AppLanguage.english: 'WISDOM CHANNELS',
       AppLanguage.tamil: 'ஞான அலைவரிசைகள்',

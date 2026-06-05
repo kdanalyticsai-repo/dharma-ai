@@ -100,6 +100,17 @@ void main() async {
         options.environment = 'production';
         // Sample a fraction of transactions for performance tracing.
         options.tracesSampleRate = 0.2;
+        // Drop a known-benign just_audio web error: AudioPlayer.dispose() rejects
+        // with "UnimplementedError: dispose() has not been implemented." during
+        // teardown on web. It doesn't affect the user; ignore it so it doesn't
+        // create noise/regression alerts.
+        options.beforeSend = (event, hint) {
+          final detail = event.throwable?.toString() ??
+              event.message?.formatted ??
+              '';
+          if (detail.contains('dispose() has not been implemented')) return null;
+          return event;
+        };
       },
       appRunner: () =>
           runApp(ProviderScope(child: DharmaApp(navigatorKey: _navigatorKey))),
