@@ -11,17 +11,34 @@ import 'package:dharma_ai/widgets/verse_share_card.dart';
 import 'package:dharma_ai/services/image_saver_io.dart'
     if (dart.library.html) 'package:dharma_ai/services/image_saver_web.dart';
 
-/// Opens a bottom sheet previewing the branded verse card with Share / Save.
+/// Previews the branded verse card with Share / Save. A centered dialog on wide
+/// screens (desktop), a bottom sheet on phones.
 void openVerseShareSheet(BuildContext context, Verse verse, AppLanguage lang) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: SacredTheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-    ),
-    builder: (_) => _VerseShareSheet(verse: verse, lang: lang),
-  );
+  final wide = MediaQuery.of(context).size.width >= 600;
+  if (wide) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: SacredTheme.surface,
+        insetPadding: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460, maxHeight: 760),
+          child: _VerseShareSheet(verse: verse, lang: lang),
+        ),
+      ),
+    );
+  } else {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: SacredTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => _VerseShareSheet(verse: verse, lang: lang),
+    );
+  }
 }
 
 class _VerseShareSheet extends StatefulWidget {
