@@ -75,6 +75,16 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
       if (remote != null) {
         state = remote;
         await prefs.setString(_prefKey, remote.code);
+      } else {
+        // New account with no stored language yet (e.g. a Google sign-up, which
+        // doesn't pass language at auth). Adopt the language chosen before
+        // sign-in — this user's local cache, else the welcome-screen choice
+        // (saved under 'anon') — and persist it to the account so cloud sync
+        // and the localized emails use it.
+        final pre = local ??
+            _languageFromCode(prefs.getString('preferred_language_anon')) ??
+            state;
+        await setLanguage(pre);
       }
     } catch (_) {
       // offline / not reachable → keep the local choice
