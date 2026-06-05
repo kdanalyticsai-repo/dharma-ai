@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:dharma_ai/firebase_options.dart';
+import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
@@ -18,6 +21,15 @@ import 'package:dharma_ai/config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase Analytics (web now; Android added later to the same project).
+  // Guarded so a config/init issue can never block app startup.
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    Analytics.attach();
+  } catch (e) {
+    debugPrint('Firebase init skipped: $e');
+  }
 
   // Detect a password-recovery link from the URL. The reset email links to
   //   https://dharma.kdaanalytics.com/?type=recovery&token_hash=...
@@ -140,6 +152,10 @@ class DharmaApp extends ConsumerWidget {
       theme: SacredTheme.lightTheme,
       themeMode: ThemeMode.light,
       debugShowCheckedModeBanner: false,
+      // Auto-logs screen_view on route changes (no-op if analytics is off).
+      navigatorObservers: [
+        if (Analytics.observer != null) Analytics.observer!,
+      ],
       // During password recovery, always show the set-password screen — the
       // user has a live session but must not be routed into the app first.
       home: isRecoveringPassword

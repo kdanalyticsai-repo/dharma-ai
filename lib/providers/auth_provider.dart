@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
+import 'package:dharma_ai/services/analytics_service.dart';
 
 // True while the user is in the password-recovery flow (followed a reset link).
 // The recovery link establishes a real session, so the global auth listener
@@ -53,6 +54,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       );
       state = AsyncValue.data(res.user);
       if (res.user != null) {
+        Analytics.signUp('email');
         try {
           await _upsertProfile(res.user!.id, name, email);
         } catch (_) {
@@ -76,6 +78,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         password: password,
       );
       state = AsyncValue.data(res.user);
+      Analytics.login('email');
       return null;
     } on AuthException catch (e) {
       return e.message;

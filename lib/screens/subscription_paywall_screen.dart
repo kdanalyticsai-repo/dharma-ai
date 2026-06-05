@@ -9,6 +9,7 @@ import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/razorpay_service.dart';
+import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 
@@ -23,6 +24,12 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   bool _isProcessing = false;
   bool _isProcessingQuarterly = false;
   bool _isProcessingAnnual = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Analytics.paywallView();
+  }
 
   // Unified purchase: web → Razorpay (real); other platforms → existing flow.
   Future<void> _buyPlan(String plan) async {
@@ -61,6 +68,8 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
     if (!mounted) return;
     setState(() => _setProcessing(plan, false));
     if (success) {
+      Analytics.purchaseSuccess(
+          plan, plan == 'monthly' ? 101 : plan == 'quarterly' ? 201 : 501);
       _showWelcomeDialog(_planMessage(plan));
     } else if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(

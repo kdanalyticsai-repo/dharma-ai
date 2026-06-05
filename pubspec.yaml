@@ -35,6 +35,8 @@ dependencies:
 
   # Observability
   sentry_flutter: ^8.9.0   # production error/crash monitoring (DSN via dart-define)
+  firebase_core: ^3.6.0    # required by firebase_analytics
+  firebase_analytics: ^11.3.3   # cross-platform analytics (web + Android)
 
   # Utility
   shared_preferences: ^2.2.2
