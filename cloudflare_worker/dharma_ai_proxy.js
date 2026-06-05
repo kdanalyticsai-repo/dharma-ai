@@ -422,5 +422,7 @@ function cors(body, status = 200, origin = null) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
   if (origin) headers['Access-Control-Allow-Origin'] = origin;
-  return new Response(body, { status, headers });
+  // 204/304 responses must have a null body — a zero-length string triggers a
+  // Workers runtime warning. (Used by the CORS preflight, which returns 204.)
+  return new Response(status === 204 || status === 304 ? null : body, { status, headers });
 }
