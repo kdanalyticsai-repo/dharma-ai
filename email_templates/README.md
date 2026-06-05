@@ -25,10 +25,12 @@ Both templates are localized via Go-template conditionals on
 `{{ .Data.preferred_language }}` (the user's auth metadata), falling back to
 English. The app stores `preferred_language` in auth metadata at signup and
 updates it whenever the user switches language, so reset emails follow their
-current language. **The Subject line is also localized** — each template file's
-top comment contains the exact subject string to paste into Supabase's
-**Subject** field (it's a one-liner with the same conditional). Users without a
-language set (e.g. Google sign-ups) get English.
+current language. Users without a language set (e.g. Google sign-ups) get
+English.
+
+**Subjects stay English** — Supabase caps the Subject field at 255 characters,
+which a 4-language conditional can't fit. Each template file's top comment has
+the plain English subject to paste. Only the localized **body** varies.
 
 ## Notes
 - **Reset Password** links to
