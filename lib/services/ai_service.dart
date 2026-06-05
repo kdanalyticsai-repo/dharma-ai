@@ -56,7 +56,9 @@ class AiService {
         return await _callOpenAIScripture(prompt, contextVerses, language, userName);
       } catch (e) {
         debugPrint('⚠️  OpenAI Scripture error: $e');
-        return {'text': '⚠️ AI error: $e', 'citations': <String>[]};
+        // Surface a friendly, localized message via the provider — and don't
+        // let the caller cache this failed response.
+        rethrow;
       }
     }
     await Future.delayed(const Duration(milliseconds: 1500));
@@ -76,7 +78,8 @@ class AiService {
         return await _callOpenAIGuru(prompt, history, language, userName);
       } catch (e) {
         debugPrint('⚠️  OpenAI Guru error: $e');
-        return '⚠️ AI error: $e';
+        // Surface a friendly, localized message via the provider.
+        rethrow;
       }
     }
     await Future.delayed(const Duration(milliseconds: 1800));

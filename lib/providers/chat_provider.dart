@@ -279,7 +279,7 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       final currentLanguage = _ref.read(languageProvider);
       final errorMessage = ChatMessage(
         id: DateTime.now().toString(),
-        text: '${AppTranslations.get('errorScripture', currentLanguage)} (Details: $e)',
+        text: AppTranslations.get('errorScripture', currentLanguage),
         role: 'assistant',
         timestamp: DateTime.now(),
         isGuruMode: false,
