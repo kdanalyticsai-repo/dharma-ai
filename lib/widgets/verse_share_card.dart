@@ -85,22 +85,32 @@ class VerseShareCard extends StatelessWidget {
           const SizedBox(height: 22),
           Container(height: 1, color: SacredTheme.templeGold.withOpacity(0.25)),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'DharmaAI',
-                style: GoogleFonts.newsreader(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: SacredTheme.primary,
-                ),
-              ),
-              Text(
-                '  ·  dharma.kdaanalytics.com',
-                style: GoogleFonts.inter(fontSize: 11.5, color: SacredTheme.onSurfaceVariant),
-              ),
-            ],
+          Text(
+            'DharmaAI',
+            style: GoogleFonts.newsreader(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: SacredTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            AppTranslations.get('shareCardCta', lang),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 1.35,
+              color: SacredTheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            'https://dharma.kdaanalytics.com/',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: SacredTheme.primary,
+            ),
           ),
         ],
       ),

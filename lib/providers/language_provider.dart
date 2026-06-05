@@ -1527,6 +1527,12 @@ class AppTranslations {
       AppLanguage.hindi: 'छवि नहीं बन सकी। कृपया पुनः प्रयास करें।',
       AppLanguage.bengali: 'ছবি তৈরি করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।',
     },
+    'shareCardCta': {
+      AppLanguage.english: 'For more daily verses & wisdom, visit',
+      AppLanguage.tamil: 'மேலும் தினசரி ஸ்லோகங்கள் & ஞானத்திற்கு செல்லவும்',
+      AppLanguage.hindi: 'और दैनिक श्लोक व ज्ञान के लिए जाएँ',
+      AppLanguage.bengali: 'আরও দৈনিক শ্লোক ও জ্ঞানের জন্য দেখুন',
+    },
     'wisdomChannels': {
       AppLanguage.english: 'WISDOM CHANNELS',
       AppLanguage.tamil: 'ஞான அலைவரிசைகள்',
