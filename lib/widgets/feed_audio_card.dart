@@ -107,7 +107,7 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
               const Icon(Icons.headphones_rounded, size: 16, color: SacredTheme.primary),
               const SizedBox(width: 6),
               Text(
-                AppTranslations.get('audioWisdomTitle', lang).toUpperCase(),
+                AppTranslations.get('audioDailyReflection', lang).toUpperCase(),
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

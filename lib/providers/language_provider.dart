@@ -1491,6 +1491,12 @@ class AppTranslations {
       AppLanguage.hindi: 'सभी 18 अध्याय सुनें',
       AppLanguage.bengali: 'সব ১৮টি অধ্যায় শুনুন',
     },
+    'audioDailyReflection': {
+      AppLanguage.english: 'Daily Audio Wisdom Reflection',
+      AppLanguage.tamil: 'தினசரி ஒலி ஞான சிந்தனை',
+      AppLanguage.hindi: 'दैनिक ऑडियो ज्ञान चिंतन',
+      AppLanguage.bengali: 'দৈনিক অডিও জ্ঞান প্রতিফলন',
+    },
     'wisdomChannels': {
       AppLanguage.english: 'WISDOM CHANNELS',
       AppLanguage.tamil: 'ஞான அலைவரிசைகள்',
