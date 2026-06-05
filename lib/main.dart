@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
@@ -62,7 +63,24 @@ void main() async {
     });
   }
 
-  runApp(ProviderScope(child: DharmaApp(navigatorKey: _navigatorKey)));
+  // Production error/crash monitoring. The DSN is injected at build time
+  // (--dart-define=SENTRY_DSN). When absent (local dev), Sentry is skipped and
+  // the app runs exactly as before.
+  const sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
+  if (sentryDsn.isEmpty) {
+    runApp(ProviderScope(child: DharmaApp(navigatorKey: _navigatorKey)));
+  } else {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = sentryDsn;
+        options.environment = 'production';
+        // Sample a fraction of transactions for performance tracing.
+        options.tracesSampleRate = 0.2;
+      },
+      appRunner: () =>
+          runApp(ProviderScope(child: DharmaApp(navigatorKey: _navigatorKey))),
+    );
+  }
 }
 
 final _navigatorKey = GlobalKey<NavigatorState>();
