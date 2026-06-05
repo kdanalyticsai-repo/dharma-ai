@@ -68,7 +68,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final auth = ref.read(authProvider.notifier);
 
     if (_isSignUp) {
-      final r = await auth.signUp(email, password, name);
+      final r = await auth.signUp(email, password, name,
+          langCode: ref.read(languageProvider).code);
       if (!mounted) return;
       setState(() => _isLoading = false);
       if (r.error != null) {

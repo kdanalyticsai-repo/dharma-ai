@@ -50,7 +50,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   //    (Supabase "Confirm email" is on); NO session yet, so do NOT route to app.
   //  • both falsey                → signed in immediately (confirmation off).
   Future<({String? error, bool needsConfirmation})> signUp(
-      String email, String password, String name) async {
+      String email, String password, String name, {String? langCode}) async {
     if (!SupabaseConfig.isConfigured) {
       return (error: 'Backend not configured — check Supabase URL in settings.', needsConfirmation: false);
     }
@@ -58,7 +58,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       final res = await _client.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': name},
+        // preferred_language drives the language of the confirmation/reset
+        // emails (the Supabase templates branch on {{ .Data.preferred_language }}).
+        data: {
+          'full_name': name,
+          if (langCode != null) 'preferred_language': langCode,
+        },
       );
       // With "Confirm email" on, signUp returns a user but NO session.
       final needsConfirmation = res.session == null;

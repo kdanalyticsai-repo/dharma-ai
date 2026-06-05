@@ -1,5 +1,6 @@
 ﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 import 'package:dharma_ai/services/supabase_sync.dart';
 
 enum AppLanguage {
@@ -93,6 +94,13 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
       await client.from('profiles').update({'preferred_language': language.code}).eq('id', uid);
     } catch (_) {
       // best-effort cross-device sync; local copy already saved
+    }
+    try {
+      // Mirror into auth metadata so password-reset emails are sent in the
+      // user's current language (the Supabase templates read .Data.preferred_language).
+      await client.auth.updateUser(UserAttributes(data: {'preferred_language': language.code}));
+    } catch (_) {
+      // best-effort; not critical
     }
   }
 }

@@ -20,6 +20,16 @@ set the **Subject**, and paste the file's HTML into the **Message body** (the
 | **Reset Password** | `reset_password.html` | `Reset your DharmaAI password` |
 | **Confirm signup** | `confirm_signup.html` | `Confirm your email to begin your path` |
 
+## Localization (EN / HI / TA / BN)
+Both templates are localized via Go-template conditionals on
+`{{ .Data.preferred_language }}` (the user's auth metadata), falling back to
+English. The app stores `preferred_language` in auth metadata at signup and
+updates it whenever the user switches language, so reset emails follow their
+current language. **The Subject line is also localized** — each template file's
+top comment contains the exact subject string to paste into Supabase's
+**Subject** field (it's a one-liner with the same conditional). Users without a
+language set (e.g. Google sign-ups) get English.
+
 ## Notes
 - **Reset Password** links to
   `https://dharma.kdaanalytics.com/?type=recovery&token_hash={{ .TokenHash }}`
