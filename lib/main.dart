@@ -32,13 +32,16 @@ void main() async {
   }
 
   // Detect a password-recovery link from the URL. The reset email links to
-  //   https://dharma.kdaanalytics.com/?type=recovery&token_hash=...
+  //   https://dharma.kdaanalytics.com/?type=recovery&token=<otp>&email=<email>
   // We read these BEFORE Supabase.initialize() (the SDK strips auth params from
-  // the URL during init). The token_hash lets us open the recovery session via
-  // verifyOTP() — which works in ANY browser/device, unlike the PKCE code flow
-  // that needs a code_verifier stored only in the browser that requested it.
+  // the URL during init). Verifying the EMAIL OTP (token + email) opens the
+  // recovery session WITHOUT a PKCE code_verifier, so it works in ANY
+  // browser/device. (token_hash is kept only as a same-browser fallback — under
+  // PKCE it's a pkce_ hash that needs the verifier, hence the cross-browser bug.)
   final recoveryParams = kIsWeb ? Uri.base.queryParameters : const <String, String>{};
   final isRecovery = recoveryParams['type'] == 'recovery';
+  final recoveryToken = recoveryParams['token'];
+  final recoveryEmail = recoveryParams['email'];
   final recoveryTokenHash = recoveryParams['token_hash'];
   if (isRecovery) isRecoveringPassword = true;
 
@@ -48,13 +51,22 @@ void main() async {
       anonKey: SupabaseConfig.supabaseAnonKey,
     );
 
-    // Establish the recovery session from the emailed token hash (cross-browser).
-    if (isRecovery && recoveryTokenHash != null && recoveryTokenHash.isNotEmpty) {
+    // Establish the recovery session from the emailed OTP (cross-browser).
+    if (isRecovery) {
       try {
-        await Supabase.instance.client.auth.verifyOTP(
-          type: OtpType.recovery,
-          tokenHash: recoveryTokenHash,
-        );
+        if (recoveryToken != null && recoveryToken.isNotEmpty &&
+            recoveryEmail != null && recoveryEmail.isNotEmpty) {
+          await Supabase.instance.client.auth.verifyOTP(
+            type: OtpType.recovery,
+            email: recoveryEmail,
+            token: recoveryToken,
+          );
+        } else if (recoveryTokenHash != null && recoveryTokenHash.isNotEmpty) {
+          await Supabase.instance.client.auth.verifyOTP(
+            type: OtpType.recovery,
+            tokenHash: recoveryTokenHash,
+          );
+        }
       } catch (e) {
         debugPrint('recovery verifyOTP failed: $e');
       }
