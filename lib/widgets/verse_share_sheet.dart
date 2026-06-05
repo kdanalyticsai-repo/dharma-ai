@@ -177,7 +177,7 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
                         ),
                         onPressed: _ready ? _share : null,
                         icon: _ready
-                            ? const Icon(Icons.ios_share_rounded, size: 18)
+                            ? const Icon(Icons.share, size: 18)
                             : const SizedBox(
                                 width: 16, height: 16,
                                 child: CircularProgressIndicator(

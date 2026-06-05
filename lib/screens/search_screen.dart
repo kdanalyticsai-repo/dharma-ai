@@ -222,7 +222,7 @@ class SingleVerseDetailScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.ios_share_rounded, color: SacredTheme.primary),
+            icon: const Icon(Icons.share, color: SacredTheme.primary),
             tooltip: AppTranslations.get('shareVerseShare', currentLanguage),
             onPressed: () => openVerseShareSheet(context, verse, currentLanguage),
           ),

@@ -213,7 +213,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                   child: const Padding(
                                     padding: EdgeInsets.all(3),
-                                    child: Icon(Icons.ios_share_rounded,
+                                    child: Icon(Icons.share,
                                         color: SacredTheme.templeGold, size: 16),
                                   ),
                                 ),
