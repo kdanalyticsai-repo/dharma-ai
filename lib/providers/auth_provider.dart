@@ -44,28 +44,42 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   SupabaseClient get _client => Supabase.instance.client;
 
   // ── Sign up with email + password ──────────────────────────
-  Future<String?> signUp(String email, String password, String name) async {
-    if (!SupabaseConfig.isConfigured) return 'Backend not configured — check Supabase URL in settings.';
+  // Returns (error, needsConfirmation):
+  //  • error != null              → failed
+  //  • needsConfirmation == true  → account created but email must be confirmed
+  //    (Supabase "Confirm email" is on); NO session yet, so do NOT route to app.
+  //  • both falsey                → signed in immediately (confirmation off).
+  Future<({String? error, bool needsConfirmation})> signUp(
+      String email, String password, String name) async {
+    if (!SupabaseConfig.isConfigured) {
+      return (error: 'Backend not configured — check Supabase URL in settings.', needsConfirmation: false);
+    }
     try {
       final res = await _client.auth.signUp(
         email: email,
         password: password,
         data: {'full_name': name},
       );
-      state = AsyncValue.data(res.user);
-      if (res.user != null) {
-        Analytics.signUp('email');
-        try {
-          await _upsertProfile(res.user!.id, name, email);
-        } catch (_) {
-          // Profile row creation failed but auth succeeded — not blocking
+      // With "Confirm email" on, signUp returns a user but NO session.
+      final needsConfirmation = res.session == null;
+      if (!needsConfirmation) {
+        state = AsyncValue.data(res.user);
+        if (res.user != null) {
+          Analytics.signUp('email');
+          try {
+            await _upsertProfile(res.user!.id, name, email);
+          } catch (_) {
+            // Profile row creation failed but auth succeeded — not blocking
+          }
         }
       }
-      return null; // null = success
+      // (When confirmation is required the profile is created server-side by the
+      // handle_new_user trigger; a client upsert would fail without a session.)
+      return (error: null, needsConfirmation: needsConfirmation);
     } on AuthException catch (e) {
-      return e.message;
+      return (error: e.message, needsConfirmation: false);
     } catch (e) {
-      return e.toString();
+      return (error: e.toString(), needsConfirmation: false);
     }
   }
 

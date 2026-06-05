@@ -1011,6 +1011,12 @@ class AppTranslations {
       AppLanguage.tamil: 'கடவுச்சொல்',
       AppLanguage.bengali: 'পাসওয়ার্ড',
     },
+    'authConfirmEmailSent': {
+      AppLanguage.english: 'We\'ve emailed you a confirmation link. Please confirm your email, then sign in.',
+      AppLanguage.tamil: 'உறுதிப்படுத்தும் இணைப்பை மின்னஞ்சலில் அனுப்பியுள்ளோம். மின்னஞ்சலை உறுதிப்படுத்திய பின் உள்நுழையவும்.',
+      AppLanguage.hindi: 'हमने आपको एक पुष्टिकरण लिंक ईमेल किया है। कृपया अपना ईमेल पुष्टि करें, फिर साइन इन करें।',
+      AppLanguage.bengali: 'আমরা আপনাকে একটি নিশ্চিতকরণ লিঙ্ক ইমেল করেছি। অনুগ্রহ করে আপনার ইমেল নিশ্চিত করুন, তারপর সাইন ইন করুন।',
+    },
     'authForgotPassword': {
       AppLanguage.english: 'Forgot password?',
       AppLanguage.hindi: 'पासवर्ड भूल गए?',

@@ -66,30 +66,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() { _isLoading = true; _errorMessage = null; });
 
     final auth = ref.read(authProvider.notifier);
-    String? error;
 
     if (_isSignUp) {
-      error = await auth.signUp(email, password, name);
-    } else {
-      error = await auth.signIn(email, password);
-    }
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (error != null) {
-      setState(() => _errorMessage = error);
-      return;
-    }
-
-    if (_isSignUp) {
-      // New users choose their path first
+      final r = await auth.signUp(email, password, name);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (r.error != null) {
+        setState(() => _errorMessage = r.error);
+        return;
+      }
+      if (r.needsConfirmation) {
+        // Email must be confirmed before there's a session — DON'T enter the
+        // app. Switch to sign-in and tell the user to check their inbox.
+        setState(() {
+          _isSignUp = false;
+          _errorMessage = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppTranslations.get('authConfirmEmailSent', ref.read(languageProvider))),
+            backgroundColor: SacredTheme.primary,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+        return;
+      }
+      // Signed in immediately (confirmation off) — new users choose their path.
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const PersonalizeScreen()),
         (route) => false,
       );
     } else {
+      final error = await auth.signIn(email, password);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (error != null) {
+        setState(() => _errorMessage = error);
+        return;
+      }
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const HomeShell()),
