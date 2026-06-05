@@ -52,8 +52,8 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
       try {
         final probe = AudioPlayer();
         final d = await probe.setUrl(bgAudioTracks[i].audioUrl);
-        await probe.dispose();
         if (d != null && mounted) setState(() => _durations[i] = d);
+        await probe.dispose(); // awaited inside this try → its error is caught here
       } catch (_) {
         // skip tracks that fail to probe
       }
@@ -77,7 +77,8 @@ class _AudioWisdomScreenState extends ConsumerState<AudioWisdomScreen> {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    // just_audio on web can reject dispose() with UnimplementedError; swallow it.
+    _audioPlayer.dispose().catchError((Object _) {});
     super.dispose();
   }
 

@@ -40,7 +40,9 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
 
   @override
   void dispose() {
-    _player.dispose();
+    // just_audio on web can reject dispose() with UnimplementedError; swallow it
+    // (it's an async rejection, so .catchError — not try/catch — is what catches it).
+    _player.dispose().catchError((Object _) {});
     super.dispose();
   }
 
