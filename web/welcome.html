@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <title>DharmaAI — Ask the Bhagavad Gita Anything | AI Spiritual Guide</title>
   <meta name="description" content="DharmaAI is a free AI spiritual companion. Ask an AI Guru for guidance grounded in the Bhagavad Gita, Vedas and Upanishads, read scripture with translations, get a daily verse and audio wisdom, and track your sadhana — in English, Hindi, Tamil and Bengali.">
   <link rel="canonical" href="https://dharma.kdaanalytics.com/welcome">
-  <meta name="theme-color" content="#FAF7F2">
+  <meta name="theme-color" content="#FAF7F2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1A1210" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/png" href="favicon.png">
 
   <!-- Open Graph / Twitter -->
@@ -71,7 +72,7 @@
 
     /* Top bar */
     header{position:sticky;top:0;z-index:10;background:rgba(250,247,242,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-    .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+    .nav{display:flex;align-items:center;justify-content:center;height:64px}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--saffron);font-size:1.15rem}
     .brand img{height:34px}
 
@@ -124,16 +125,31 @@
     .final p{color:var(--muted);margin-bottom:24px}
 
     footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:.9rem}
-    .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;align-items:center}
-    .foot nav a{margin-right:16px;color:var(--muted)}
+    .foot{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;flex-wrap:wrap;gap:14px}
+    .foot nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px}
+    .foot nav a{color:var(--muted)}
     .foot nav a:hover{color:var(--saffron)}
+
+    /* Dark mode — mirror the in-app SacredTheme dark palette so browsers
+       don't apply their muddy auto-dark to the light-only page. */
+    @media (prefers-color-scheme: dark){
+      :root{
+        --saffron:#FFB68A; --saffron2:#FFC9A6; --gold:#D4AF37;
+        --cream:#1A1210; --surface:#2A1C16; --ink:#FFF1EB; --muted:#D4B0A2;
+        --indigo:#0D1A38; --line:#4A3028;
+      }
+      .btn{color:#3A1500}
+      .btn-ghost{color:var(--saffron)}
+      header{background:rgba(26,18,16,.9)}
+      .final{background:linear-gradient(180deg,#2A1C16,#331F17)}
+      .eyebrow{background:rgba(212,175,55,.12);border-color:rgba(212,175,55,.34)}
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="wrap nav">
       <a class="brand" href="/welcome"><img src="email-logo.png" alt="DharmaAI logo"> DharmaAI</a>
-      <a class="btn" href="https://dharma.kdaanalytics.com/">Open the App →</a>
     </div>
   </header>
 

@@ -109,6 +109,16 @@ void main() async {
               event.message?.formatted ??
               '';
           if (detail.contains('dispose() has not been implemented')) return null;
+          // CanvasKit fails to get a WebGL/GPU context inside iOS in-app
+          // browsers (FB/Insta webviews) and some locked-down iOS Safari
+          // configs — "getParameter is not a function" from MakeWebGLContext.
+          // It's environmental, not our bug, and CanvasKit falls back to CPU
+          // rendering, so the app still loads. Drop the (escalating) noise.
+          if (detail.contains('getParameter is not a function') ||
+              detail.contains('MakeWebGLContext') ||
+              detail.contains('MakeGrContext')) {
+            return null;
+          }
           return event;
         };
       },
