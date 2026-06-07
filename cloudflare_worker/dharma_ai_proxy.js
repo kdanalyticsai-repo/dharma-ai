@@ -52,7 +52,9 @@ export default {
     const origin = request.headers.get('Origin') || '';
     if (request.method === 'OPTIONS') return cors('', 204, allowedOrigin(origin, env));
     if (request.method !== 'POST') return cors(j({ error: 'Method not allowed' }), 405, null);
-    if (!isAllowed(origin, env)) return cors(j({ error: 'Forbidden' }), 403, null);
+    // Native clients (Android) send no Origin header — each handler enforces its own auth.
+    // Only block requests that come from a browser origin NOT in the allow-list.
+    if (origin && !isAllowed(origin, env)) return cors(j({ error: 'Forbidden' }), 403, null);
 
     try {
       if (path === '/razorpay/order')  return await createOrder(request, env, origin);

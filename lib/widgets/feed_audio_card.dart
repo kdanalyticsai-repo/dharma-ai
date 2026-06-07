@@ -108,16 +108,19 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
             children: [
               const Icon(Icons.headphones_rounded, size: 16, color: SacredTheme.primary),
               const SizedBox(width: 6),
-              Text(
-                AppTranslations.get('audioDailyReflection', lang).toUpperCase(),
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                  color: SacredTheme.primary,
+              Flexible(
+                child: Text(
+                  AppTranslations.get('audioDailyReflection', lang).toUpperCase(),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    color: SacredTheme.primary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 6),
               InkWell(
                 onTap: _shuffle,
                 borderRadius: BorderRadius.circular(20),

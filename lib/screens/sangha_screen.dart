@@ -155,13 +155,17 @@ class _SanghaScreenState extends ConsumerState<SanghaScreen> {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: SacredTheme.marginEdge, vertical: 8),
-                        itemCount: posts.length,
-                        itemBuilder: (context, index) =>
-                            CommunityPostCard(post: posts[index]),
+                    : RefreshIndicator(
+                        color: SacredTheme.primary,
+                        onRefresh: () => ref.read(communityProvider.notifier).refresh(),
+                        child: ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: SacredTheme.marginEdge, vertical: 8),
+                          itemCount: posts.length,
+                          itemBuilder: (context, index) =>
+                              CommunityPostCard(post: posts[index]),
+                        ),
                       ),
               ),
             ],

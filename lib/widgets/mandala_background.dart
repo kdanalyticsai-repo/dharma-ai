@@ -8,14 +8,18 @@ class MandalaBackground extends StatefulWidget {
   final Alignment alignment;
   final bool rotate;
   final double opacity;
+  // When set, renders this widget centered on the true screen midpoint —
+  // aligned with the mandala's geometric centre regardless of header height.
+  final Widget? centerOverlay;
 
   const MandalaBackground({
     Key? key,
     required this.child,
     this.scale = 1.0,
     this.alignment = Alignment.center,
-    this.rotate = true, // slow serene rotation on every screen
-    this.opacity = 0.10, // visible mandala on every screen
+    this.rotate = true,
+    this.opacity = 0.10,
+    this.centerOverlay,
   }) : super(key: key);
 
   @override
@@ -100,6 +104,15 @@ class _MandalaBackgroundState extends State<MandalaBackground> with SingleTicker
           ),
         ),
         widget.child,
+        // Overlay centred on the true screen midpoint — same as the mandala's
+        // geometric centre — regardless of how much header sits above the content.
+        if (widget.centerOverlay != null)
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: false,
+              child: Center(child: widget.centerOverlay),
+            ),
+          ),
       ],
     );
   }

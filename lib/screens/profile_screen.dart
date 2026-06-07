@@ -17,6 +17,7 @@ import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/transliteration_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
+import 'package:dharma_ai/widgets/lotus_painter.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
 import 'package:dharma_ai/widgets/circle_icon_button.dart';
 
@@ -308,6 +309,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
       ),
       body: MandalaBackground(
         scale: 0.85,
+        centerOverlay: savedVersesAsync.isLoading ? const LotusLoadingIndicator(size: 64) : null,
         child: SafeArea(
         child: Column(
           children: [
@@ -476,7 +478,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                         },
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator()),
+                    loading: () => const SizedBox.shrink(),
                     error: (err, stack) => Center(child: Text('Error loading saved items: $err')),
                   ),
 

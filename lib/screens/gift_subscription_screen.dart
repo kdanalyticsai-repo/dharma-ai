@@ -253,9 +253,11 @@ class _GiftSubscriptionScreenState extends ConsumerState<GiftSubscriptionScreen>
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_giftLabel, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                        Flexible(
+                          child: Text(_giftLabel, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                        ),
+                        const SizedBox(width: 12),
                         Text(_giftPrice, style: textTheme.bodyLarge?.copyWith(color: SacredTheme.primary, fontWeight: FontWeight.bold)),
                       ],
                     ),

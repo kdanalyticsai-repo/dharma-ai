@@ -72,17 +72,17 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/images/dharma_logo.png"
-  adaptive_icon_background: "#FDF5E6"   # parchmentCream — shows behind the logo in circle-crop
-  adaptive_icon_foreground: "assets/images/dharma_logo.png"
+  image_path: "assets/images/dharma_logo_mobile.png"
+  adaptive_icon_background: "#1A0A00"
+  adaptive_icon_foreground: "assets/images/dharma_logo_mobile.png"
   min_sdk_android: 21
 
 flutter_native_splash:
-  color: "#FDF5E6"                       # parchmentCream background
-  image: assets/images/dharma_logo.png
+  color: "#1A0A00"
+  image: assets/images/dharma_logo_mobile.png
   android: true
   ios: false
   web: false
   android_12:
-    image: assets/images/dharma_logo.png
-    color: "#FDF5E6"
+    image: assets/images/dharma_logo_mobile.png
+    color: "#1A0A00"

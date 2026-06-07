@@ -385,16 +385,19 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                title,
-                style: textTheme.headlineMedium?.copyWith(
-                  color: isPremiumHighlight ? SacredTheme.templeGold : SacredTheme.primary,
-                  fontSize: 22,
+              Flexible(
+                child: Text(
+                  title,
+                  style: textTheme.headlineMedium?.copyWith(
+                    color: isPremiumHighlight ? SacredTheme.templeGold : SacredTheme.primary,
+                    fontSize: 22,
+                  ),
                 ),
               ),
-              if (badge != null)
+              if (badge != null) ...[
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -406,6 +409,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: SacredTheme.templeGold),
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 6),

@@ -56,7 +56,11 @@ class PlayBillingService {
 
     final response = await _iap.queryProductDetails({productId});
     if (response.productDetails.isEmpty) {
-      return const PlayBillingResult(success: false, error: 'Product unavailable — please try again');
+      return const PlayBillingResult(
+        success: false,
+        error: 'Subscriptions not yet live on Play Store. '
+            'Visit dharma.kdaanalytics.com to subscribe now.',
+      );
     }
 
     _pending = Completer<PlayBillingResult>();
