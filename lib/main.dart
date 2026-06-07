@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:app_links/app_links.dart';
 import 'package:dharma_ai/firebase_options.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/theme/theme.dart';
@@ -33,12 +34,15 @@ void main() async {
 
   // Detect a password-recovery link from the URL. The reset email links to
   //   https://dharma.kdaanalytics.com/?type=recovery&token=<otp>&email=<email>
-  // We read these BEFORE Supabase.initialize() (the SDK strips auth params from
-  // the URL during init). Verifying the EMAIL OTP (token + email) opens the
-  // recovery session WITHOUT a PKCE code_verifier, so it works in ANY
-  // browser/device. (token_hash is kept only as a same-browser fallback — under
-  // PKCE it's a pkce_ hash that needs the verifier, hence the cross-browser bug.)
-  final recoveryParams = kIsWeb ? Uri.base.queryParameters : const <String, String>{};
+  // Web: read from Uri.base before Supabase.initialize() strips auth params.
+  // Android: read from the App Link that launched the app (getInitialLink).
+  Map<String, String> recoveryParams = const {};
+  if (kIsWeb) {
+    recoveryParams = Uri.base.queryParameters;
+  } else {
+    final initialLink = await AppLinks().getInitialLink();
+    if (initialLink != null) recoveryParams = initialLink.queryParameters;
+  }
   final isRecovery = recoveryParams['type'] == 'recovery';
   final recoveryToken = recoveryParams['token'];
   final recoveryEmail = recoveryParams['email'];
@@ -85,6 +89,35 @@ void main() async {
         );
       }
     });
+
+    // Android: handle auth links that arrive while the app is already running.
+    if (!kIsWeb) {
+      AppLinks().uriLinkStream.listen((uri) async {
+        final params = uri.queryParameters;
+        if (params['type'] == 'recovery') {
+          final token = params['token'];
+          final email = params['email'];
+          final tokenHash = params['token_hash'];
+          try {
+            if (token != null && token.isNotEmpty &&
+                email != null && email.isNotEmpty) {
+              await Supabase.instance.client.auth.verifyOTP(
+                type: OtpType.recovery,
+                email: email,
+                token: token,
+              );
+            } else if (tokenHash != null && tokenHash.isNotEmpty) {
+              await Supabase.instance.client.auth.verifyOTP(
+                type: OtpType.recovery,
+                tokenHash: tokenHash,
+              );
+            }
+          } catch (e) {
+            debugPrint('deep link recovery verifyOTP failed: $e');
+          }
+        }
+      });
+    }
   }
 
   // Production error/crash monitoring. The DSN is injected at build time

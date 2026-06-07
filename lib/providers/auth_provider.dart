@@ -1,8 +1,14 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
+
+// Web Client ID from Google OAuth (Supabase → Auth → Providers → Google).
+// Not a secret — it is embedded in the app and visible in web builds.
+const _googleWebClientId =
+    '110176980918-out28b4bjvl2f2vd852kgiagk12h4ds0.apps.googleusercontent.com';
 
 // True while the user is in the password-recovery flow (followed a reset link).
 // The recovery link establishes a real session, so the global auth listener
@@ -108,11 +114,35 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
   // ── Sign in with Google ─────────────────────────────────────
   Future<String?> signInWithGoogle() async {
+    if (kIsWeb) {
+      // Web: browser-based OAuth redirect (unchanged).
+      try {
+        await _client.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: 'https://dharma.kdaanalytics.com',
+        );
+        return null;
+      } on AuthException catch (e) {
+        return e.message;
+      } catch (e) {
+        return e.toString();
+      }
+    }
+
+    // Android: native account picker → ID token → Supabase signInWithIdToken.
     try {
-      await _client.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: 'https://dharma.kdaanalytics.com',
+      final googleUser = await GoogleSignIn(
+        serverClientId: _googleWebClientId,
+      ).signIn();
+      if (googleUser == null) return null; // user cancelled — not an error
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) return 'Google sign-in failed: no ID token';
+      await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
       );
+      Analytics.login('google');
       return null;
     } on AuthException catch (e) {
       return e.message;

@@ -44,6 +44,10 @@ dependencies:
   path_provider: ^2.1.1
   crypto: ^3.0.3   # SHA-256 for privacy-preserving Q&A cache keys
   url_launcher: ^6.2.5   # open temple credit links (Audio Wisdom)
+  google_sign_in: ^6.2.0   # native Google Sign-In for Android
+  app_links: ^6.4.0        # intercept HTTPS App Links on Android (auth deep links)
+  in_app_purchase: ^3.2.0          # Google Play Billing for Android subscriptions
+  in_app_purchase_android: ^0.3.6  # Access GooglePlayPurchaseDetails.purchaseToken
 
 dev_dependencies:
   flutter_test:
@@ -51,6 +55,8 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.8
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
 
 flutter:
   uses-material-design: true
@@ -62,3 +68,21 @@ flutter:
 
   # Fonts can also be defined here if they are bundled locally,
   # but google_fonts package fetches them dynamically and caches them.
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/dharma_logo.png"
+  adaptive_icon_background: "#FDF5E6"   # parchmentCream — shows behind the logo in circle-crop
+  adaptive_icon_foreground: "assets/images/dharma_logo.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#FDF5E6"                       # parchmentCream background
+  image: assets/images/dharma_logo.png
+  android: true
+  ios: false
+  web: false
+  android_12:
+    image: assets/images/dharma_logo.png
+    color: "#FDF5E6"

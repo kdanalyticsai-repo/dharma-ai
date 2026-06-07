@@ -42,6 +42,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android release signing — keystore and credentials must never be committed.
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+
 # Secrets — real keys are injected via --dart-define, never committed.
 # The lib/config/*.dart files contain only placeholders and ARE committed.
 # Local dev secrets live in run_dev.ps1 (below) and .env (never committed).

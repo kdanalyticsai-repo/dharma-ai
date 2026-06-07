@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "494796756772",
+    "project_id": "dharmaai-f0078",
+    "storage_bucket": "dharmaai-f0078.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:494796756772:android:488070190c1d64306a05b1",
+        "android_client_info": {
+          "package_name": "com.kdaanalytics.dharmaai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "494796756772-s83ctnufhplgeusu0ijs40k3p6inm15h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kdaanalytics.dharmaai",
+            "certificate_hash": "c7b2565c58a3627f5e2507b3c3f5c15abad5c5a2"
+          }
+        },
+        {
+          "client_id": "494796756772-kv3raikt2k991emqbjp1er4tbnit62qs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpZc_lUHhod6W-zpzoxVTYZjce2rEfXmc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "494796756772-kv3raikt2k991emqbjp1er4tbnit62qs.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -13,6 +13,7 @@ import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
+import 'package:dharma_ai/widgets/app_download_banner.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({Key? key}) : super(key: key);
@@ -106,7 +107,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     return Scaffold(
       body: _screens[currentIndex],
-      bottomNavigationBar: Container(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AppDownloadBanner(),
+          Container(
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
@@ -170,9 +175,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 label: AppTranslations.get('tabSangha', currentLanguage),
               ),
             ],
-          ),
-        ),
-      ),
+          ),       // NavigationBar
+        ),         // NavigationBarTheme
+      ),           // Container
+      ],           // Column.children
+    ),             // Column (bottomNavigationBar)
     );
   }
 }
