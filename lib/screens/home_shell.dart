@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -105,7 +106,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final currentLanguage = ref.watch(languageProvider);
     final currentIndex = ref.watch(homeTabProvider);
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFFFAF7F2),
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
       body: _screens[currentIndex],
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
@@ -180,6 +187,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       ),           // Container
       ],           // Column.children
     ),             // Column (bottomNavigationBar)
-    );
+    ),             // Scaffold
+    );             // AnnotatedRegion
   }
 }

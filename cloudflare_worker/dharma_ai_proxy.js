@@ -94,6 +94,8 @@ async function openaiProxy(request, env, origin) {
   body.model = 'gpt-4o-mini'; // never honour a client-chosen (expensive) model
   if (!Number.isInteger(body.max_tokens) || body.max_tokens > 1000) body.max_tokens = 1000;
 
+  const wantsStream = body.stream === true;
+
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -102,6 +104,23 @@ async function openaiProxy(request, env, origin) {
     },
     body: JSON.stringify(body),
   });
+
+  if (wantsStream && res.body) {
+    // Forward the SSE stream directly to the client with CORS headers.
+    const headers = {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
+    };
+    if (origin) {
+      headers['Access-Control-Allow-Origin'] = origin;
+      headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+      headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
+      headers['Access-Control-Allow-Credentials'] = 'true';
+    }
+    return new Response(res.body, { status: res.status, headers });
+  }
+
   const data = await res.json();
   return cors(j(data), res.status, origin);
 }

@@ -27,6 +27,8 @@ String _welcomeName(Ref ref, AppLanguage lang) {
         return 'அன்பான தேடுபவரே';
       case AppLanguage.bengali:
         return 'প্রিয় অন্বেষক';
+      case AppLanguage.oriya:
+        return 'ପ୍ରିୟ ସାଧକ';
       default:
         return 'dear seeker';
     }
@@ -242,50 +244,112 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       isLoading: true,
     );
 
+    final streamId = 'stream_${DateTime.now().millisecondsSinceEpoch}';
     try {
       final scriptureService = _ref.read(scriptureServiceProvider);
       final aiService = _ref.read(aiServiceProvider);
       final cache = _ref.read(qaCacheServiceProvider);
       final currentLanguage = _ref.read(languageProvider);
+      final userName = _ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?;
 
-      // Check the shared answer cache first (avoids a repeat OpenAI call).
-      Map<String, dynamic>? result = await cache.get(text, currentLanguage);
-      if (result == null) {
-        // Cache miss — perform RAG search, call the AI, then cache the answer.
-        final contextVerses = await scriptureService.searchScriptures(text);
-        result = await aiService.generateScriptureResponse(
-          text, contextVerses, currentLanguage,
-          userName: _ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?,
+      // Cache hit — display immediately, no streaming needed.
+      final cached = await cache.get(text, currentLanguage);
+      if (cached != null) {
+        state = state.copyWith(
+          messages: [
+            ...state.messages,
+            ChatMessage(
+              id: DateTime.now().toString(),
+              text: cached['text'] as String,
+              role: 'assistant',
+              timestamp: DateTime.now(),
+              verseCitations: cached['citations'] != null
+                  ? List<String>.from(cached['citations'] as Iterable)
+                  : null,
+              isGuruMode: false,
+            ),
+          ],
+          isLoading: false,
         );
-        await cache.put(text, currentLanguage, result);
+        return;
       }
 
-      final assistantMessage = ChatMessage(
-        id: DateTime.now().toString(),
-        text: result['text'] as String,
-        role: 'assistant',
-        timestamp: DateTime.now(),
-        verseCitations: result['citations'] != null
-            ? List<String>.from(result['citations'] as Iterable)
-            : null,
-        isGuruMode: false,
-      );
+      // Cache miss — RAG search then stream from AI.
+      final contextVerses = await scriptureService.searchScriptures(text);
+      final accumulated = StringBuffer();
+      bool started = false;
+
+      await for (final chunk in aiService.streamScriptureResponse(
+          text, contextVerses, currentLanguage, userName: userName)) {
+        accumulated.write(chunk);
+        if (!started) {
+          started = true;
+          // First chunk: replace loading indicator with the streaming bubble.
+          state = state.copyWith(
+            messages: [
+              ...state.messages,
+              ChatMessage(
+                id: streamId,
+                text: accumulated.toString(),
+                role: 'assistant',
+                timestamp: DateTime.now(),
+                isGuruMode: false,
+              ),
+            ],
+            isLoading: false,
+          );
+        } else {
+          state = state.copyWith(
+            messages: state.messages
+                .map((m) => m.id == streamId
+                    ? m.copyWith(text: accumulated.toString())
+                    : m)
+                .toList(),
+          );
+        }
+      }
+
+      if (!started) {
+        state = state.copyWith(isLoading: false);
+        return;
+      }
+
+      // Finalize: extract verse citations from the complete response.
+      final fullText = accumulated.toString();
+      final citations = contextVerses
+          .where((v) =>
+              fullText.contains(v.id) ||
+              fullText.contains('${v.chapter}.${v.verseNumber}') ||
+              fullText.contains('Chapter ${v.chapter}'))
+          .map((v) => v.id)
+          .toList();
 
       state = state.copyWith(
-        messages: [...state.messages, assistantMessage],
-        isLoading: false,
+        messages: state.messages
+            .map((m) => m.id == streamId
+                ? m.copyWith(
+                    text: fullText,
+                    verseCitations: citations.isNotEmpty ? citations : null,
+                  )
+                : m)
+            .toList(),
       );
+      await cache.put(text, currentLanguage, {'text': fullText, 'citations': citations});
     } catch (e) {
       final currentLanguage = _ref.read(languageProvider);
-      final errorMessage = ChatMessage(
-        id: DateTime.now().toString(),
-        text: AppTranslations.get('errorScripture', currentLanguage),
-        role: 'assistant',
-        timestamp: DateTime.now(),
-        isGuruMode: false,
-      );
+      final cleanMsgs =
+          state.messages.where((m) => m.id != streamId).toList();
       state = state.copyWith(
-        messages: [...state.messages, errorMessage],
+        messages: [
+          ...cleanMsgs,
+          ChatMessage(
+            id: DateTime.now().toString(),
+            text: AppTranslations.get('errorScripture', currentLanguage),
+            role: 'assistant',
+            timestamp: DateTime.now(),
+            isGuruMode: false,
+          ),
+        ],
         isLoading: false,
       );
     }
@@ -293,9 +357,7 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
 
   void clearHistory() {
     state = ChatState(
-      messages: [
-        state.messages.first, // Keep the welcome message
-      ],
+      messages: [_buildWelcome()],
       isLoading: false,
     );
   }
@@ -438,11 +500,12 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
       isLoading: true,
     );
 
+    final streamId = 'stream_${DateTime.now().millisecondsSinceEpoch}';
     try {
       final aiService = _ref.read(aiServiceProvider);
       final currentLanguage = _ref.read(languageProvider);
+      final userName = _ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?;
 
-      // Annual tier gets deeper memory context; Monthly Premium gets standard depth
       final historyDepth = tier == SubscriptionTier.annual ? kAnnualHistoryDepth : kPaidHistoryDepth;
       final contextMessages = tier == SubscriptionTier.free
           ? state.messages
@@ -450,36 +513,57 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
               ? state.messages.sublist(state.messages.length - historyDepth)
               : state.messages;
 
-      // Request AI response with tier-appropriate history
-      final responseText = await aiService.generateGuruResponse(
-        text, contextMessages, currentLanguage,
-        userName: _ref.read(authUserProvider).valueOrNull?.userMetadata?['full_name'] as String?,
-      );
+      final accumulated = StringBuffer();
+      bool started = false;
 
-      final assistantMessage = ChatMessage(
-        id: DateTime.now().toString(),
-        text: responseText,
-        role: 'assistant',
-        timestamp: DateTime.now(),
-        isGuruMode: true,
-      );
+      await for (final chunk in aiService.streamGuruResponse(
+          text, contextMessages, currentLanguage, userName: userName)) {
+        accumulated.write(chunk);
+        if (!started) {
+          started = true;
+          state = state.copyWith(
+            messages: [
+              ...state.messages,
+              ChatMessage(
+                id: streamId,
+                text: accumulated.toString(),
+                role: 'assistant',
+                timestamp: DateTime.now(),
+                isGuruMode: true,
+              ),
+            ],
+            isLoading: false,
+          );
+        } else {
+          state = state.copyWith(
+            messages: state.messages
+                .map((m) => m.id == streamId
+                    ? m.copyWith(text: accumulated.toString())
+                    : m)
+                .toList(),
+          );
+        }
+      }
 
-      state = state.copyWith(
-        messages: [...state.messages, assistantMessage],
-        isLoading: false,
-      );
+      if (!started) {
+        state = state.copyWith(isLoading: false);
+      }
       _persist();
     } catch (e) {
       final currentLanguage = _ref.read(languageProvider);
-      final errorMessage = ChatMessage(
-        id: DateTime.now().toString(),
-        text: AppTranslations.get('errorGuru', currentLanguage),
-        role: 'assistant',
-        timestamp: DateTime.now(),
-        isGuruMode: true,
-      );
+      final cleanMsgs =
+          state.messages.where((m) => m.id != streamId).toList();
       state = state.copyWith(
-        messages: [...state.messages, errorMessage],
+        messages: [
+          ...cleanMsgs,
+          ChatMessage(
+            id: DateTime.now().toString(),
+            text: AppTranslations.get('errorGuru', currentLanguage),
+            role: 'assistant',
+            timestamp: DateTime.now(),
+            isGuruMode: true,
+          ),
+        ],
         isLoading: false,
       );
       _persist();
@@ -488,9 +572,7 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
 
   void clearHistory() {
     state = ChatState(
-      messages: [
-        state.messages.first, // Keep welcome message
-      ],
+      messages: [_buildWelcome()],
       isLoading: false,
     );
     _persist();

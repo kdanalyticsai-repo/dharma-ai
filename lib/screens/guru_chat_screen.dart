@@ -21,6 +21,23 @@ class GuruChatScreen extends ConsumerStatefulWidget {
 class _GuruChatScreenState extends ConsumerState<GuruChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController.addListener(() {
+      final has = _textController.text.isNotEmpty;
+      if (has != _hasText) setState(() => _hasText = has);
+    });
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -191,11 +208,12 @@ class _GuruChatScreenState extends ConsumerState<GuruChatScreen> {
               top: false,
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.psychology_outlined, color: SacredTheme.outline),
-                    tooltip: AppTranslations.get('resetMindTooltip', lang),
-                    onPressed: () => ref.read(guruChatProvider.notifier).clearHistory(),
-                  ),
+                  if (_hasText)
+                    IconButton(
+                      icon: const Icon(Icons.close, color: SacredTheme.primary),
+                      tooltip: 'Clear text',
+                      onPressed: _textController.clear,
+                    ),
                   Expanded(
                     child: TextField(
                       controller: _textController,

@@ -15,6 +15,24 @@ class ChatMessage {
     required this.isGuruMode,
   });
 
+  ChatMessage copyWith({
+    String? id,
+    String? text,
+    String? role,
+    DateTime? timestamp,
+    List<String>? verseCitations,
+    bool? isGuruMode,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      role: role ?? this.role,
+      timestamp: timestamp ?? this.timestamp,
+      verseCitations: verseCitations ?? this.verseCitations,
+      isGuruMode: isGuruMode ?? this.isGuruMode,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

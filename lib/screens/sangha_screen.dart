@@ -353,15 +353,37 @@ class CommunityPostCard extends ConsumerWidget {
   }
 
   void _openComments(BuildContext context, CommunityPost post) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: SacredTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _CommentsSheet(post: post),
-    );
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    if (isMobile) {
+      showDialog(
+        context: context,
+        builder: (ctx) {
+          final height = MediaQuery.of(ctx).size.height;
+          return Dialog(
+            backgroundColor: SacredTheme.surface,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: SizedBox(
+                height: height * 0.78,
+                child: _CommentsSheet(post: post, isDialog: true),
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: SacredTheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (_) => _CommentsSheet(post: post),
+      );
+    }
   }
 
   String _formatTimeAgo(DateTime dateTime) {
@@ -377,10 +399,11 @@ class CommunityPostCard extends ConsumerWidget {
   }
 }
 
-// ── Comment thread (bottom sheet) ──────────────────────────────
+// ── Comment thread (bottom sheet or centered dialog) ───────────
 class _CommentsSheet extends ConsumerStatefulWidget {
   final CommunityPost post;
-  const _CommentsSheet({required this.post});
+  final bool isDialog;
+  const _CommentsSheet({required this.post, this.isDialog = false});
 
   @override
   ConsumerState<_CommentsSheet> createState() => _CommentsSheetState();
@@ -388,6 +411,7 @@ class _CommentsSheet extends ConsumerStatefulWidget {
 
 class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _listScrollController = ScrollController();
   bool _sending = false;
   List<CommunityComment>? _comments; // null = still loading
 
@@ -406,6 +430,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
   @override
   void dispose() {
     _controller.dispose();
+    _listScrollController.dispose();
     super.dispose();
   }
 
@@ -460,175 +485,195 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     final currentUid = ref.watch(authUserProvider).valueOrNull?.id;
     final comments = _comments;
 
-    return Padding(
-      // Lift the sheet above the on-screen keyboard.
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.92,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: SacredTheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+    if (widget.isDialog) {
+      return _buildContent(context, _listScrollController, textTheme, lang, currentUid, comments);
+    }
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (ctx, sc) => _buildContent(ctx, sc, textTheme, lang, currentUid, comments),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    ScrollController scrollController,
+    TextTheme textTheme,
+    AppLanguage lang,
+    String? currentUid,
+    List<CommunityComment>? comments,
+  ) {
+    return Column(
+      children: [
+        if (!widget.isDialog) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: SacredTheme.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ] else
+          const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+          child: Row(
+            children: [
+              Text(
+                AppTranslations.get('sanghaRepliesTitle', lang),
+                style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold, color: SacredTheme.primary),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: Row(
-                children: [
-                  Text(
-                    AppTranslations.get('sanghaRepliesTitle', lang),
-                    style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold, color: SacredTheme.primary),
-                  ),
-                  const SizedBox(width: 8),
-                  if (widget.post.commentsCount > 0)
-                    Text('· ${widget.post.commentsCount}', style: textTheme.labelMedium),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: comments == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : comments.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Text(
-                              AppTranslations.get('sanghaNoReplies', lang),
-                              textAlign: TextAlign.center,
-                              style: textTheme.bodyMedium
-                                  ?.copyWith(color: SacredTheme.onSurfaceVariant),
-                            ),
-                          ),
-                        )
-                      : ListView.separated(
-                          controller: scrollController,
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                          itemCount: comments.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 16),
-                          itemBuilder: (_, i) {
-                            final c = comments[i];
-                            final isMine = c.userId != null && c.userId == currentUid;
-                            final name = isMine
-                                ? AppTranslations.get('sanghaYou', lang)
-                                : c.authorName;
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 15,
-                                  backgroundColor: SacredTheme.secondary,
-                                  child: Text(c.authorAvatar,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(name,
-                                          style: textTheme.bodyMedium
-                                              ?.copyWith(fontWeight: FontWeight.bold)),
-                                      const SizedBox(height: 2),
-                                      Text(c.content,
-                                          style: textTheme.bodyMedium
-                                              ?.copyWith(height: 1.35)),
-                                      const SizedBox(height: 6),
-                                      // Like a reply
-                                      InkWell(
-                                        onTap: () => _toggleLike(c),
-                                        borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 2),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                c.isLikedByMe
-                                                    ? Icons.favorite
-                                                    : Icons.favorite_border,
-                                                size: 15,
-                                                color: c.isLikedByMe
-                                                    ? SacredTheme.primary
-                                                    : SacredTheme.outline,
-                                              ),
-                                              if (c.likes > 0) ...[
-                                                const SizedBox(width: 4),
-                                                Text('${c.likes}',
-                                                    style: textTheme.labelSmall?.copyWith(
-                                                        color: c.isLikedByMe
-                                                            ? SacredTheme.primary
-                                                            : SacredTheme.onSurfaceVariant)),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-            ),
-            const Divider(height: 1),
-            // Reply input
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      minLines: 1,
-                      maxLines: 4,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _send(),
-                      decoration: InputDecoration(
-                        hintText: AppTranslations.get('sanghaReplyHint', lang),
-                        filled: true,
-                        fillColor: SacredTheme.surfaceContainerLow,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
+              const SizedBox(width: 8),
+              if (widget.post.commentsCount > 0)
+                Text('· ${widget.post.commentsCount}', style: textTheme.labelMedium),
+              if (widget.isDialog) ...[
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () => Navigator.of(context).pop(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: comments == null
+              ? const Center(child: CircularProgressIndicator())
+              : comments.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          AppTranslations.get('sanghaNoReplies', lang),
+                          textAlign: TextAlign.center,
+                          style: textTheme.bodyMedium
+                              ?.copyWith(color: SacredTheme.onSurfaceVariant),
                         ),
                       ),
+                    )
+                  : ListView.separated(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                      itemCount: comments.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (_, i) {
+                        final c = comments[i];
+                        final isMine = c.userId != null && c.userId == currentUid;
+                        final name = isMine
+                            ? AppTranslations.get('sanghaYou', lang)
+                            : c.authorName;
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 15,
+                              backgroundColor: SacredTheme.secondary,
+                              child: Text(c.authorAvatar,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(name,
+                                      style: textTheme.bodyMedium
+                                          ?.copyWith(fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 2),
+                                  Text(c.content,
+                                      style: textTheme.bodyMedium?.copyWith(height: 1.35)),
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () => _toggleLike(c),
+                                    borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 2),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            c.isLikedByMe
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            size: 15,
+                                            color: c.isLikedByMe
+                                                ? SacredTheme.primary
+                                                : SacredTheme.outline,
+                                          ),
+                                          if (c.likes > 0) ...[
+                                            const SizedBox(width: 4),
+                                            Text('${c.likes}',
+                                                style: textTheme.labelSmall?.copyWith(
+                                                    color: c.isLikedByMe
+                                                        ? SacredTheme.primary
+                                                        : SacredTheme.onSurfaceVariant)),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    style: IconButton.styleFrom(
-                      backgroundColor: SacredTheme.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _sending ? null : _send,
-                    icon: _sending
-                        ? const SizedBox(
-                            width: 18, height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.send_rounded, size: 20),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
-      ),
+        const Divider(height: 1),
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+              16, 8, 12, MediaQuery.of(context).viewInsets.bottom + 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  minLines: 1,
+                  maxLines: 4,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _send(),
+                  decoration: InputDecoration(
+                    hintText: AppTranslations.get('sanghaReplyHint', lang),
+                    filled: true,
+                    fillColor: SacredTheme.surfaceContainerLow,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: SacredTheme.primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _sending ? null : _send,
+                icon: _sending
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send_rounded, size: 20),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

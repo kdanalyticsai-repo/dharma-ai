@@ -102,6 +102,9 @@ class AiService {
       case AppLanguage.bengali:
         script = 'Bengali';
         break;
+      case AppLanguage.oriya:
+        script = 'Odia (Oriya)';
+        break;
       default:
         return name; // English / unknown — keep as-is
     }
@@ -250,6 +253,152 @@ class AiService {
     if (choices.isEmpty) throw Exception('OpenAI returned no choices');
 
     return choices[0]['message']['content'] as String;
+  }
+
+  // ── Streaming ────────────────────────────────────────────────
+
+  Stream<String> streamScriptureResponse(
+    String prompt,
+    List<Verse> contextVerses,
+    AppLanguage language, {
+    String? userName,
+  }) async* {
+    if (!OpenAIConfig.isConfigured) {
+      await Future.delayed(const Duration(milliseconds: 1500));
+      final result = _simulateScriptureResponse(prompt, contextVerses, language);
+      yield result['text'] as String;
+      return;
+    }
+
+    final contextBlock = contextVerses.isNotEmpty
+        ? contextVerses.map((v) =>
+            '[${v.id}] ${v.bookName} Ch.${v.chapter} V.${v.verseNumber}\n'
+            'Sanskrit: ${v.sanskritText}\n'
+            'Translation: ${v.getLocalizedTranslation(language)}\n'
+            'Commentary: ${v.getLocalizedCommentary(language)}')
+            .join('\n\n')
+        : 'No specific verse context — answer from general Vedic knowledge.';
+
+    final languageNote = language == AppLanguage.english
+        ? 'Respond in English.'
+        : 'Respond in ${language.displayName} if possible, otherwise English.';
+
+    yield* _streamOpenAI([
+      {'role': 'system', 'content': _withName(_scriptureSystemPrompt, userName)},
+      {
+        'role': 'user',
+        'content': 'Verse context:\n$contextBlock\n\nQuestion: $prompt\n\n$languageNote'
+      },
+    ]);
+  }
+
+  Stream<String> streamGuruResponse(
+    String prompt,
+    List<ChatMessage> history,
+    AppLanguage language, {
+    String? userName,
+  }) async* {
+    if (!OpenAIConfig.isConfigured) {
+      await Future.delayed(const Duration(milliseconds: 1800));
+      yield _simulateGuruResponse(prompt, history, language);
+      return;
+    }
+
+    final languageNote = language == AppLanguage.english
+        ? 'Respond in English.'
+        : 'Respond in ${language.displayName} if possible, otherwise English.';
+
+    final messages = <Map<String, String>>[
+      {'role': 'system', 'content': _withName(_guruSystemPrompt, userName)},
+    ];
+
+    for (final msg in history.skip(1)) {
+      messages.add({
+        'role': msg.role == 'user' ? 'user' : 'assistant',
+        'content': msg.text,
+      });
+    }
+    messages.add({'role': 'user', 'content': '$prompt\n\n($languageNote)'});
+
+    yield* _streamOpenAI(messages);
+  }
+
+  // Opens an SSE connection to OpenAI (or the Worker) and yields text chunks
+  // as they arrive. Falls back to returning the full text at once if the
+  // response is not SSE (e.g. old Worker version or non-streaming client).
+  Stream<String> _streamOpenAI(List<Map<String, dynamic>> messages) async* {
+    final body = {
+      'model': OpenAIConfig.model,
+      'messages': messages,
+      'temperature': 0.75,
+      'max_tokens': 600,
+      'stream': true,
+    };
+
+    final headers = Map<String, String>.from(OpenAIConfig.headers);
+    if (OpenAIConfig.usesWorker) {
+      final token = _supabaseToken();
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+    }
+
+    final request = http.Request('POST', Uri.parse(OpenAIConfig.baseUrl));
+    request.headers.addAll(headers);
+    request.body = jsonEncode(body);
+
+    final streamedResponse = await http.Client()
+        .send(request)
+        .timeout(const Duration(seconds: 60));
+
+    if (streamedResponse.statusCode == 401) {
+      throw Exception('Your session expired. Please sign in again.');
+    }
+    if (streamedResponse.statusCode == 429) {
+      throw Exception('Too many requests. Please wait a moment before asking again.');
+    }
+    if (streamedResponse.statusCode != 200) {
+      throw Exception('Service temporarily unavailable. Please try again shortly.');
+    }
+
+    final contentType = streamedResponse.headers['content-type'] ?? '';
+
+    if (!contentType.contains('event-stream')) {
+      // Non-streaming response (old Worker or direct JSON) — parse as JSON.
+      final responseBody =
+          await streamedResponse.stream.transform(utf8.decoder).join();
+      final data = jsonDecode(responseBody) as Map<String, dynamic>;
+      final choices = data['choices'] as List<dynamic>?;
+      if (choices != null && choices.isNotEmpty) {
+        final text = choices[0]['message']?['content'] as String?;
+        if (text != null && text.isNotEmpty) yield text;
+      }
+      return;
+    }
+
+    // SSE streaming — yield each content delta as it arrives.
+    String remainder = '';
+    await for (final chunk
+        in streamedResponse.stream.transform(utf8.decoder)) {
+      final text = remainder + chunk;
+      final lines = text.split('\n');
+      remainder = lines.removeLast(); // last entry may be an incomplete line
+      for (final line in lines) {
+        if (!line.startsWith('data: ')) continue;
+        final data = line.substring(6).trim();
+        if (data == '[DONE]') return;
+        try {
+          final parsed = jsonDecode(data) as Map<String, dynamic>;
+          final choices = parsed['choices'] as List<dynamic>?;
+          if (choices != null && choices.isNotEmpty) {
+            final content =
+                (choices[0] as Map<String, dynamic>)['delta']?['content']
+                    as String?;
+            if (content != null && content.isNotEmpty) yield content;
+          }
+        } catch (_) {
+          // Skip malformed SSE lines (e.g. keep-alive comments).
+        }
+      }
+    }
   }
 
   // ── Local Simulation Fallback ─────────────────────────────────

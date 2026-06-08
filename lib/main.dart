@@ -26,9 +26,9 @@ void main() async {
 
   if (!kIsWeb) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,   // dark icons on light bg
-      statusBarBrightness: Brightness.light,       // iOS equivalent
+      statusBarColor: Color(0xFFFAF7F2), // app's cream bg — keeps icons visible
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ));
   }
 
@@ -49,8 +49,12 @@ void main() async {
   if (kIsWeb) {
     recoveryParams = Uri.base.queryParameters;
   } else {
-    final initialLink = await AppLinks().getInitialLink();
-    if (initialLink != null) recoveryParams = initialLink.queryParameters;
+    try {
+      final initialLink = await AppLinks().getInitialLink();
+      if (initialLink != null) recoveryParams = initialLink.queryParameters;
+    } catch (e) {
+      debugPrint('AppLinks.getInitialLink failed: $e');
+    }
   }
   final isRecovery = recoveryParams['type'] == 'recovery';
   final recoveryToken = recoveryParams['token'];
@@ -59,73 +63,81 @@ void main() async {
   if (isRecovery) isRecoveringPassword = true;
 
   if (SupabaseConfig.isConfigured) {
-    await Supabase.initialize(
-      url: SupabaseConfig.supabaseUrl,
-      anonKey: SupabaseConfig.supabaseAnonKey,
-    );
-
-    // Establish the recovery session from the emailed OTP (cross-browser).
-    if (isRecovery) {
-      try {
-        if (recoveryToken != null && recoveryToken.isNotEmpty &&
-            recoveryEmail != null && recoveryEmail.isNotEmpty) {
-          await Supabase.instance.client.auth.verifyOTP(
-            type: OtpType.recovery,
-            email: recoveryEmail,
-            token: recoveryToken,
-          );
-        } else if (recoveryTokenHash != null && recoveryTokenHash.isNotEmpty) {
-          await Supabase.instance.client.auth.verifyOTP(
-            type: OtpType.recovery,
-            tokenHash: recoveryTokenHash,
-          );
-        }
-      } catch (e) {
-        debugPrint('recovery verifyOTP failed: $e');
-      }
+    bool supabaseReady = false;
+    try {
+      await Supabase.initialize(
+        url: SupabaseConfig.supabaseUrl,
+        anonKey: SupabaseConfig.supabaseAnonKey,
+      );
+      supabaseReady = true;
+    } catch (e) {
+      debugPrint('Supabase.initialize failed: $e');
     }
 
-    // Belt-and-suspenders: if the SDK does emit a passwordRecovery event, make
-    // the set-password screen the only route so nothing bounces to Home.
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (data.event == AuthChangeEvent.passwordRecovery) {
-        // Enter recovery mode and make the set-password screen the only route,
-        // so the auth listener below can't bounce the user to Home first.
-        isRecoveringPassword = true;
-        _navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()),
-          (_) => false,
-        );
-      }
-    });
-
-    // Android: handle auth links that arrive while the app is already running.
-    if (!kIsWeb) {
-      AppLinks().uriLinkStream.listen((uri) async {
-        final params = uri.queryParameters;
-        if (params['type'] == 'recovery') {
-          final token = params['token'];
-          final email = params['email'];
-          final tokenHash = params['token_hash'];
-          try {
-            if (token != null && token.isNotEmpty &&
-                email != null && email.isNotEmpty) {
-              await Supabase.instance.client.auth.verifyOTP(
-                type: OtpType.recovery,
-                email: email,
-                token: token,
-              );
-            } else if (tokenHash != null && tokenHash.isNotEmpty) {
-              await Supabase.instance.client.auth.verifyOTP(
-                type: OtpType.recovery,
-                tokenHash: tokenHash,
-              );
-            }
-          } catch (e) {
-            debugPrint('deep link recovery verifyOTP failed: $e');
+    if (supabaseReady) {
+      // Establish the recovery session from the emailed OTP (cross-browser).
+      if (isRecovery) {
+        try {
+          if (recoveryToken != null && recoveryToken.isNotEmpty &&
+              recoveryEmail != null && recoveryEmail.isNotEmpty) {
+            await Supabase.instance.client.auth.verifyOTP(
+              type: OtpType.recovery,
+              email: recoveryEmail,
+              token: recoveryToken,
+            );
+          } else if (recoveryTokenHash != null && recoveryTokenHash.isNotEmpty) {
+            await Supabase.instance.client.auth.verifyOTP(
+              type: OtpType.recovery,
+              tokenHash: recoveryTokenHash,
+            );
           }
+        } catch (e) {
+          debugPrint('recovery verifyOTP failed: $e');
+        }
+      }
+
+      // Belt-and-suspenders: if the SDK does emit a passwordRecovery event, make
+      // the set-password screen the only route so nothing bounces to Home.
+      Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        if (data.event == AuthChangeEvent.passwordRecovery) {
+          // Enter recovery mode and make the set-password screen the only route,
+          // so the auth listener below can't bounce the user to Home first.
+          isRecoveringPassword = true;
+          _navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()),
+            (_) => false,
+          );
         }
       });
+
+      // Android: handle auth links that arrive while the app is already running.
+      if (!kIsWeb) {
+        AppLinks().uriLinkStream.listen((uri) async {
+          final params = uri.queryParameters;
+          if (params['type'] == 'recovery') {
+            final token = params['token'];
+            final email = params['email'];
+            final tokenHash = params['token_hash'];
+            try {
+              if (token != null && token.isNotEmpty &&
+                  email != null && email.isNotEmpty) {
+                await Supabase.instance.client.auth.verifyOTP(
+                  type: OtpType.recovery,
+                  email: email,
+                  token: token,
+                );
+              } else if (tokenHash != null && tokenHash.isNotEmpty) {
+                await Supabase.instance.client.auth.verifyOTP(
+                  type: OtpType.recovery,
+                  tokenHash: tokenHash,
+                );
+              }
+            } catch (e) {
+              debugPrint('deep link recovery verifyOTP failed: $e');
+            }
+          }
+        });
+      }
     }
   }
 

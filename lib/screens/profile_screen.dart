@@ -281,7 +281,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final fullName = (user?.userMetadata?['full_name'] as String?)?.trim();
     final hasName = fullName != null && fullName.isNotEmpty;
     final rawName = hasName ? fullName : 'Seeker of Truth';
-    final avatarLetter = rawName[0].toUpperCase();
+    final nameParts = rawName.trim().split(RegExp(r'\s+'));
+    final avatarText = nameParts.length >= 2
+        ? '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase()
+        : rawName.length >= 2
+            ? rawName.substring(0, 2).toUpperCase()
+            : rawName[0].toUpperCase();
     // Render the name in the selected script (e.g. अर्जुन in Hindi); falls back
     // to the Latin name while the transliteration loads or for English.
     final displayName = (hasName && lang != AppLanguage.english)
@@ -331,8 +336,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                         child: (avatarUrl != null && avatarUrl.isNotEmpty)
                             ? null
                             : Text(
-                                avatarLetter,
-                                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                                avatarText,
+                                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                       ),
                       const SizedBox(width: 16),
