@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SacredTheme {
@@ -104,6 +105,16 @@ class SacredTheme {
         outlineVariant: outlineVariant,
       ),
       scaffoldBackgroundColor: surface,
+      appBarTheme: const AppBarTheme(
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Color(0xFFFAF7F2),
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
       cardTheme: CardTheme(
         color: surfaceContainerLow,
         elevation: 0,

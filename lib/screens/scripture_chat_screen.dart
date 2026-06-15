@@ -23,6 +23,23 @@ class ScriptureChatScreen extends ConsumerStatefulWidget {
 class _ScriptureChatScreenState extends ConsumerState<ScriptureChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController.addListener(() {
+      final has = _textController.text.isNotEmpty;
+      if (has != _hasText) setState(() => _hasText = has);
+    });
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -101,11 +118,14 @@ class _ScriptureChatScreenState extends ConsumerState<ScriptureChatScreen> {
               children: [
                 const Icon(Icons.auto_awesome, size: 14, color: SacredTheme.templeGold),
                 const SizedBox(width: 8),
-                Text(
-                  AppTranslations.get('freePromptsLeft', lang).replaceAll('{n}', '$remaining'),
-                  style: GoogleFonts.inter(fontSize: 11, color: SacredTheme.onSurfaceVariant),
+                Expanded(
+                  child: Text(
+                    AppTranslations.get('freePromptsLeft', lang).replaceAll('{n}', '$remaining'),
+                    style: GoogleFonts.inter(fontSize: 11, color: SacredTheme.onSurfaceVariant),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionPaywallScreen())),
                   child: Text(AppTranslations.get('upgradeBtn', lang), style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: SacredTheme.primary)),
@@ -166,10 +186,12 @@ class _ScriptureChatScreenState extends ConsumerState<ScriptureChatScreen> {
             top: false,
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.refresh, color: SacredTheme.outline),
-                  onPressed: () => ref.read(scriptureChatProvider.notifier).clearHistory(),
-                ),
+                if (_hasText)
+                  IconButton(
+                    icon: const Icon(Icons.close, color: SacredTheme.primary),
+                    tooltip: 'Clear text',
+                    onPressed: _textController.clear,
+                  ),
                 Expanded(
                   child: TextField(
                     controller: _textController,
@@ -200,7 +222,7 @@ class _ScriptureChatScreenState extends ConsumerState<ScriptureChatScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: Icon(Icons.send_rounded, color: limitReached ? SacredTheme.outline : SacredTheme.primary),
+                  icon: Icon(Icons.spa_outlined, color: limitReached ? SacredTheme.outline : SacredTheme.primary),
                   onPressed: limitReached ? null : () {
                     final text = _textController.text;
                     if (text.trim().isNotEmpty) {

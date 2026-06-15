@@ -9,6 +9,7 @@ import 'package:dharma_ai/providers/auth_provider.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/services/razorpay_service.dart';
+import 'package:dharma_ai/services/play_billing_service.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/widgets/fading_divider.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
@@ -29,7 +30,21 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   void initState() {
     super.initState();
     Analytics.paywallView();
+    if (!kIsWeb) PlayBillingService().initialize();
   }
+
+  @override
+  void dispose() {
+    if (!kIsWeb) PlayBillingService().dispose();
+    super.dispose();
+  }
+
+  // Maps the plan string to the Play Console product ID.
+  static String _toPlayProductId(String plan) => switch (plan) {
+        'monthly'   => 'dharmaai_monthly',
+        'quarterly' => 'dharmaai_quarterly',
+        _           => 'dharmaai_annual',
+      };
 
   // Unified purchase: web → Razorpay (real); other platforms → existing flow.
   Future<void> _buyPlan(String plan) async {
@@ -55,12 +70,16 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
           }
         }
       } else {
-        final n = ref.read(purchaseProvider.notifier);
-        success = plan == 'monthly'
-            ? await n.buySadhaka()
-            : plan == 'quarterly'
-                ? await n.buyQuarterly()
-                : await n.buyAnnual();
+        // Android: Google Play Billing.
+        final result = await PlayBillingService().purchase(_toPlayProductId(plan));
+        success = result.success;
+        if (result.success) {
+          await ref.read(purchaseServiceProvider).setLocalPlan(plan);
+          await ref.read(purchaseProvider.notifier).refresh();
+          ref.invalidate(activePlanProvider);
+        } else {
+          error = result.error; // null when user cancelled — no snackbar shown
+        }
       }
     } catch (e) {
       error = e.toString().replaceFirst('Exception: ', '');
@@ -366,16 +385,19 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                title,
-                style: textTheme.headlineMedium?.copyWith(
-                  color: isPremiumHighlight ? SacredTheme.templeGold : SacredTheme.primary,
-                  fontSize: 22,
+              Flexible(
+                child: Text(
+                  title,
+                  style: textTheme.headlineMedium?.copyWith(
+                    color: isPremiumHighlight ? SacredTheme.templeGold : SacredTheme.primary,
+                    fontSize: 22,
+                  ),
                 ),
               ),
-              if (badge != null)
+              if (badge != null) ...[
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -387,6 +409,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                     style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: SacredTheme.templeGold),
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 6),

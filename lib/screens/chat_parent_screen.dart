@@ -105,8 +105,8 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
                 duration: const Duration(milliseconds: 250),
                 child: Text(
                   _selectedIndex == 0
-                      ? 'Verse-grounded answers with citations'
-                      : 'Empathetic spiritual counsel & guidance',
+                      ? AppTranslations.get('tabScriptureScholarSubtitle', lang)
+                      : AppTranslations.get('tabAiGuruSubtitle', lang),
                   key: ValueKey(_selectedIndex),
                   style: GoogleFonts.inter(
                     fontSize: 11,
@@ -186,15 +186,18 @@ class _ChatParentScreenState extends ConsumerState<ChatParentScreen>
               const SizedBox(height: 6),
               Text(
                 label,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                // Use system font (no GoogleFonts.inter) so Flutter's font
+                // fallback renders Oriya, Tamil, and other scripts correctly.
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected
                       ? Colors.white
                       : SacredTheme.headingColor(context).withOpacity(0.7),
-                  letterSpacing: 0.4,
+                  letterSpacing: 0.2,
                 ),
               ),
             ],

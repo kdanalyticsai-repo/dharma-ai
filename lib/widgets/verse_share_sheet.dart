@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
@@ -110,18 +110,28 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
 
   void _save() {
     final bytes = _bytes;
-    if (bytes != null) saveImageBytes(bytes, 'dharma-verse.png');
+    if (bytes == null) return;
+    if (kIsWeb) {
+      saveImageBytes(bytes, 'dharma-verse.png');
+    } else {
+      // On mobile, open the native share sheet so the user can "Save Image"
+      // to their gallery — the share API is the standard mobile save path.
+      Share.shareXFiles(
+        [XFile.fromData(bytes, mimeType: 'image/png', name: 'dharma-verse.png')],
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final lang = widget.lang;
-    return SafeArea(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+    // viewPadding.bottom gives the system nav bar height regardless of SafeArea.
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 10, 20, bottomInset + 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -164,6 +174,17 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _ready ? _save : null,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(
+                            color: _ready
+                                ? SacredTheme.primary
+                                : SacredTheme.outlineVariant,
+                            width: 1.5,
+                          ),
+                          foregroundColor: SacredTheme.primary,
+                        ),
                         icon: const Icon(Icons.download_rounded, size: 18),
                         label: Text(AppTranslations.get('shareVerseSave', lang)),
                       ),
@@ -174,6 +195,8 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: SacredTheme.primary,
                           foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 48),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: _ready ? _share : null,
                         icon: _ready
@@ -190,7 +213,6 @@ class _VerseShareSheetState extends State<_VerseShareSheet> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

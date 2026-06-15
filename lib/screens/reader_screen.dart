@@ -36,13 +36,21 @@ class ScripturesScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     final currentLanguage = ref.watch(languageProvider);
     final selectedBook = ref.watch(selectedBookProvider);
+    final selectedVeda = ref.watch(selectedVedaProvider);
     final tier = ref.watch(purchaseProvider);
     final isPaid = tier != SubscriptionTier.free;
+
+    final isLoading = switch (selectedBook) {
+      ScriptureBook.gita => versesAsync.isLoading,
+      ScriptureBook.upanishads => ref.watch(upanishadVersesProvider).isLoading,
+      ScriptureBook.vedas => ref.watch(vedaVersesProvider(selectedVeda)).isLoading,
+    };
 
     return Scaffold(
       body: MandalaBackground(
         scale: 0.9,
         alignment: Alignment.center,
+        centerOverlay: isLoading ? const LotusLoadingIndicator(size: 64) : null,
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,13 +166,17 @@ class ScripturesScreen extends ConsumerWidget {
 
     final isPaid = ref.watch(purchaseProvider) != SubscriptionTier.free;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(SacredTheme.marginEdge, 12, SacredTheme.marginEdge, 0),
-      child: Row(
-        children: [
-          chip('Bhagavad Gita', ScriptureBook.gita),
-          chip('Upanishads', ScriptureBook.upanishads, locked: !isPaid),
-          chip('Vedas', ScriptureBook.vedas, locked: !isPaid),
-        ],
+      padding: const EdgeInsets.only(top: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge),
+        child: Row(
+          children: [
+            chip('Bhagavad Gita', ScriptureBook.gita),
+            chip('Upanishads', ScriptureBook.upanishads, locked: !isPaid),
+            chip('Vedas', ScriptureBook.vedas, locked: !isPaid),
+          ],
+        ),
       ),
     );
   }
@@ -191,7 +203,7 @@ class ScripturesScreen extends ConsumerWidget {
             itemBuilder: (context, index) => VerseCard(verse: verses[index]),
           );
         },
-        loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
+        loading: () => const SizedBox.shrink(),
         error: (err, stack) => Center(
           child: Text('${AppTranslations.get('errorLoadingScriptures', lang)}: $err'),
         ),
@@ -225,9 +237,9 @@ class ScripturesScreen extends ConsumerWidget {
       return ref.watch(vedaVersesProvider(selectedVeda)).when(
         data: (verses) => shell(verses),
         loading: () => Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             _vedaSubFilter(context, ref, selectedVeda),
-            const Expanded(child: Center(child: LotusLoadingIndicator(size: 60))),
           ],
         ),
         error: (_, __) => shell(
@@ -254,7 +266,7 @@ class ScripturesScreen extends ConsumerWidget {
 
     return ref.watch(upanishadVersesProvider).when(
       data: (verses) => upaShell(verses),
-      loading: () => const Center(child: LotusLoadingIndicator(size: 60)),
+      loading: () => const SizedBox.shrink(),
       error: (_, __) => upaShell(MockScriptureData.upanishadVerses),
     );
   }
@@ -432,6 +444,7 @@ class ScripturesScreen extends ConsumerWidget {
   void _showSettingsBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: SacredTheme.surfaceContainerLow,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -440,7 +453,13 @@ class ScripturesScreen extends ConsumerWidget {
         ),
       ),
       builder: (context) {
-        return const ReaderSettingsSheet();
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.92,
+          builder: (_, controller) => ReaderSettingsSheet(scrollController: controller),
+        );
       },
     );
   }
@@ -565,6 +584,39 @@ class VerseCard extends ConsumerWidget {
                 const SizedBox(height: 16),
               ],
 
+              // Hindi Translation — hidden when app language is already Hindi
+              // (the regular translation block already shows Hindi text)
+              if (settings.showHindiTranslation && currentLanguage != AppLanguage.hindi) ...[
+                Builder(builder: (context) {
+                  final hindiText = verse.hindiTranslation
+                      ?? LocalizedScripture.translations[verse.id]?[AppLanguage.hindi];
+                  if (hindiText == null) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppTranslations.get('showHindiTranslationToggle', currentLanguage),
+                        style: textTheme.labelSmall?.copyWith(
+                          color: SacredTheme.outline,
+                          fontSize: (textTheme.labelSmall?.fontSize ?? 12) * textScale,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        hindiText,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontFamily: null,
+                          fontSize: (textTheme.bodyLarge?.fontSize ?? 16) * textScale,
+                          color: SacredTheme.onSurface,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  );
+                }),
+              ],
+
               // Commentary
               if (settings.showCommentary && verse.commentary.isNotEmpty) ...[
                 Text(
@@ -606,7 +658,8 @@ class VerseCard extends ConsumerWidget {
 }
 
 class ReaderSettingsSheet extends ConsumerWidget {
-  const ReaderSettingsSheet({Key? key}) : super(key: key);
+  final ScrollController? scrollController;
+  const ReaderSettingsSheet({Key? key, this.scrollController}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -616,6 +669,7 @@ class ReaderSettingsSheet extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return SingleChildScrollView(
+      controller: scrollController,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
         child: Column(
@@ -643,9 +697,12 @@ class ReaderSettingsSheet extends ConsumerWidget {
                   tooltip: 'Close',
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  AppTranslations.get('readingOptions', currentLanguage),
-                  style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context)),
+                Expanded(
+                  child: Text(
+                    AppTranslations.get('readingOptions', currentLanguage),
+                    style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -720,6 +777,15 @@ class ReaderSettingsSheet extends ConsumerWidget {
               subtitle: 'English meaning of each verse',
               value: settings.showTranslation,
               onChanged: (_) => notifier.toggleTranslation(),
+            ),
+            if (currentLanguage != AppLanguage.hindi)
+            _buildToggleItem(
+              context,
+              icon: Icons.translate,
+              label: AppTranslations.get('showHindiTranslationToggle', currentLanguage),
+              subtitle: 'हिंदी अर्थ',
+              value: settings.showHindiTranslation,
+              onChanged: (_) => notifier.toggleHindiTranslation(),
             ),
             _buildToggleItem(
               context,

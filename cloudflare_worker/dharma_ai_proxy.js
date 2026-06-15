@@ -5,6 +5,7 @@
 //   • POST /razorpay/verify  → verify payment signature + grant the subscription
 //   • POST /razorpay/redeem  → redeem a gift code
 //   • POST /razorpay/webhook → Razorpay server-to-server callback (reliable grant)
+//   • POST /play/verify      → verify Google Play purchase token + grant subscription
 //
 // Secrets (set via `wrangler secret put <NAME>`):
 //   OPENAI_API_KEY
@@ -13,6 +14,7 @@
 //   RAZORPAY_WEBHOOK_SECRET  (from Razorpay dashboard → Webhooks)
 //   SUPABASE_URL             (e.g. https://xxxx.supabase.co)
 //   SUPABASE_SERVICE_KEY     (service_role key — server only)
+//   GOOGLE_PLAY_SA_JSON      (service account JSON for Play Developer API)
 // Vars (wrangler.toml [vars]): ALLOWED_ORIGINS
 // KV binding (wrangler.toml [[kv_namespaces]]): AI_RATE_LIMIT (per-user daily cap)
 
@@ -22,6 +24,13 @@ const PLANS = {
   monthly:   { tier: 'sadhaka', amount: 10100,  days: 30,  label: 'Sadhaka Premium (Monthly)' },
   quarterly: { tier: 'sadhaka', amount: 20100,  days: 90,  label: 'Sadhaka Quarterly' },
   annual:    { tier: 'annual',  amount: 50100, days: 365, label: 'Sadhaka Annual' },
+};
+
+// Play product IDs → plan names (server-side mapping; client cannot override).
+const PLAY_PRODUCTS = {
+  dharmaai_monthly:   'monthly',
+  dharmaai_quarterly: 'quarterly',
+  dharmaai_annual:    'annual',
 };
 
 export default {
@@ -43,12 +52,16 @@ export default {
     const origin = request.headers.get('Origin') || '';
     if (request.method === 'OPTIONS') return cors('', 204, allowedOrigin(origin, env));
     if (request.method !== 'POST') return cors(j({ error: 'Method not allowed' }), 405, null);
-    if (!isAllowed(origin, env)) return cors(j({ error: 'Forbidden' }), 403, null);
+    // Native clients (Android) send no Origin header — each handler enforces its own auth.
+    // Only block requests that come from a browser origin NOT in the allow-list.
+    if (origin && !isAllowed(origin, env)) return cors(j({ error: 'Forbidden' }), 403, null);
 
     try {
       if (path === '/razorpay/order')  return await createOrder(request, env, origin);
       if (path === '/razorpay/verify') return await verifyPayment(request, env, origin);
       if (path === '/razorpay/redeem') return await redeemGift(request, env, origin);
+      // Android Play Billing: no browser Origin header — auth via Supabase JWT only.
+      if (path === '/play/verify')     return await verifyPlayPurchase(request, env, origin);
       return await openaiProxy(request, env, origin); // default
     } catch (e) {
       return cors(j({ error: 'Worker error', detail: e.message }), 500, origin);
@@ -81,6 +94,8 @@ async function openaiProxy(request, env, origin) {
   body.model = 'gpt-4o-mini'; // never honour a client-chosen (expensive) model
   if (!Number.isInteger(body.max_tokens) || body.max_tokens > 1000) body.max_tokens = 1000;
 
+  const wantsStream = body.stream === true;
+
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -89,6 +104,23 @@ async function openaiProxy(request, env, origin) {
     },
     body: JSON.stringify(body),
   });
+
+  if (wantsStream && res.body) {
+    // Forward the SSE stream directly to the client with CORS headers.
+    const headers = {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
+    };
+    if (origin) {
+      headers['Access-Control-Allow-Origin'] = origin;
+      headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+      headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
+      headers['Access-Control-Allow-Credentials'] = 'true';
+    }
+    return new Response(res.body, { status: res.status, headers });
+  }
+
   const data = await res.json();
   return cors(j(data), res.status, origin);
 }
@@ -324,6 +356,114 @@ async function redeemGift(request, env, origin) {
   } catch (e) {
     return cors(j({ valid: false, error: 'Redeem error', detail: e.message }), 500, origin);
   }
+}
+
+// ── Google Play Billing: verify purchase + grant ─────────────────────────────
+// Body: { purchase_token, product_id, user_id }
+// Auth: Supabase Bearer token (no Origin header from Android — CORS skipped).
+// Secret: GOOGLE_PLAY_SA_JSON (service account JSON for Play Developer API).
+async function verifyPlayPurchase(request, env, origin) {
+  // Auth: validate the Supabase session (same as openaiProxy).
+  const user = await validateUser(env, request);
+  if (!user) return cors(j({ error: 'Unauthorized' }), 401, origin);
+
+  const { purchase_token, product_id, user_id } = await request.json();
+  if (!purchase_token || !product_id || !user_id) {
+    return cors(j({ valid: false, error: 'Missing fields' }), 400, origin);
+  }
+  if (user.id !== user_id) {
+    return cors(j({ valid: false, error: 'User mismatch' }), 403, origin);
+  }
+
+  const plan = PLAY_PRODUCTS[product_id];
+  if (!plan) return cors(j({ valid: false, error: 'Unknown product' }), 400, origin);
+  const p = PLANS[plan];
+
+  if (!env.GOOGLE_PLAY_SA_JSON) {
+    return cors(j({ valid: false, error: 'Play service account not configured' }), 500, origin);
+  }
+
+  // 1. Get a Google OAuth access token via service account JWT.
+  let accessToken;
+  try {
+    accessToken = await getGoogleAccessToken(env.GOOGLE_PLAY_SA_JSON);
+  } catch (e) {
+    return cors(j({ valid: false, error: 'Google auth failed', detail: e.message }), 500, origin);
+  }
+
+  // 2. Verify the purchase token with the Play Developer API.
+  const packageName = 'com.kdaanalytics.dharmaai';
+  const apiUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/products/${product_id}/tokens/${encodeURIComponent(purchase_token)}`;
+  const apiRes = await fetch(apiUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!apiRes.ok) {
+    const err = await apiRes.text();
+    return cors(j({ valid: false, error: 'Play API error', detail: err }), 400, origin);
+  }
+  const purchase = await apiRes.json();
+
+  // purchaseState 0 = Purchased, 1 = Cancelled, 2 = Pending.
+  if (purchase.purchaseState !== 0) {
+    return cors(j({ valid: false, error: 'Purchase not completed' }), 400, origin);
+  }
+
+  // 3. Idempotent grant — use prefixed purchase_token as the unique ID.
+  const sb = sbFetch(env);
+  const uniqueId = `play_${purchase_token}`;
+  const grant = await grantSubscription(sb, user_id, p, uniqueId);
+  if (!grant.ok) {
+    return cors(j({ valid: false, error: 'Grant failed', detail: grant.detail }), 500, origin);
+  }
+  return cors(j({ valid: true, tier: p.tier, plan, expires_at: grant.expires_at }), 200, origin);
+}
+
+// Exchange a service account JSON key for a short-lived Google OAuth access token.
+// Uses RS256 JWT signing via the WebCrypto API (available in Cloudflare Workers).
+async function getGoogleAccessToken(saJson) {
+  const sa = JSON.parse(saJson);
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const payload = {
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/androidpublisher',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  };
+
+  const encode = (obj) => btoa(JSON.stringify(obj))
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const unsigned = `${encode(header)}.${encode(payload)}`;
+
+  // Import the RSA private key (PKCS#8 PEM → CryptoKey).
+  const pemBody = sa.private_key
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s/g, '');
+  const der = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8', der.buffer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false, ['sign'],
+  );
+
+  const sig = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5', cryptoKey,
+    new TextEncoder().encode(unsigned),
+  );
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const jwt = `${unsigned}.${sigB64}`;
+
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+  });
+  const tokenData = await tokenRes.json();
+  if (!tokenData.access_token) throw new Error(tokenData.error_description || 'Token exchange failed');
+  return tokenData.access_token;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

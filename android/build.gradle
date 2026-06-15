@@ -3,6 +3,27 @@ allprojects {
         google()
         mavenCentral()
     }
+    // Force kotlin-stdlib to match our KGP version (2.1.20).
+    // Some plugins (e.g. package_info_plus 9.0.1) declare stdlib 2.2.0 in their own buildscript,
+    // which Kotlin 2.1.x cannot read. Forcing here prevents the version mismatch.
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:2.1.20"
+        }
+    }
+}
+
+// Expose flutter SDK constants to plugin subprojects that use flutter.compileSdkVersion etc.
+// Excludes :app which uses the real FlutterExtension from dev.flutter.flutter-gradle-plugin.
+subprojects {
+    if (project.name != 'app') {
+        project.ext {
+            flutter = [compileSdkVersion: 35, minSdkVersion: 21, targetSdkVersion: 35, ndkVersion: "25.1.8937393"]
+        }
+    }
 }
 
 rootProject.buildDir = "../build"

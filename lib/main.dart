@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:app_links/app_links.dart';
 import 'package:dharma_ai/firebase_options.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/theme/theme.dart';
@@ -22,6 +24,14 @@ import 'package:dharma_ai/config/supabase_config.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  if (!kIsWeb) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Color(0xFFFAF7F2), // app's cream bg — keeps icons visible
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ));
+  }
+
   // Firebase Analytics (web now; Android added later to the same project).
   // Guarded so a config/init issue can never block app startup.
   try {
@@ -33,12 +43,19 @@ void main() async {
 
   // Detect a password-recovery link from the URL. The reset email links to
   //   https://dharma.kdaanalytics.com/?type=recovery&token=<otp>&email=<email>
-  // We read these BEFORE Supabase.initialize() (the SDK strips auth params from
-  // the URL during init). Verifying the EMAIL OTP (token + email) opens the
-  // recovery session WITHOUT a PKCE code_verifier, so it works in ANY
-  // browser/device. (token_hash is kept only as a same-browser fallback — under
-  // PKCE it's a pkce_ hash that needs the verifier, hence the cross-browser bug.)
-  final recoveryParams = kIsWeb ? Uri.base.queryParameters : const <String, String>{};
+  // Web: read from Uri.base before Supabase.initialize() strips auth params.
+  // Android: read from the App Link that launched the app (getInitialLink).
+  Map<String, String> recoveryParams = const {};
+  if (kIsWeb) {
+    recoveryParams = Uri.base.queryParameters;
+  } else {
+    try {
+      final initialLink = await AppLinks().getInitialLink();
+      if (initialLink != null) recoveryParams = initialLink.queryParameters;
+    } catch (e) {
+      debugPrint('AppLinks.getInitialLink failed: $e');
+    }
+  }
   final isRecovery = recoveryParams['type'] == 'recovery';
   final recoveryToken = recoveryParams['token'];
   final recoveryEmail = recoveryParams['email'];
@@ -46,45 +63,82 @@ void main() async {
   if (isRecovery) isRecoveringPassword = true;
 
   if (SupabaseConfig.isConfigured) {
-    await Supabase.initialize(
-      url: SupabaseConfig.supabaseUrl,
-      anonKey: SupabaseConfig.supabaseAnonKey,
-    );
-
-    // Establish the recovery session from the emailed OTP (cross-browser).
-    if (isRecovery) {
-      try {
-        if (recoveryToken != null && recoveryToken.isNotEmpty &&
-            recoveryEmail != null && recoveryEmail.isNotEmpty) {
-          await Supabase.instance.client.auth.verifyOTP(
-            type: OtpType.recovery,
-            email: recoveryEmail,
-            token: recoveryToken,
-          );
-        } else if (recoveryTokenHash != null && recoveryTokenHash.isNotEmpty) {
-          await Supabase.instance.client.auth.verifyOTP(
-            type: OtpType.recovery,
-            tokenHash: recoveryTokenHash,
-          );
-        }
-      } catch (e) {
-        debugPrint('recovery verifyOTP failed: $e');
-      }
+    bool supabaseReady = false;
+    try {
+      await Supabase.initialize(
+        url: SupabaseConfig.supabaseUrl,
+        anonKey: SupabaseConfig.supabaseAnonKey,
+      );
+      supabaseReady = true;
+    } catch (e) {
+      debugPrint('Supabase.initialize failed: $e');
     }
 
-    // Belt-and-suspenders: if the SDK does emit a passwordRecovery event, make
-    // the set-password screen the only route so nothing bounces to Home.
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (data.event == AuthChangeEvent.passwordRecovery) {
-        // Enter recovery mode and make the set-password screen the only route,
-        // so the auth listener below can't bounce the user to Home first.
-        isRecoveringPassword = true;
-        _navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()),
-          (_) => false,
-        );
+    if (supabaseReady) {
+      // Establish the recovery session from the emailed OTP (cross-browser).
+      if (isRecovery) {
+        try {
+          if (recoveryToken != null && recoveryToken.isNotEmpty &&
+              recoveryEmail != null && recoveryEmail.isNotEmpty) {
+            await Supabase.instance.client.auth.verifyOTP(
+              type: OtpType.recovery,
+              email: recoveryEmail,
+              token: recoveryToken,
+            );
+          } else if (recoveryTokenHash != null && recoveryTokenHash.isNotEmpty) {
+            await Supabase.instance.client.auth.verifyOTP(
+              type: OtpType.recovery,
+              tokenHash: recoveryTokenHash,
+            );
+          }
+        } catch (e) {
+          debugPrint('recovery verifyOTP failed: $e');
+        }
       }
-    });
+
+      // Belt-and-suspenders: if the SDK does emit a passwordRecovery event, make
+      // the set-password screen the only route so nothing bounces to Home.
+      Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        if (data.event == AuthChangeEvent.passwordRecovery) {
+          // Enter recovery mode and make the set-password screen the only route,
+          // so the auth listener below can't bounce the user to Home first.
+          isRecoveringPassword = true;
+          _navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()),
+            (_) => false,
+          );
+        }
+      });
+
+      // Android: handle auth links that arrive while the app is already running.
+      if (!kIsWeb) {
+        AppLinks().uriLinkStream.listen((uri) async {
+          final params = uri.queryParameters;
+          if (params['type'] == 'recovery') {
+            final token = params['token'];
+            final email = params['email'];
+            final tokenHash = params['token_hash'];
+            try {
+              if (token != null && token.isNotEmpty &&
+                  email != null && email.isNotEmpty) {
+                await Supabase.instance.client.auth.verifyOTP(
+                  type: OtpType.recovery,
+                  email: email,
+                  token: token,
+                );
+              } else if (tokenHash != null && tokenHash.isNotEmpty) {
+                await Supabase.instance.client.auth.verifyOTP(
+                  type: OtpType.recovery,
+                  tokenHash: tokenHash,
+                );
+              }
+            } catch (e) {
+              debugPrint('deep link recovery verifyOTP failed: $e');
+            }
+          }
+        });
+      }
+    }
   }
 
   // Production error/crash monitoring. The DSN is injected at build time
@@ -142,41 +196,52 @@ class DharmaApp extends ConsumerWidget {
     // MaterialApp.home changes alone don't navigate an already-mounted
     // Navigator — the NavigatorKey + pushAndRemoveUntil is the reliable fix.
     ref.listen(authUserProvider, (prev, next) {
-      // During password recovery the session is live but we must keep the user
-      // on the set-password screen, not route them into the app.
+      // During password recovery keep the user on the set-password screen.
       if (isRecoveringPassword) return;
+      // During new-user onboarding LoginScreen/Google flow handles navigation
+      // explicitly; skip here to avoid a double-navigation race condition.
+      if (isNewUserOnboarding) return;
 
       final prevId = prev?.valueOrNull?.id;
       final nextId = next.valueOrNull?.id;
       if (prevId == nextId) return;
 
-      final nav = navigatorKey.currentState;
-      if (nav == null) return;
+      // Defer navigation to the NEXT frame. Calling pushAndRemoveUntil
+      // synchronously here (during a Riverpod provider-notification cycle)
+      // triggers '_dependents.isEmpty' / 'ancestor not in tree' Flutter
+      // assertions: the old route's widgets are still live in the element
+      // tree when we start tearing them down.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final nav = navigatorKey.currentState;
+        if (nav == null) return;
 
-      if (nextId != null) {
-        nav.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeShell()),
-          (_) => false,
-        );
-      } else if (prev?.hasValue == true) {
-        // Only redirect to welcome when we had a session (not on initial load)
-        nav.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-          (_) => false,
-        );
-      }
+        if (nextId != null) {
+          nav.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const HomeShell()),
+            (_) => false,
+          );
+        } else if (prev?.hasValue == true) {
+          // Only redirect to welcome when we had a session (not on initial load)
+          nav.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+            (_) => false,
+          );
+        }
 
-      // Reset per-user data providers. Invalidate the Guru chat too so its
-      // locally-cached conversation reloads under the new account's key
-      // (prevents one user's chat showing for another on a shared browser).
-      ref.invalidate(purchaseProvider);
-      ref.invalidate(activePlanProvider);
-      ref.invalidate(subscriptionEndProvider);
-      ref.invalidate(bookmarksProvider);
-      ref.invalidate(sadhanaProvider);
-      ref.invalidate(guruChatProvider);
-      ref.invalidate(dailyPromptCounterProvider);
-      ref.invalidate(languageProvider);
+        // Invalidate per-user providers only after the navigation frame so the
+        // old route's widgets (e.g. LoginScreen watching languageProvider) are
+        // fully deactivated before providers are rebuilt.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.invalidate(purchaseProvider);
+          ref.invalidate(activePlanProvider);
+          ref.invalidate(subscriptionEndProvider);
+          ref.invalidate(bookmarksProvider);
+          ref.invalidate(sadhanaProvider);
+          ref.invalidate(guruChatProvider);
+          ref.invalidate(dailyPromptCounterProvider);
+          ref.invalidate(languageProvider);
+        });
+      });
     });
 
     return MaterialApp(

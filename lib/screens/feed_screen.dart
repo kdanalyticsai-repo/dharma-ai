@@ -39,6 +39,14 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
     final firstName = (fullName != null && fullName.isNotEmpty)
         ? fullName.split(' ').first
         : null;
+    final nameParts = (fullName ?? '').trim().split(RegExp(r'\s+'));
+    final avatarText = fullName != null && fullName.isNotEmpty
+        ? (nameParts.length >= 2
+            ? '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase()
+            : fullName.length >= 2
+                ? fullName.substring(0, 2).toUpperCase()
+                : fullName[0].toUpperCase())
+        : 'S';
     // Google sign-in provides a profile photo URL in auth metadata.
     final avatarUrl = (user?.userMetadata?['avatar_url'] ??
         user?.userMetadata?['picture']) as String?;
@@ -150,9 +158,9 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                                   width: 44,
                                   height: 44,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _avatarInitial(firstName),
+                                  errorBuilder: (_, __, ___) => _avatarInitial(avatarText),
                                 )
-                              : _avatarInitial(firstName),
+                              : _avatarInitial(avatarText),
                         ),
                       ),
                     ),
@@ -278,10 +286,14 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
-                      style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                    Flexible(
+                      child: Text(
+                        AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
+                        style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => ref.read(homeTabProvider.notifier).state = 1,
                       borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
@@ -343,8 +355,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
     );
   }
 
-  // Gradient circle with the user's first initial (avatar fallback).
-  Widget _avatarInitial(String? firstName) {
+  Widget _avatarInitial(String initials) {
     return Container(
       width: 44,
       height: 44,
@@ -358,9 +369,9 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
       ),
       child: Center(
         child: Text(
-          firstName?.isNotEmpty == true ? firstName![0].toUpperCase() : 'S',
+          initials,
           style: GoogleFonts.inter(
-            fontSize: 18,
+            fontSize: initials.length > 1 ? 15 : 18,
             fontWeight: FontWeight.w700,
             color: Colors.white,
           ),

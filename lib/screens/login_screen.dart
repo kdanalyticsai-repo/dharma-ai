@@ -59,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final name = _nameController.text.trim();
 
     if (email.isEmpty || password.isEmpty || (_isSignUp && name.isEmpty)) {
-      setState(() => _errorMessage = 'Please fill in all fields.');
+      setState(() => _errorMessage = AppTranslations.get('authErrorFillFields', ref.read(languageProvider)));
       return;
     }
 
@@ -93,6 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return;
       }
       // Signed in immediately (confirmation off) — new users choose their path.
+      isNewUserOnboarding = true;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const PersonalizeScreen()),
@@ -101,11 +102,86 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } else {
       final error = await auth.signIn(email, password);
       if (!mounted) return;
-      setState(() => _isLoading = false);
       if (error != null) {
-        setState(() => _errorMessage = error);
+        // Only update state on failure — on success the auth listener navigates
+        // us away and calling setState on a departing widget triggers
+        // "dirty widget in wrong build scope" + _dependents.isEmpty assertions.
+        // Sentinel codes (prefix 't:') are looked up in AppTranslations.
+        final lang = ref.read(languageProvider);
+        final msg = error.startsWith('t:')
+            ? AppTranslations.get(error.substring(2), lang)
+            : error;
+        setState(() { _isLoading = false; _errorMessage = msg; });
         return;
       }
+      // Success: DharmaApp.ref.listen handles routing to HomeShell.
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() { _isLoading = true; _errorMessage = null; });
+    // Block the global auth listener for the entire Google flow.
+    // signInWithIdToken fires an auth state change BEFORE we know whether this
+    // is a new or returning user (the profile check happens after). If we don't
+    // block early, DharmaApp.ref.listen can fire during the profile check and
+    // navigate to HomeShell before we've decided where to go.
+    isNewUserOnboarding = true;
+    final result = await ref.read(authProvider.notifier).signInWithGoogle();
+    if (!mounted) {
+      isNewUserOnboarding = false;
+      return;
+    }
+    if (result.error != null) {
+      isNewUserOnboarding = false;
+      // 'cancelled' = user dismissed the Google picker — no error to show.
+      if (result.error != 'cancelled') {
+        setState(() { _isLoading = false; _errorMessage = result.error; });
+      } else {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+    if (!mounted) {
+      isNewUserOnboarding = false;
+      return;
+    }
+    // Route based on (isNewUser × _isSignUp) — four cases:
+    if (result.isNewUser && _isSignUp) {
+      // New account from sign-up form → create profile then go to onboarding.
+      // Profile creation is deferred to here (not inside signInWithGoogle) so
+      // the sign-in-form blocking path never writes a stale profile row.
+      await ref.read(authProvider.notifier).createGoogleProfile();
+      if (!mounted) { isNewUserOnboarding = false; return; }
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const PersonalizeScreen()),
+        (route) => false,
+      );
+    } else if (result.isNewUser && !_isSignUp) {
+      // Unregistered Google account on sign-in form → block and warn.
+      // signInWithIdToken already created a session — revoke it first.
+      // Keep isNewUserOnboarding = true during signOut so the auth listener
+      // doesn't redirect to WelcomeScreen while we're still on LoginScreen.
+      await ref.read(authProvider.notifier).signOut();
+      if (!mounted) { isNewUserOnboarding = false; return; }
+      isNewUserOnboarding = false;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = AppTranslations.get('authGoogleNotRegistered', ref.read(languageProvider));
+      });
+    } else if (!result.isNewUser && _isSignUp) {
+      // Existing Google user on sign-up form → block and warn.
+      await ref.read(authProvider.notifier).signOut();
+      if (!mounted) { isNewUserOnboarding = false; return; }
+      isNewUserOnboarding = false;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = AppTranslations.get('authGoogleAlreadyRegistered', ref.read(languageProvider));
+      });
+    } else {
+      // Existing user on sign-in form → HomeShell.
+      // Global listener was blocked during the flow; navigate explicitly now.
+      isNewUserOnboarding = false;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const HomeShell()),
@@ -114,100 +190,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    setState(() { _isLoading = true; _errorMessage = null; });
-    final error = await ref.read(authProvider.notifier).signInWithGoogle();
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    if (error != null) {
-      setState(() => _errorMessage = error);
-      return;
-    }
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeShell()),
-      (route) => false,
-    );
-  }
-
   Future<void> _forgotPassword() async {
-    final resetController = TextEditingController(text: _emailController.text.trim());
-    final textTheme = Theme.of(context).textTheme;
-    final dlang = ref.read(languageProvider);
-    bool sending = false;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setLocal) => AlertDialog(
-          backgroundColor: SacredTheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
-          title: Text(
-            AppTranslations.get('fpTitle', dlang),
-            style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: SacredTheme.primary),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppTranslations.get('fpBody', dlang),
-                style: textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: resetController,
-                keyboardType: TextInputType.emailAddress,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'your@email.com',
-                  filled: true,
-                  fillColor: SacredTheme.surfaceContainerLowest,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusSm)),
-                ),
-                style: textTheme.bodyLarge,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: sending ? null : () => Navigator.pop(dialogContext),
-              child: Text(AppTranslations.get('fpCancel', dlang), style: const TextStyle(color: SacredTheme.outline)),
-            ),
-            ElevatedButton(
-              onPressed: sending
-                  ? null
-                  : () async {
-                      final email = resetController.text.trim();
-                      final messenger = ScaffoldMessenger.of(context);
-                      final navigator = Navigator.of(dialogContext);
-                      if (email.isEmpty || !email.contains('@')) {
-                        messenger.showSnackBar(
-                          SnackBar(content: Text(AppTranslations.get('fpInvalidEmail', dlang))),
-                        );
-                        return;
-                      }
-                      setLocal(() => sending = true);
-                      final error = await ref.read(authProvider.notifier).resetPassword(email);
-                      if (!mounted) return;
-                      navigator.pop();
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(error ?? AppTranslations.get('fpSent', dlang)),
-                          backgroundColor: error == null ? SacredTheme.primary : null,
-                          duration: const Duration(seconds: 4),
-                        ),
-                      );
-                    },
-              child: sending
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text(AppTranslations.get('fpSend', dlang)),
-            ),
-          ],
-        ),
+    // Push a dedicated route instead of showDialog. Flutter 3.22's showDialog
+    // wraps content in _ModalScope which adds a FocusScope InheritedWidget; on
+    // the user-branch build, that scope's debugDeactivated() fires before all
+    // dependents finish cleanup → _dependents.isEmpty assertion crash. A pushed
+    // route has none of these dialog-specific lifecycle issues.
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ForgotPasswordScreen(initialEmail: _emailController.text.trim()),
       ),
     );
-    resetController.dispose();
   }
 
   @override
@@ -380,7 +374,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _isLoading ? null : _signInWithGoogle,
                     icon: const Icon(Icons.g_mobiledata, size: 22),
-                    label: Text(AppTranslations.get('authContinueGoogle', lang)),
+                    label: Text(AppTranslations.get(
+                      _isSignUp ? 'authBeginWithGoogle' : 'authContinueGoogle',
+                      lang,
+                    )),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: SacredTheme.outlineVariant),
                       foregroundColor: SacredTheme.onSurface,
@@ -451,6 +448,165 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Separate screen for password reset — avoids showDialog's _ModalScope
+// FocusScope lifecycle crash on Flutter 3.22 (user-branch).
+class _ForgotPasswordScreen extends ConsumerStatefulWidget {
+  final String initialEmail;
+  const _ForgotPasswordScreen({required this.initialEmail});
+
+  @override
+  ConsumerState<_ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends ConsumerState<_ForgotPasswordScreen> {
+  late final TextEditingController _controller;
+  bool _sending = false;
+  bool _sent = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialEmail);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final lang = ref.read(languageProvider);
+    final email = _controller.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _error = AppTranslations.get('fpInvalidEmail', lang));
+      return;
+    }
+    setState(() { _sending = true; _error = null; });
+    final error = await ref.read(authProvider.notifier).resetPassword(email);
+    if (!mounted) return;
+    if (error != null) {
+      setState(() { _sending = false; _error = error; });
+    } else {
+      setState(() { _sending = false; _sent = true; });
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = ref.read(languageProvider);
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      body: MandalaBackground(
+        scale: 1.0,
+        alignment: Alignment.center,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: SacredTheme.onSurface),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  AppTranslations.get('fpTitle', lang),
+                  style: GoogleFonts.newsreader(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: SacredTheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  AppTranslations.get('fpBody', lang),
+                  style: textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  AppTranslations.get('authEmail', lang),
+                  style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _controller,
+                  keyboardType: TextInputType.emailAddress,
+                  autofocus: true,
+                  enabled: !_sending && !_sent,
+                  decoration: const InputDecoration(
+                    hintText: 'your@email.com',
+                    prefixIcon: Icon(Icons.email_outlined, size: 18, color: SacredTheme.onSurfaceVariant),
+                  ),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: Text(_error!, style: textTheme.bodySmall?.copyWith(color: Colors.red.shade700)),
+                  ),
+                ],
+                if (_sent) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: SacredTheme.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                      border: Border.all(color: SacredTheme.primary.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      AppTranslations.get('fpSent', lang),
+                      style: textTheme.bodySmall?.copyWith(color: SacredTheme.primary),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: (_sending || _sent) ? null : _send,
+                    child: _sending
+                        ? const SizedBox(
+                            height: 18, width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(AppTranslations.get('fpSend', lang)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      AppTranslations.get('fpCancel', lang),
+                      style: textTheme.labelLarge?.copyWith(color: SacredTheme.outline),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

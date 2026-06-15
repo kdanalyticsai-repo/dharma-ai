@@ -90,6 +90,8 @@ class CommunityNotifier extends StateNotifier<List<CommunityPost>> {
     ];
   }
 
+  Future<void> refresh() => _loadPosts();
+
   // ── Add post ─────────────────────────────────────────────────
 
   // Resolve the signed-in user's display name + avatar letter from their

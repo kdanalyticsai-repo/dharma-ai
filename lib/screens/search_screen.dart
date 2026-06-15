@@ -230,10 +230,13 @@ class SingleVerseDetailScreen extends ConsumerWidget {
         ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: SacredTheme.marginEdge),
-          child: VerseCard(verse: verse),
+        padding: EdgeInsets.fromLTRB(
+          SacredTheme.marginEdge,
+          0,
+          SacredTheme.marginEdge,
+          MediaQuery.of(context).padding.bottom + 24,
         ),
+        child: VerseCard(verse: verse),
       ),
     );
   }

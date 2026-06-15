@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,7 @@ import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
+import 'package:dharma_ai/widgets/app_download_banner.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({Key? key}) : super(key: key);
@@ -104,9 +106,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final currentLanguage = ref.watch(languageProvider);
     final currentIndex = ref.watch(homeTabProvider);
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFFFAF7F2),
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
       body: _screens[currentIndex],
-      bottomNavigationBar: Container(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AppDownloadBanner(),
+          Container(
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
@@ -170,9 +182,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 label: AppTranslations.get('tabSangha', currentLanguage),
               ),
             ],
-          ),
-        ),
-      ),
-    );
+          ),       // NavigationBar
+        ),         // NavigationBarTheme
+      ),           // Container
+      ],           // Column.children
+    ),             // Column (bottomNavigationBar)
+    ),             // Scaffold
+    );             // AnnotatedRegion
   }
 }
