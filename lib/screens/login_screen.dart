@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -120,11 +121,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _signInWithGoogle() async {
     setState(() { _isLoading = true; _errorMessage = null; });
-    // Block the global auth listener for the entire Google flow.
-    // signInWithIdToken fires an auth state change BEFORE we know whether this
-    // is a new or returning user (the profile check happens after). If we don't
-    // block early, DharmaApp.ref.listen can fire during the profile check and
-    // navigate to HomeShell before we've decided where to go.
+
+    if (kIsWeb) {
+      // On web, signInWithOAuth() redirects the browser immediately and returns
+      // before the user sees the Google account picker. Running the 4-case
+      // (isNewUser × _isSignUp) routing logic here would fire the "already
+      // registered" error before Google even opens. After the OAuth redirect the
+      // page reloads fresh, so all widget state is gone anyway.
+      // main.dart's auth listener handles routing: new accounts (createdAt < 60s)
+      // → PersonalizeScreen; existing accounts → HomeShell.
+      await ref.read(authProvider.notifier).signInWithGoogle();
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
+    // Android: native account picker — block the global auth listener and apply
+    // the full 4-case (isNewUser × _isSignUp) routing logic inline.
     isNewUserOnboarding = true;
     final result = await ref.read(authProvider.notifier).signInWithGoogle();
     if (!mounted) {
@@ -148,8 +160,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Route based on (isNewUser × _isSignUp) — four cases:
     if (result.isNewUser && _isSignUp) {
       // New account from sign-up form → create profile then go to onboarding.
-      // Profile creation is deferred to here (not inside signInWithGoogle) so
-      // the sign-in-form blocking path never writes a stale profile row.
       await ref.read(authProvider.notifier).createGoogleProfile();
       if (!mounted) { isNewUserOnboarding = false; return; }
       Navigator.pushAndRemoveUntil(
@@ -159,9 +169,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     } else if (result.isNewUser && !_isSignUp) {
       // Unregistered Google account on sign-in form → block and warn.
-      // signInWithIdToken already created a session — revoke it first.
-      // Keep isNewUserOnboarding = true during signOut so the auth listener
-      // doesn't redirect to WelcomeScreen while we're still on LoginScreen.
       await ref.read(authProvider.notifier).signOut();
       if (!mounted) { isNewUserOnboarding = false; return; }
       isNewUserOnboarding = false;
@@ -180,7 +187,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     } else {
       // Existing user on sign-in form → HomeShell.
-      // Global listener was blocked during the flow; navigate explicitly now.
       isNewUserOnboarding = false;
       Navigator.pushAndRemoveUntil(
         context,

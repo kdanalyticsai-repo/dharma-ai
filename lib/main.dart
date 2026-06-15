@@ -9,6 +9,7 @@ import 'package:app_links/app_links.dart';
 import 'package:dharma_ai/firebase_options.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/theme/theme.dart';
+import 'package:dharma_ai/screens/personalize_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
 import 'package:dharma_ai/screens/set_new_password_screen.dart';
@@ -216,10 +217,32 @@ class DharmaApp extends ConsumerWidget {
         if (nav == null) return;
 
         if (nextId != null) {
-          nav.pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const HomeShell()),
-            (_) => false,
-          );
+          // On web, after Google OAuth redirect the page reloads fresh and
+          // isNewUserOnboarding is gone. Detect a brand-new account by its
+          // createdAt timestamp and route to onboarding instead of HomeShell.
+          if (kIsWeb) {
+            final user = next.valueOrNull;
+            final createdAt = DateTime.tryParse(user?.createdAt ?? '');
+            final isNewWebUser = createdAt != null &&
+                DateTime.now().toUtc().difference(createdAt).abs().inSeconds < 60;
+            if (isNewWebUser) {
+              ref.read(authProvider.notifier).createGoogleProfile();
+              nav.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const PersonalizeScreen()),
+                (_) => false,
+              );
+            } else {
+              nav.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomeShell()),
+                (_) => false,
+              );
+            }
+          } else {
+            nav.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const HomeShell()),
+              (_) => false,
+            );
+          }
         } else if (prev?.hasValue == true) {
           // Only redirect to welcome when we had a session (not on initial load)
           nav.pushAndRemoveUntil(
