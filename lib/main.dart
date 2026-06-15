@@ -9,6 +9,7 @@ import 'package:app_links/app_links.dart';
 import 'package:dharma_ai/firebase_options.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/theme/theme.dart';
+import 'package:dharma_ai/screens/login_screen.dart';
 import 'package:dharma_ai/screens/personalize_screen.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
@@ -49,6 +50,10 @@ void main() async {
   Map<String, String> recoveryParams = const {};
   if (kIsWeb) {
     recoveryParams = Uri.base.queryParameters;
+    // Capture the Google OAuth intent encoded in the redirectTo URL before
+    // Supabase.initialize() processes and strips the auth tokens from the URL.
+    final intent = recoveryParams['googleIntent'];
+    if (intent != null) googleWebSignInIntent = intent;
   } else {
     try {
       final initialLink = await AppLinks().getInitialLink();
@@ -217,25 +222,60 @@ class DharmaApp extends ConsumerWidget {
         if (nav == null) return;
 
         if (nextId != null) {
-          // On web, after Google OAuth redirect the page reloads fresh and
-          // isNewUserOnboarding is gone. Detect a brand-new account by its
-          // createdAt timestamp and route to onboarding instead of HomeShell.
           if (kIsWeb) {
+            // On web, the OAuth redirect reloads the page and wipes all widget
+            // state. Apply the same 4-case (isNewUser × intent) routing as
+            // Android, using the ?googleIntent= param captured at startup.
+            final intent = googleWebSignInIntent;
+            googleWebSignInIntent = null; // consume once
             final user = next.valueOrNull;
             final createdAt = DateTime.tryParse(user?.createdAt ?? '');
-            final isNewWebUser = createdAt != null &&
+            final isNew = createdAt != null &&
                 DateTime.now().toUtc().difference(createdAt).abs().inSeconds < 60;
-            if (isNewWebUser) {
+
+            if (intent == 'signup' && isNew) {
+              // New account from sign-up form → profile + onboarding.
               ref.read(authProvider.notifier).createGoogleProfile();
               nav.pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const PersonalizeScreen()),
                 (_) => false,
               );
-            } else {
+            } else if (intent == 'signin' && isNew) {
+              // Unregistered / deleted account on sign-in form → block.
+              // LoginScreen will sign out the session and show the error.
+              pendingGoogleAuthError = 'authGoogleNotRegistered';
+              nav.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (_) => false,
+              );
+            } else if (intent == 'signup' && !isNew) {
+              // Existing account on sign-up form → block.
+              pendingGoogleAuthError = 'authGoogleAlreadyRegistered';
+              nav.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen(startInSignUpMode: true)),
+                (_) => false,
+              );
+            } else if (intent == 'signin' && !isNew) {
+              // Existing account on sign-in form → home.
               nav.pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const HomeShell()),
                 (_) => false,
               );
+            } else {
+              // No intent (page refresh with live session, or intent URL param
+              // was stripped by the browser). Route by newness as fallback.
+              if (isNew) {
+                ref.read(authProvider.notifier).createGoogleProfile();
+                nav.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const PersonalizeScreen()),
+                  (_) => false,
+                );
+              } else {
+                nav.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const HomeShell()),
+                  (_) => false,
+                );
+              }
             }
           } else {
             nav.pushAndRemoveUntil(

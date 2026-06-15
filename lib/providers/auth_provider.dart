@@ -18,6 +18,16 @@ bool isRecoveringPassword = false;
 // with the explicit navigation to PersonalizeScreen.
 bool isNewUserOnboarding = false;
 
+// Web-only: 'signup' or 'signin' — read from the ?googleIntent= URL param that
+// main() encodes into the OAuth redirectTo before the browser redirect. Consumed
+// once by the auth listener to apply the correct 4-case routing.
+String? googleWebSignInIntent;
+
+// Web-only: translation key set by the auth listener when a Google OAuth attempt
+// is blocked (not-registered / already-registered). LoginScreen reads this in
+// initState, signs out the session, and displays the localised message.
+String? pendingGoogleAuthError;
+
 // Current Supabase user.
 // Yields the already-restored session synchronously (from localStorage,
 // populated by Supabase.initialize()) so page refresh keeps the user
@@ -135,14 +145,19 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   // Returns (error, isNewUser).
   // isNewUser = true when no profile row exists after auth (first-time sign-in
   // OR deleted-account sign-in). Caller should route to PersonalizeScreen.
-  Future<({String? error, bool isNewUser})> signInWithGoogle() async {
+  //
+  // [webIsSignUp] is web-only: encodes the user's form intent into the OAuth
+  // redirectTo URL (?googleIntent=signup|signin) so main.dart can apply the
+  // same 4-case routing logic after the browser redirect reloads the page.
+  Future<({String? error, bool isNewUser})> signInWithGoogle({bool webIsSignUp = false}) async {
     if (kIsWeb) {
       try {
+        final intent = webIsSignUp ? 'signup' : 'signin';
         await _client.auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: 'https://dharma.kdaanalytics.com',
+          redirectTo: 'https://dharma.kdaanalytics.com?googleIntent=$intent',
         );
-        return (error: null, isNewUser: false); // web uses redirect; no inline check
+        return (error: null, isNewUser: false); // web uses redirect; routing in main.dart
       } on AuthException catch (e) {
         return (error: e.message, isNewUser: false);
       } catch (e) {
@@ -179,7 +194,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       // AFTER INSERT on auth.users and immediately creates a profile row, so a
       // profile always exists — even for a brand-new account created one second ago.
       // createdAt ≈ now (within 30 s) reliably means this auth row was just created.
-      final createdAt = DateTime.tryParse(user.createdAt ?? '');
+      final createdAt = DateTime.tryParse(user.createdAt);
       final isNewUser = createdAt != null &&
           DateTime.now().toUtc().difference(createdAt).abs().inSeconds < 30;
 

@@ -32,6 +32,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
     _isSignUp = widget.startInSignUpMode;
+
+    // Web: main.dart navigated here after a blocked Google OAuth attempt
+    // (not-registered or already-registered). The session is still live, so we
+    // sign out under isNewUserOnboarding guard, then display the error message.
+    if (pendingGoogleAuthError != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        isNewUserOnboarding = true; // block auth listener during signOut
+        await ref.read(authProvider.notifier).signOut();
+        if (!mounted) { isNewUserOnboarding = false; return; }
+        isNewUserOnboarding = false;
+        final key = pendingGoogleAuthError!;
+        pendingGoogleAuthError = null;
+        setState(() => _errorMessage = AppTranslations.get(key, ref.read(languageProvider)));
+      });
+    }
   }
 
   @override
@@ -123,14 +139,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() { _isLoading = true; _errorMessage = null; });
 
     if (kIsWeb) {
-      // On web, signInWithOAuth() redirects the browser immediately and returns
-      // before the user sees the Google account picker. Running the 4-case
-      // (isNewUser × _isSignUp) routing logic here would fire the "already
-      // registered" error before Google even opens. After the OAuth redirect the
-      // page reloads fresh, so all widget state is gone anyway.
-      // main.dart's auth listener handles routing: new accounts (createdAt < 60s)
-      // → PersonalizeScreen; existing accounts → HomeShell.
-      await ref.read(authProvider.notifier).signInWithGoogle();
+      // On web, signInWithOAuth() redirects the browser immediately — widget
+      // state (_isSignUp) is lost after the page reloads. We encode the intent
+      // in the redirectTo URL (?googleIntent=signup|signin) so main.dart can
+      // apply the full 4-case routing logic after the OAuth redirect completes.
+      await ref.read(authProvider.notifier).signInWithGoogle(webIsSignUp: _isSignUp);
       if (mounted) setState(() => _isLoading = false);
       return;
     }
