@@ -82,6 +82,7 @@ class ReaderSettings {
   final bool showSanskrit;
   final bool showTransliteration;
   final bool showTranslation;
+  final bool showHindiTranslation;
   final bool showCommentary;
 
   const ReaderSettings({
@@ -89,6 +90,7 @@ class ReaderSettings {
     this.showSanskrit = true,
     this.showTransliteration = true,
     this.showTranslation = true,
+    this.showHindiTranslation = false,
     this.showCommentary = true,
   });
 
@@ -97,6 +99,7 @@ class ReaderSettings {
     bool? showSanskrit,
     bool? showTransliteration,
     bool? showTranslation,
+    bool? showHindiTranslation,
     bool? showCommentary,
   }) {
     return ReaderSettings(
@@ -104,6 +107,7 @@ class ReaderSettings {
       showSanskrit: showSanskrit ?? this.showSanskrit,
       showTransliteration: showTransliteration ?? this.showTransliteration,
       showTranslation: showTranslation ?? this.showTranslation,
+      showHindiTranslation: showHindiTranslation ?? this.showHindiTranslation,
       showCommentary: showCommentary ?? this.showCommentary,
     );
   }
@@ -126,6 +130,10 @@ class ReaderSettingsNotifier extends StateNotifier<ReaderSettings> {
 
   void toggleTranslation() {
     state = state.copyWith(showTranslation: !state.showTranslation);
+  }
+
+  void toggleHindiTranslation() {
+    state = state.copyWith(showHindiTranslation: !state.showHindiTranslation);
   }
 
   void toggleCommentary() {

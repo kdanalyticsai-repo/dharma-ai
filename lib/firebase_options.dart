@@ -14,10 +14,7 @@ class DefaultFirebaseOptions {
     if (kIsWeb) return web;
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'Firebase is not configured for Android yet — add it when building '
-          'the mobile app (flutterfire configure).',
-        );
+        return android;
       default:
         throw UnsupportedError(
           'Firebase is not configured for this platform.',
@@ -33,5 +30,13 @@ class DefaultFirebaseOptions {
     authDomain: 'dharmaai-f0078.firebaseapp.com',
     storageBucket: 'dharmaai-f0078.firebasestorage.app',
     measurementId: 'G-HW138CH39L',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBpZc_lUHhod6W-zpzoxVTYZjce2rEfXmc',
+    appId: '1:494796756772:android:488070190c1d64306a05b1',
+    messagingSenderId: '494796756772',
+    projectId: 'dharmaai-f0078',
+    storageBucket: 'dharmaai-f0078.firebasestorage.app',
   );
 }

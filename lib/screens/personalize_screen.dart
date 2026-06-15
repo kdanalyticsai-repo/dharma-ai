@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
+import 'package:dharma_ai/providers/auth_provider.dart' show isNewUserOnboarding;
 import 'package:dharma_ai/providers/language_provider.dart';
 
 class PersonalizeScreen extends ConsumerStatefulWidget {
@@ -267,6 +268,7 @@ class _PersonalizeScreenState extends ConsumerState<PersonalizeScreen> {
                   child: ElevatedButton(
                     onPressed: (_selectedGoalIndex != null && _selectedLevelIndex != null)
                         ? () {
+                            isNewUserOnboarding = false;
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(

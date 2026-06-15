@@ -225,6 +225,7 @@ class SadhanaScreen extends ConsumerWidget {
                     child: Text(
                       AppTranslations.get('resetTodayProgress', currentLanguage),
                       style: GoogleFonts.inter(color: SacredTheme.outline, fontSize: 12),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -297,9 +298,13 @@ class SadhanaScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                      Text(
+                        title,
+                        style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.center,
+                      ),
                       Text(progressString, style: textTheme.labelSmall),
                     ],
                   ),

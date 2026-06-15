@@ -286,10 +286,14 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
-                      style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                    Flexible(
+                      child: Text(
+                        AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
+                        style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => ref.read(homeTabProvider.notifier).state = 1,
                       borderRadius: BorderRadius.circular(SacredTheme.radiusSm),

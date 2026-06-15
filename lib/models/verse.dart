@@ -8,6 +8,7 @@ class Verse {
   final String sanskritText;
   final String englishTransliteration;
   final String translation;
+  final String? hindiTranslation;
   final String commentary;
   final Map<String, String>? wordMeanings; // Sanskrit word -> translation
 
@@ -19,11 +20,17 @@ class Verse {
     required this.sanskritText,
     required this.englishTransliteration,
     required this.translation,
+    this.hindiTranslation,
     required this.commentary,
     this.wordMeanings,
   });
 
   String getLocalizedTranslation(AppLanguage lang) {
+    if (lang == AppLanguage.hindi) {
+      return hindiTranslation
+          ?? LocalizedScripture.translations[id]?[lang]
+          ?? translation;
+    }
     return LocalizedScripture.translations[id]?[lang] ?? translation;
   }
 
@@ -41,6 +48,7 @@ class Verse {
       'sanskritText': sanskritText,
       'englishTransliteration': englishTransliteration,
       'translation': translation,
+      'hindiTranslation': hindiTranslation,
       'commentary': commentary,
       'wordMeanings': wordMeanings,
     };
@@ -56,6 +64,7 @@ class Verse {
       sanskritText: json['sanskritText'] as String? ?? '',
       englishTransliteration: json['englishTransliteration'] as String? ?? '',
       translation: json['translation'] as String? ?? '',
+      hindiTranslation: json['hindiTranslation'] as String?,
       commentary: json['commentary'] as String? ?? '',
       wordMeanings: json['wordMeanings'] != null
           ? Map<String, String>.from(json['wordMeanings'] as Map)

@@ -33,7 +33,7 @@ class VerseShareCard extends StatelessWidget {
         border: Border.all(color: SacredTheme.templeGold.withOpacity(0.35), width: 1.5),
         borderRadius: BorderRadius.circular(24),
       ),
-      padding: const EdgeInsets.fromLTRB(30, 30, 30, 22),
+      padding: const EdgeInsets.fromLTRB(30, 30, 30, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -104,12 +104,15 @@ class VerseShareCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3),
-          Text(
-            'https://dharma.kdaanalytics.com/welcome',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: SacredTheme.primary,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'dharma.kdaanalytics.com/welcome',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: SacredTheme.primary,
+              ),
             ),
           ),
         ],

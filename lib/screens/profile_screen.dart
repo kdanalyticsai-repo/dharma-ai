@@ -45,6 +45,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
     final current = ref.read(languageProvider);
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: SacredTheme.surfaceContainerLow,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -85,6 +86,87 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
         );
       },
     );
+  }
+
+  Future<void> _deleteAccount() async {
+    final tier = ref.read(purchaseProvider);
+    final isPaid = tier != SubscriptionTier.free;
+    final planName = tier == SubscriptionTier.annual ? 'Annual Sadhaka' : 'Sadhaka Premium';
+
+    final bodyText = isPaid
+        ? 'Your $planName subscription benefits will be lost immediately and cannot be recovered. All your sacred data — sadhana streaks, bookmarks, and personal notes — will also be permanently removed.\n\nAre you sure you want to delete your account?'
+        : 'Your sadhana logs, bookmarks, and personal notes will be permanently removed.\n\nYour path of dharma is always here for you — feel free to return and re-register whenever you feel ready.\n\nAre you sure you want to delete your account?';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SacredTheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
+        title: Row(
+          children: [
+            Icon(
+              isPaid ? Icons.workspace_premium : Icons.favorite_border,
+              color: isPaid ? SacredTheme.templeGold : SacredTheme.primary,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('We\'re Sorry to See You Go')),
+          ],
+        ),
+        content: Text(bodyText),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep My Account'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete My Account'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final client = SupabaseSync.client;
+    if (client == null) return;
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: SacredTheme.primary),
+      ),
+    );
+
+    try {
+      await client.rpc('delete_user');
+      if (mounted) Navigator.pop(context);
+      await ref.read(authProvider.notifier).signOut();
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (route) => false,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to delete account. Please try again or contact support@kdaanalytics.com'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 
   void _showSanctuarySettings(BuildContext context, {required bool isPaid}) {
@@ -189,6 +271,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                       (route) => false,
                     );
                   }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
+                title: const Text('Delete Account', style: TextStyle(color: Colors.redAccent)),
+                subtitle: const Text('Permanently remove all your data', style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteAccount();
                 },
               ),
               const Divider(),

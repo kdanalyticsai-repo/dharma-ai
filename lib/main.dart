@@ -196,41 +196,52 @@ class DharmaApp extends ConsumerWidget {
     // MaterialApp.home changes alone don't navigate an already-mounted
     // Navigator — the NavigatorKey + pushAndRemoveUntil is the reliable fix.
     ref.listen(authUserProvider, (prev, next) {
-      // During password recovery the session is live but we must keep the user
-      // on the set-password screen, not route them into the app.
+      // During password recovery keep the user on the set-password screen.
       if (isRecoveringPassword) return;
+      // During new-user onboarding LoginScreen/Google flow handles navigation
+      // explicitly; skip here to avoid a double-navigation race condition.
+      if (isNewUserOnboarding) return;
 
       final prevId = prev?.valueOrNull?.id;
       final nextId = next.valueOrNull?.id;
       if (prevId == nextId) return;
 
-      final nav = navigatorKey.currentState;
-      if (nav == null) return;
+      // Defer navigation to the NEXT frame. Calling pushAndRemoveUntil
+      // synchronously here (during a Riverpod provider-notification cycle)
+      // triggers '_dependents.isEmpty' / 'ancestor not in tree' Flutter
+      // assertions: the old route's widgets are still live in the element
+      // tree when we start tearing them down.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final nav = navigatorKey.currentState;
+        if (nav == null) return;
 
-      if (nextId != null) {
-        nav.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeShell()),
-          (_) => false,
-        );
-      } else if (prev?.hasValue == true) {
-        // Only redirect to welcome when we had a session (not on initial load)
-        nav.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-          (_) => false,
-        );
-      }
+        if (nextId != null) {
+          nav.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const HomeShell()),
+            (_) => false,
+          );
+        } else if (prev?.hasValue == true) {
+          // Only redirect to welcome when we had a session (not on initial load)
+          nav.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+            (_) => false,
+          );
+        }
 
-      // Reset per-user data providers. Invalidate the Guru chat too so its
-      // locally-cached conversation reloads under the new account's key
-      // (prevents one user's chat showing for another on a shared browser).
-      ref.invalidate(purchaseProvider);
-      ref.invalidate(activePlanProvider);
-      ref.invalidate(subscriptionEndProvider);
-      ref.invalidate(bookmarksProvider);
-      ref.invalidate(sadhanaProvider);
-      ref.invalidate(guruChatProvider);
-      ref.invalidate(dailyPromptCounterProvider);
-      ref.invalidate(languageProvider);
+        // Invalidate per-user providers only after the navigation frame so the
+        // old route's widgets (e.g. LoginScreen watching languageProvider) are
+        // fully deactivated before providers are rebuilt.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.invalidate(purchaseProvider);
+          ref.invalidate(activePlanProvider);
+          ref.invalidate(subscriptionEndProvider);
+          ref.invalidate(bookmarksProvider);
+          ref.invalidate(sadhanaProvider);
+          ref.invalidate(guruChatProvider);
+          ref.invalidate(dailyPromptCounterProvider);
+          ref.invalidate(languageProvider);
+        });
+      });
     });
 
     return MaterialApp(

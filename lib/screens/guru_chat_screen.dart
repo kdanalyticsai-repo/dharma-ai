@@ -121,11 +121,14 @@ class _GuruChatScreenState extends ConsumerState<GuruChatScreen> {
                 children: [
                   const Icon(Icons.auto_awesome, size: 14, color: SacredTheme.templeGold),
                   const SizedBox(width: 8),
-                  Text(
-                    AppTranslations.get('freePromptsLeft', lang).replaceAll('{n}', '$remaining'),
-                    style: GoogleFonts.inter(fontSize: 11, color: SacredTheme.onSurfaceVariant),
+                  Expanded(
+                    child: Text(
+                      AppTranslations.get('freePromptsLeft', lang).replaceAll('{n}', '$remaining'),
+                      style: GoogleFonts.inter(fontSize: 11, color: SacredTheme.onSurfaceVariant),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionPaywallScreen())),
                     child: Text(AppTranslations.get('upgradeBtn', lang), style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: SacredTheme.primary)),

@@ -12,6 +12,22 @@ import 'package:dharma_ai/services/qa_cache_service.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 import 'package:dharma_ai/providers/transliteration_provider.dart';
 
+// Returns true for very short or greeting-only inputs that the AI can't answer
+// meaningfully (e.g. "hi", "hello", "ok", "namaste"). Both chat modes show a
+// nudge message instead of hitting the Worker for such inputs.
+bool _isTooVague(String text) {
+  const vague = {
+    'hi', 'hey', 'hello', 'ok', 'okay', 'k', 'yes', 'no', 'hmm', 'hm',
+    'namaste', 'namaskar', 'jai shri krishna', 'jai shree krishna',
+    'hare krishna', 'radhe radhe', 'ram ram', 'jai ram', 'om',
+    'ॐ', 'नमस्ते', 'राधे राधे', 'हरे कृष्ण', 'जय श्री कृष्ण',
+    'ராதே ராதே', 'நமஸ்தே', 'রাধে রাধে', 'নমস্তে',
+    'ରାଧେ ରାଧେ', 'ନମସ୍କାର', 'રાધે રાધે', 'નમસ્તે',
+  };
+  final t = text.trim().toLowerCase();
+  return vague.contains(t) || t.length <= 2;
+}
+
 // First name for the chat welcome greeting, written in the selected language's
 // script (transliterated, cached by the Feed), with a localized fallback when
 // the user has no name on their profile.
@@ -243,6 +259,26 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       messages: [...state.messages, userMessage],
       isLoading: true,
     );
+
+    // Short/vague inputs (greetings, single words) confuse the AI and often
+    // cause errors. Nudge the user to ask a specific question instead.
+    if (_isTooVague(text)) {
+      final lang = _ref.read(languageProvider);
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          ChatMessage(
+            id: DateTime.now().toString(),
+            text: AppTranslations.get('chatNudgeResponse', lang),
+            role: 'assistant',
+            timestamp: DateTime.now(),
+            isGuruMode: false,
+          ),
+        ],
+        isLoading: false,
+      );
+      return;
+    }
 
     final streamId = 'stream_${DateTime.now().millisecondsSinceEpoch}';
     try {
@@ -499,6 +535,24 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
       messages: [...state.messages, userMessage],
       isLoading: true,
     );
+
+    if (_isTooVague(text)) {
+      final lang = _ref.read(languageProvider);
+      state = state.copyWith(
+        messages: [
+          ...state.messages,
+          ChatMessage(
+            id: DateTime.now().toString(),
+            text: AppTranslations.get('chatNudgeResponse', lang),
+            role: 'assistant',
+            timestamp: DateTime.now(),
+            isGuruMode: true,
+          ),
+        ],
+        isLoading: false,
+      );
+      return;
+    }
 
     final streamId = 'stream_${DateTime.now().millisecondsSinceEpoch}';
     try {

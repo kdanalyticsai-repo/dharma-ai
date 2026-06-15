@@ -43,7 +43,7 @@ class LegalFooter extends StatelessWidget {
           dot(),
           link('Terms', 'terms.html'),
           dot(),
-          link('Cancellation & Refunds', 'refunds.html'),
+          link('Refunds', 'refunds.html'),
           dot(),
           link('Contact', 'contact.html'),
         ],

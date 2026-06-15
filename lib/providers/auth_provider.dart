@@ -5,17 +5,18 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
 
-// Web Client ID from Google OAuth (Supabase → Auth → Providers → Google).
+// Web Client ID from Firebase project (google-services.json → client_type: 3).
 // Not a secret — it is embedded in the app and visible in web builds.
 const _googleWebClientId =
-    '110176980918-out28b4bjvl2f2vd852kgiagk12h4ds0.apps.googleusercontent.com';
+    '494796756772-kv3raikt2k991emqbjp1er4tbnit62qs.apps.googleusercontent.com';
 
 // True while the user is in the password-recovery flow (followed a reset link).
-// The recovery link establishes a real session, so the global auth listener
-// would otherwise bounce them to Home — this flag holds them on the
-// "set a new password" screen until they finish. Cleared once the new password
-// is saved (or the app is restarted).
 bool isRecoveringPassword = false;
+
+// True when a brand-new user (email sign-up or first-time Google sign-in) is
+// mid-onboarding. Prevents the global auth listener in DharmaApp from racing
+// with the explicit navigation to PersonalizeScreen.
+bool isNewUserOnboarding = false;
 
 // Current Supabase user.
 // Yields the already-restored session synchronously (from localStorage,
@@ -106,6 +107,24 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       Analytics.login('email');
       return null;
     } on AuthException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (msg.contains('invalid login credentials') || msg.contains('invalid credentials')) {
+        // Supabase returns the same error for wrong password and non-existent user.
+        // Call a SECURITY DEFINER RPC so RLS doesn't hide the result from anonymous callers.
+        try {
+          final exists = await _client.rpc(
+            'check_email_exists',
+            params: {'p_email': email.trim().toLowerCase()},
+          ) as bool;
+          if (!exists) {
+            // Sentinel prefix 't:' tells the UI to look this up in AppTranslations.
+            return 't:authErrorNoAccount';
+          }
+        } catch (_) {
+          // RPC not deployed yet — fall through to the generic message below.
+        }
+        return 't:authErrorWrongPassword';
+      }
       return e.message;
     } catch (e) {
       return e.toString();
@@ -113,47 +132,91 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 
   // ── Sign in with Google ─────────────────────────────────────
-  Future<String?> signInWithGoogle() async {
+  // Returns (error, isNewUser).
+  // isNewUser = true when no profile row exists after auth (first-time sign-in
+  // OR deleted-account sign-in). Caller should route to PersonalizeScreen.
+  Future<({String? error, bool isNewUser})> signInWithGoogle() async {
     if (kIsWeb) {
-      // Web: browser-based OAuth redirect (unchanged).
       try {
         await _client.auth.signInWithOAuth(
           OAuthProvider.google,
           redirectTo: 'https://dharma.kdaanalytics.com',
         );
-        return null;
+        return (error: null, isNewUser: false); // web uses redirect; no inline check
       } on AuthException catch (e) {
-        return e.message;
+        return (error: e.message, isNewUser: false);
       } catch (e) {
-        return e.toString();
+        return (error: e.toString(), isNewUser: false);
       }
     }
 
     // Android: native account picker → ID token → Supabase signInWithIdToken.
     try {
-      final googleUser = await GoogleSignIn(
-        serverClientId: _googleWebClientId,
-      ).signIn();
-      if (googleUser == null) return null; // user cancelled — not an error
+      final gsi = GoogleSignIn(serverClientId: _googleWebClientId);
+      // Clear any cached account so the picker always shows — without this
+      // Android silently re-uses the last signed-in Google account.
+      try { await gsi.signOut(); } catch (_) {}
+      final googleUser = await gsi.signIn();
+      if (googleUser == null) return (error: 'cancelled', isNewUser: false);
+
+      // No deleted-account gate here. delete_user now removes the row from
+      // auth.users (cascades). Re-signing in with Google creates a fresh auth
+      // record; the profile check below then sees no profile → isNewUser=true →
+      // onboarding. That IS re-registration, which is allowed.
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
-      if (idToken == null) return 'Google sign-in failed: no ID token';
-      await _client.auth.signInWithIdToken(
+      if (idToken == null) return (error: 'Google sign-in failed: no ID token', isNewUser: false);
+
+      final authResponse = await _client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
       );
-      Analytics.login('google');
-      return null;
+      final user = authResponse.user;
+      if (user == null) return (error: 'Google sign-in failed: no session', isNewUser: false);
+
+      // Detect new vs returning user via auth record creation timestamp.
+      // We cannot use profile-existence: the handle_new_user DB trigger fires
+      // AFTER INSERT on auth.users and immediately creates a profile row, so a
+      // profile always exists — even for a brand-new account created one second ago.
+      // createdAt ≈ now (within 30 s) reliably means this auth row was just created.
+      final createdAt = DateTime.tryParse(user.createdAt ?? '');
+      final isNewUser = createdAt != null &&
+          DateTime.now().toUtc().difference(createdAt).abs().inSeconds < 30;
+
+      if (!isNewUser) {
+        Analytics.login('google');
+      }
+
+      return (error: null, isNewUser: isNewUser);
     } on AuthException catch (e) {
-      return e.message;
+      return (error: e.message, isNewUser: false);
     } catch (e) {
-      return e.toString();
+      return (error: e.toString(), isNewUser: false);
     }
+  }
+
+  // ── Create profile for a new Google user ───────────────────
+  // Called by login_screen after confirming the user is on the sign-up form.
+  // Separated from signInWithGoogle() so the sign-in form can block new users
+  // without accidentally writing a profile row.
+  Future<void> createGoogleProfile() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    final name = (user.userMetadata?['full_name'] as String?)
+        ?? (user.userMetadata?['name'] as String?)
+        ?? user.email
+        ?? '';
+    await _upsertProfile(user.id, name, user.email ?? '');
+    Analytics.signUp('google');
   }
 
   // ── Sign out ────────────────────────────────────────────────
   Future<void> signOut() async {
-    await _client.auth.signOut();
+    try {
+      await _client.auth.signOut();
+    } catch (_) {
+      // Session may already be invalid (e.g. auth.users deleted). Still clear local state.
+    }
     state = const AsyncValue.data(null);
   }
 
@@ -169,11 +232,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         // the PKCE flow Supabase does NOT reliably emit a passwordRecovery
         // event, so this marker is how we know to show the set-password screen
         // instead of dropping the user on the feed.
-        redirectTo: kIsWeb ? '${Uri.base.origin}/?type=recovery' : null,
+        redirectTo: kIsWeb
+          ? '${Uri.base.origin}/?type=recovery'
+          : 'https://dharma.kdaanalytics.com/?type=recovery',
       );
       return null;
     } on AuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 

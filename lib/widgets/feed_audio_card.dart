@@ -178,26 +178,25 @@ class _FeedAudioCardState extends ConsumerState<FeedAudioCard> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        tier == SubscriptionTier.free ? Icons.lock_outline_rounded : Icons.library_music_outlined,
-                        size: 15,
+                  Icon(
+                    tier == SubscriptionTier.free ? Icons.lock_outline_rounded : Icons.library_music_outlined,
+                    size: 15,
+                    color: SacredTheme.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      AppTranslations.get('audioExploreAll', lang),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                         color: SacredTheme.primary,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        AppTranslations.get('audioExploreAll', lang),
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: SacredTheme.primary,
-                        ),
-                      ),
-                    ],
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  const SizedBox(width: 4),
                   const Icon(Icons.arrow_forward, size: 14, color: SacredTheme.primary),
                 ],
               ),

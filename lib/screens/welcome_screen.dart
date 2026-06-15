@@ -77,7 +77,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           },
                           borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            width: 96,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? SacredTheme.primary
@@ -92,6 +93,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                             ),
                             child: Text(
                               lang.displayName,
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,

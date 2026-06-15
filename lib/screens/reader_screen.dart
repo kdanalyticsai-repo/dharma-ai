@@ -584,6 +584,39 @@ class VerseCard extends ConsumerWidget {
                 const SizedBox(height: 16),
               ],
 
+              // Hindi Translation — hidden when app language is already Hindi
+              // (the regular translation block already shows Hindi text)
+              if (settings.showHindiTranslation && currentLanguage != AppLanguage.hindi) ...[
+                Builder(builder: (context) {
+                  final hindiText = verse.hindiTranslation
+                      ?? LocalizedScripture.translations[verse.id]?[AppLanguage.hindi];
+                  if (hindiText == null) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppTranslations.get('showHindiTranslationToggle', currentLanguage),
+                        style: textTheme.labelSmall?.copyWith(
+                          color: SacredTheme.outline,
+                          fontSize: (textTheme.labelSmall?.fontSize ?? 12) * textScale,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        hindiText,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontFamily: null,
+                          fontSize: (textTheme.bodyLarge?.fontSize ?? 16) * textScale,
+                          color: SacredTheme.onSurface,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  );
+                }),
+              ],
+
               // Commentary
               if (settings.showCommentary && verse.commentary.isNotEmpty) ...[
                 Text(
@@ -664,9 +697,12 @@ class ReaderSettingsSheet extends ConsumerWidget {
                   tooltip: 'Close',
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  AppTranslations.get('readingOptions', currentLanguage),
-                  style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context)),
+                Expanded(
+                  child: Text(
+                    AppTranslations.get('readingOptions', currentLanguage),
+                    style: textTheme.headlineSmall?.copyWith(color: SacredTheme.headingColor(context)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -741,6 +777,15 @@ class ReaderSettingsSheet extends ConsumerWidget {
               subtitle: 'English meaning of each verse',
               value: settings.showTranslation,
               onChanged: (_) => notifier.toggleTranslation(),
+            ),
+            if (currentLanguage != AppLanguage.hindi)
+            _buildToggleItem(
+              context,
+              icon: Icons.translate,
+              label: AppTranslations.get('showHindiTranslationToggle', currentLanguage),
+              subtitle: 'हिंदी अर्थ',
+              value: settings.showHindiTranslation,
+              onChanged: (_) => notifier.toggleHindiTranslation(),
             ),
             _buildToggleItem(
               context,
