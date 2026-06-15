@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dharma_ai/config/supabase_config.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
+import 'package:dharma_ai/services/google_intent_storage_stub.dart'
+    if (dart.library.html) 'package:dharma_ai/services/google_intent_storage_web.dart';
 
 // Web Client ID from Firebase project (google-services.json → client_type: 3).
 // Not a secret — it is embedded in the app and visible in web builds.
@@ -152,10 +154,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   Future<({String? error, bool isNewUser})> signInWithGoogle({bool webIsSignUp = false}) async {
     if (kIsWeb) {
       try {
-        final intent = webIsSignUp ? 'signup' : 'signin';
+        // Persist the form intent in sessionStorage BEFORE the browser redirect.
+        // sessionStorage survives same-tab OAuth redirects, so main.dart can
+        // read it on reload and apply the correct 4-case routing.
+        // (URL query params in redirectTo are unreliable: Supabase may strip
+        //  them during redirect URL validation.)
+        storeGoogleIntent(webIsSignUp ? 'signup' : 'signin');
         await _client.auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: 'https://dharma.kdaanalytics.com?googleIntent=$intent',
+          redirectTo: 'https://dharma.kdaanalytics.com',
         );
         return (error: null, isNewUser: false); // web uses redirect; routing in main.dart
       } on AuthException catch (e) {

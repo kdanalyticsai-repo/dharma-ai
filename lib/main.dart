@@ -11,6 +11,8 @@ import 'package:dharma_ai/services/analytics_service.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/screens/login_screen.dart';
 import 'package:dharma_ai/screens/personalize_screen.dart';
+import 'package:dharma_ai/services/google_intent_storage_stub.dart'
+    if (dart.library.html) 'package:dharma_ai/services/google_intent_storage_web.dart';
 import 'package:dharma_ai/screens/welcome_screen.dart';
 import 'package:dharma_ai/screens/home_shell.dart';
 import 'package:dharma_ai/screens/set_new_password_screen.dart';
@@ -50,9 +52,10 @@ void main() async {
   Map<String, String> recoveryParams = const {};
   if (kIsWeb) {
     recoveryParams = Uri.base.queryParameters;
-    // Capture the Google OAuth intent encoded in the redirectTo URL before
-    // Supabase.initialize() processes and strips the auth tokens from the URL.
-    final intent = recoveryParams['googleIntent'];
+    // Read the Google OAuth intent from sessionStorage (written by auth_provider
+    // before the OAuth redirect). sessionStorage survives same-tab redirects and
+    // is more reliable than URL query params (which Supabase may strip).
+    final intent = consumeGoogleIntent();
     if (intent != null) googleWebSignInIntent = intent;
   } else {
     try {
