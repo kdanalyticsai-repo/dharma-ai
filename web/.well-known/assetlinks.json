@@ -1,12 +1,16 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.kdaanalytics.dharmaai",
       "sha256_cert_fingerprints": [
         "27:8A:02:34:CB:2C:A5:47:42:0B:79:3A:72:F5:1F:2D:0E:3C:33:D3:B7:95:0E:54:0C:B7:C8:C4:89:94:39:05",
-        "0C:DB:B7:FB:19:0F:A2:69:C4:6A:F7:AB:12:73:8C:A7:6D:C5:F3:87:E7:C1:EC:2D:4B:07:69:54:55:EF:63:71"
+        "0C:DB:B7:FB:19:0F:A2:69:C4:6A:F7:AB:12:73:8C:A7:6D:C5:F3:87:E7:C1:EC:2D:4B:07:69:54:55:EF:63:71",
+        "9D:82:5B:21:01:E8:49:BE:E2:71:1B:79:B3:59:35:B5:52:C4:32:FE:6A:37:EC:53:B2:F6:18:A6:98:34:43:17"
       ]
     }
   }

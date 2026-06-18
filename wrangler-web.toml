@@ -1,5 +1,8 @@
 name = "dharma-ai-web"
 compatibility_date = "2024-01-01"
+# Worker script handles /.well-known/assetlinks.json (Cloudflare Assets ignores
+# dot-directories) and delegates everything else to the Flutter static build.
+main = "dharma_well_known.js"
 
 [assets]
 directory = "./build/web"
