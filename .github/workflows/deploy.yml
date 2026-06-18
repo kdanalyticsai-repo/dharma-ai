@@ -55,7 +55,7 @@ jobs:
         # Force CanvasKit on all devices (incl. mobile). The default 'auto'
         # renderer uses HTML on phones, where RepaintBoundary.toImage() (the
         # share-verse image feature) is unsupported.
-        run: flutter build web --web-renderer canvaskit --dart-define-from-file=dart_defines.json
+        run: flutter build web --dart-define-from-file=dart_defines.json
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
