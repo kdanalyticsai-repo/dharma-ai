@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/screens/feed_screen.dart';
@@ -157,28 +156,28 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             elevation: 0,
             destinations: [
               NavigationDestination(
-                icon: const Icon(PhosphorIconsRegular.sun),
-                selectedIcon: const Icon(PhosphorIconsFill.sun),
+                icon: const Icon(Icons.wb_sunny_outlined),
+                selectedIcon: const Icon(Icons.wb_sunny),
                 label: AppTranslations.get('tabFeed', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(PhosphorIconsRegular.flowerLotus),
-                selectedIcon: const Icon(PhosphorIconsFill.flowerLotus),
+                icon: const Icon(Icons.spa_outlined),
+                selectedIcon: const Icon(Icons.spa),
                 label: AppTranslations.get('tabSadhana', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(PhosphorIconsRegular.sparkle),
-                selectedIcon: const Icon(PhosphorIconsFill.sparkle),
+                icon: const Icon(Icons.auto_awesome_outlined),
+                selectedIcon: const Icon(Icons.auto_awesome),
                 label: AppTranslations.get('tabAiGuru', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(PhosphorIconsRegular.bookOpen),
-                selectedIcon: const Icon(PhosphorIconsFill.bookOpen),
+                icon: const Icon(Icons.menu_book_outlined),
+                selectedIcon: const Icon(Icons.menu_book),
                 label: AppTranslations.get('tabWisdom', currentLanguage),
               ),
               NavigationDestination(
-                icon: const Icon(PhosphorIconsRegular.usersThree),
-                selectedIcon: const Icon(PhosphorIconsFill.usersThree),
+                icon: const Icon(Icons.group_outlined),
+                selectedIcon: const Icon(Icons.group),
                 label: AppTranslations.get('tabSangha', currentLanguage),
               ),
             ],

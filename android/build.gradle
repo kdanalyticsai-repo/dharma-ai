@@ -3,15 +3,15 @@ allprojects {
         google()
         mavenCentral()
     }
-    // Force kotlin-stdlib to match our KGP version (2.1.20).
+    // Force kotlin-stdlib to match our KGP version (2.2.20).
     // Some plugins (e.g. package_info_plus 9.0.1) declare stdlib 2.2.0 in their own buildscript,
     // which Kotlin 2.1.x cannot read. Forcing here prevents the version mismatch.
     configurations.all {
         resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20"
-            force "org.jetbrains.kotlin:kotlin-stdlib-common:2.1.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib:2.2.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.20"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:2.2.20"
         }
     }
 }
@@ -21,7 +21,7 @@ allprojects {
 subprojects {
     if (project.name != 'app') {
         project.ext {
-            flutter = [compileSdkVersion: 35, minSdkVersion: 21, targetSdkVersion: 35, ndkVersion: "25.1.8937393"]
+            flutter = [compileSdkVersion: 36, minSdkVersion: 23, targetSdkVersion: 35, ndkVersion: "27.0.12077973"]
         }
     }
 }
@@ -32,6 +32,16 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+// sentry_flutter (and others) set languageVersion="1.6" which Kotlin 2.2.20 dropped.
+// gradle.projectsEvaluated fires after ALL projects are done — avoids "already evaluated" error.
+gradle.projectsEvaluated {
+    subprojects {
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).each { task ->
+            task.kotlinOptions.languageVersion = '2.0'
+        }
+    }
 }
 
 tasks.register("clean", Delete) {

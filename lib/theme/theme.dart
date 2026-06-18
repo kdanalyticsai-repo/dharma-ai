@@ -115,7 +115,7 @@ class SacredTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surfaceContainerLow,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -218,7 +218,7 @@ class SacredTheme {
         outlineVariant: outlineVariantDark,
       ),
       scaffoldBackgroundColor: surfaceDark,
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surfaceContainerLowDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
