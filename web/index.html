@@ -63,6 +63,34 @@
   <title>DharmaAI — Bhagavad Gita, AI Spiritual Guidance & Sadhana Tracker</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- PWA install prompt bridge: captures the browser's beforeinstallprompt
+       event so Flutter can trigger a native "Add to Home Screen" install.
+       Fires on Android Chrome when the app meets PWA criteria (manifest +
+       service worker + HTTPS). iOS uses "Share → Add to Home Screen" manually. -->
+  <script>
+    window._dharmaIsInstallable = false;
+    window._dharmaInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window._dharmaInstallPrompt = e;
+      window._dharmaIsInstallable = true;
+    });
+    window.addEventListener('appinstalled', function() {
+      window._dharmaIsInstallable = false;
+      window._dharmaInstallPrompt = null;
+    });
+    window.dharmaInstallPWA = function() {
+      if (!window._dharmaInstallPrompt) return;
+      window._dharmaInstallPrompt.prompt();
+      window._dharmaInstallPrompt.userChoice.then(function(result) {
+        if (result.outcome === 'accepted') {
+          window._dharmaIsInstallable = false;
+          window._dharmaInstallPrompt = null;
+        }
+      });
+    };
+  </script>
+
   <!-- Razorpay Checkout (web payments). Bridge lets Dart open the checkout. -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>

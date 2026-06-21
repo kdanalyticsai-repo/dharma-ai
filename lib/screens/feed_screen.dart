@@ -20,6 +20,7 @@ import 'package:dharma_ai/providers/transliteration_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/profile_screen.dart';
+import 'package:dharma_ai/widgets/pwa_install_button.dart';
 
 class DailyFeedScreen extends ConsumerStatefulWidget {
   const DailyFeedScreen({Key? key}) : super(key: key);
@@ -129,7 +130,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       ],
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const PwaInstallButton(),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () {
                         Navigator.push(

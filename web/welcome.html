@@ -72,9 +72,11 @@
 
     /* Top bar */
     header{position:sticky;top:0;z-index:10;background:rgba(250,247,242,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-    .nav{display:flex;align-items:center;justify-content:center;height:64px}
+    .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--saffron);font-size:1.15rem}
     .brand img{height:34px}
+    #pwa-nav-btn{display:none;background:transparent;color:var(--saffron);border:1.5px solid var(--saffron);font-weight:700;padding:8px 18px;border-radius:999px;font-size:.88rem;cursor:pointer;font-family:inherit;transition:background .2s}
+    #pwa-nav-btn:hover{background:rgba(156,63,0,.06)}
 
     /* Hero */
     .hero{text-align:center;padding:62px 0 50px}
@@ -150,6 +152,7 @@
   <header>
     <div class="wrap nav">
       <a class="brand" href="/welcome"><img src="email-logo.png" alt="DharmaAI logo"> DharmaAI</a>
+      <button id="pwa-nav-btn" onclick="installDharmaPWA()">⬇ Install App</button>
     </div>
   </header>
 
@@ -161,9 +164,10 @@
         <p class="sub">DharmaAI is your AI spiritual companion — chat with an AI Guru, read the Gita, Vedas &amp; Upanishads with translations, receive a daily verse and audio wisdom, and track your sadhana. In your language.</p>
         <div class="cta-row">
           <a class="btn" href="https://dharma.kdaanalytics.com/">Open Web App</a>
+          <button id="pwa-hero-btn" class="btn btn-ghost" style="display:none;border:none;cursor:pointer;font-family:inherit;font-size:1rem" onclick="installDharmaPWA()">⬇ Install App</button>
           <a class="btn btn-ghost" href="https://play.google.com/store/apps/details?id=com.kdaanalytics.dharmaai">Get Android App</a>
         </div>
-        <p class="note">Use in your browser instantly, or download the Android app from Google Play.</p>
+        <p class="note">Use in your browser instantly, install as an app, or download from Google Play.</p>
       </div>
     </section>
 
@@ -255,5 +259,40 @@
       </nav>
     </div>
   </footer>
+
+  <script>
+    var _dharmaWelcomePrompt = null;
+    function _showInstallBtns() {
+      var nb = document.getElementById('pwa-nav-btn');
+      var hb = document.getElementById('pwa-hero-btn');
+      if (nb) nb.style.display = 'inline-block';
+      if (hb) hb.style.display = 'inline-block';
+    }
+    function _hideInstallBtns() {
+      var nb = document.getElementById('pwa-nav-btn');
+      var hb = document.getElementById('pwa-hero-btn');
+      if (nb) nb.style.display = 'none';
+      if (hb) hb.style.display = 'none';
+    }
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      _dharmaWelcomePrompt = e;
+      _showInstallBtns();
+    });
+    window.addEventListener('appinstalled', function() {
+      _dharmaWelcomePrompt = null;
+      _hideInstallBtns();
+    });
+    function installDharmaPWA() {
+      if (!_dharmaWelcomePrompt) return;
+      _dharmaWelcomePrompt.prompt();
+      _dharmaWelcomePrompt.userChoice.then(function(result) {
+        if (result.outcome === 'accepted') {
+          _dharmaWelcomePrompt = null;
+          _hideInstallBtns();
+        }
+      });
+    }
+  </script>
 </body>
 </html>
