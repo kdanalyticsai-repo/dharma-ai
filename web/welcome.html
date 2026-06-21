@@ -72,10 +72,10 @@
 
     /* Top bar */
     header{position:sticky;top:0;z-index:10;background:rgba(250,247,242,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-    .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+    .nav{position:relative;display:flex;align-items:center;justify-content:center;height:64px}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--saffron);font-size:1.15rem}
     .brand img{height:34px}
-    #pwa-nav-btn{display:none;background:transparent;color:var(--saffron);border:1.5px solid var(--saffron);font-weight:700;padding:8px 18px;border-radius:999px;font-size:.88rem;cursor:pointer;font-family:inherit;transition:background .2s}
+    #pwa-nav-btn{display:none;position:absolute;right:0;background:transparent;color:var(--saffron);border:1.5px solid var(--saffron);font-weight:700;padding:8px 18px;border-radius:999px;font-size:.88rem;cursor:pointer;font-family:inherit;transition:background .2s}
     #pwa-nav-btn:hover{background:rgba(156,63,0,.06)}
 
     /* Hero */
