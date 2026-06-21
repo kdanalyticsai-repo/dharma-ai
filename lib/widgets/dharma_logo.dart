@@ -15,7 +15,7 @@ class DharmaLogo extends ConsumerWidget {
   final double height;
   final bool showTagline;
 
-  const DharmaLogo({Key? key, this.height = 120, this.showTagline = false})
+  const DharmaLogo({Key? key, this.height = 120, this.showTagline = true})
       : super(key: key);
 
   @override
