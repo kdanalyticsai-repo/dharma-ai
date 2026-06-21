@@ -7,6 +7,7 @@ import 'package:dharma_ai/widgets/dharma_logo.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
 import 'package:dharma_ai/screens/login_screen.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
+import 'package:dharma_ai/widgets/pwa_install_button.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -50,6 +51,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       height: 1,
                       color: SacredTheme.templeGold,
                     ),
+                    const SizedBox(height: 14),
+                    const PwaInstallButton(),
                   ],
                 ),
 

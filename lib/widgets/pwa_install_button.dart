@@ -45,7 +45,7 @@ class _PwaInstallButtonState extends State<PwaInstallButton> {
         setState(() => _available = false);
       },
       icon: const Icon(Icons.download_rounded, size: 16),
-      label: const Text('Install App'),
+      label: const Text('Install Web App'),
       style: OutlinedButton.styleFrom(
         foregroundColor: SacredTheme.primary,
         side: const BorderSide(color: SacredTheme.primary, width: 1.5),
