@@ -25,8 +25,6 @@ class DharmaLogo extends ConsumerWidget {
       height: height,
       fit: BoxFit.contain,
       filterQuality: FilterQuality.high,
-      color: SacredTheme.surface,
-      colorBlendMode: BlendMode.multiply,
       errorBuilder: (context, error, stack) => Text(
         'DharmaAI',
         textAlign: TextAlign.center,

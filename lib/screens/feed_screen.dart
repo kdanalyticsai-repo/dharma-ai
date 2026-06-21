@@ -130,8 +130,6 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       ],
                       ),
                     ),
-                    const PwaInstallButton(),
-                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () {
                         Navigator.push(
@@ -171,6 +169,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
 
                 const SizedBox(height: 18),
                 const Center(child: DharmaLogo(height: 104)),
+                const SizedBox(height: 10),
+                const Center(child: PwaInstallButton()),
 
                 const FadingDivider(height: 24),
 
