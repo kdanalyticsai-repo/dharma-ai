@@ -39,8 +39,6 @@ class LegalFooter extends StatelessWidget {
         spacing: 8,
         runSpacing: 4,
         children: [
-          link('Web App', ''),
-          dot(),
           link('Privacy', 'privacy.html'),
           dot(),
           link('Terms', 'terms.html'),
