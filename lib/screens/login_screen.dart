@@ -90,7 +90,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       if (r.error != null) {
-        setState(() => _errorMessage = r.error);
+        final lang = ref.read(languageProvider);
+        final msg = r.error!.startsWith('t:')
+            ? AppTranslations.get(r.error!.substring(2), lang)
+            : r.error!;
+        // If already registered, switch to sign-in so they can log in directly.
+        final alreadyExists = r.error == 't:authEmailAlreadyRegistered';
+        setState(() {
+          _errorMessage = msg;
+          if (alreadyExists) _isSignUp = false;
+        });
         return;
       }
       if (r.needsConfirmation) {

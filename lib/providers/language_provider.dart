@@ -849,6 +849,14 @@ class AppTranslations {
       AppLanguage.oriya: 'ଏହି Google ଖାତା ଆଗରୁ ପଞ୍ଜୀକୃତ ଅଛି। ଦୟାକରି "Sign In" ବ୍ୟବହାର କରନ୍ତୁ।',
       AppLanguage.gujarati: 'આ Google ખાતું પહેલેથી નોંધાયેલ છે. કૃપા કરીને "Sign In" ઉપયોગ કરો.',
     },
+    'authEmailAlreadyRegistered': {
+      AppLanguage.english: 'This email is already registered. Please sign in instead.',
+      AppLanguage.hindi: 'यह ईमेल पहले से पंजीकृत है। कृपया साइन इन करें।',
+      AppLanguage.tamil: 'இந்த மின்னஞ்சல் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது. தயவுசெய்து உள்நுழையவும்.',
+      AppLanguage.bengali: 'এই ইমেল ইতিমধ্যে নিবন্ধিত। দয়া করে সাইন ইন করুন।',
+      AppLanguage.oriya: 'ଏହି ଇମେଲ ଆଗରୁ ପଞ୍ଜୀକୃତ ଅଛି। ଦୟାକରି ସାଇନ ଇନ କରନ୍ତୁ।',
+      AppLanguage.gujarati: 'આ ઈમેલ પહેલેથી નોંધાયેલ છે. કૃપા કરીને સાઇન ઇન કરો.',
+    },
     // ── Subscription expiry dialog ──
     'expiryTitle': {
       AppLanguage.english: 'Subscription ended',

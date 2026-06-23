@@ -84,6 +84,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
           if (langCode != null) 'preferred_language': langCode,
         },
       );
+      // Supabase silently returns a user with empty identities when the email
+      // is already registered — it never throws an error (email enumeration
+      // protection). Detect this and surface a clear message.
+      if (res.user?.identities?.isEmpty == true) {
+        return (error: 't:authEmailAlreadyRegistered', needsConfirmation: false);
+      }
       // With "Confirm email" on, signUp returns a user but NO session.
       final needsConfirmation = res.session == null;
       if (!needsConfirmation) {
