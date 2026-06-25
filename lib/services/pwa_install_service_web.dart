@@ -3,7 +3,8 @@ import 'dart:js' as js;
 
 bool get pwaInstallAvailable {
   try {
-    return js.context['_dharmaIsInstallable'] == true;
+    final v = js.context['_dharmaIsInstallable'];
+    return v != null && v == true;
   } catch (_) {
     return false;
   }
@@ -11,6 +12,8 @@ bool get pwaInstallAvailable {
 
 void pwaInstall() {
   try {
-    js.context.callMethod('dharmaInstallPWA', []);
+    if (js.context.hasProperty('dharmaInstallPWA')) {
+      js.context.callMethod('dharmaInstallPWA', []);
+    }
   } catch (_) {}
 }

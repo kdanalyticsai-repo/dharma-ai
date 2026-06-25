@@ -39,12 +39,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (pendingGoogleAuthError != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
+        // Capture before any awaits — the global can be cleared by a
+        // concurrent initState if the widget is replaced mid-flight.
+        final key = pendingGoogleAuthError;
+        pendingGoogleAuthError = null;
+        if (key == null) return;
         isNewUserOnboarding = true; // block auth listener during signOut
         await ref.read(authProvider.notifier).signOut();
         if (!mounted) { isNewUserOnboarding = false; return; }
         isNewUserOnboarding = false;
-        final key = pendingGoogleAuthError!;
-        pendingGoogleAuthError = null;
         setState(() => _errorMessage = AppTranslations.get(key, ref.read(languageProvider)));
       });
     }
