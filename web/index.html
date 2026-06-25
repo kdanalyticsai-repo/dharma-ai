@@ -63,6 +63,35 @@
   <title>DharmaAI — Bhagavad Gita, AI Spiritual Guidance & Sadhana Tracker</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- CanvasKit / WebGL crash recovery.
+       When the browser loses the WebGL context (GPU memory pressure, tab
+       switching, device sleep) the CanvasKit WASM module aborts with
+       "RuntimeError: Aborted()". Flutter cannot recover from this on its own,
+       so we reload the page after a short delay to give the user a clean session
+       instead of a frozen white screen. -->
+  <script>
+    (function() {
+      var _reloading = false;
+      function recoverCanvasKit(reason) {
+        if (_reloading) return;
+        _reloading = true;
+        console.warn('DharmaAI: ' + reason + ' — reloading for recovery');
+        setTimeout(function() { window.location.reload(); }, 1500);
+      }
+      // Catch the Emscripten/WASM abort that surfaces as a JS error.
+      window.addEventListener('error', function(e) {
+        if (e && e.message && e.message.indexOf('Aborted') !== -1) {
+          recoverCanvasKit('CanvasKit WASM abort');
+        }
+      });
+      // Catch WebGL context loss before it reaches CanvasKit.
+      window.addEventListener('webglcontextlost', function(e) {
+        e.preventDefault();
+        recoverCanvasKit('WebGL context lost');
+      }, true);
+    })();
+  </script>
+
   <!-- PWA install prompt bridge: captures the browser's beforeinstallprompt
        event so Flutter can trigger a native "Add to Home Screen" install.
        Fires on Android Chrome when the app meets PWA criteria (manifest +
