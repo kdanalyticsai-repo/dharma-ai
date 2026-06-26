@@ -149,6 +149,16 @@
   </style>
 </head>
 <body>
+  <!-- In-app browser banner: shown when user opens link from FB / IG / LinkedIn / WhatsApp etc.
+       Those browsers block PWA install and may have JS quirks. We guide the user to their
+       real browser. Populated and shown by the detection script at the bottom. -->
+  <div id="iab-bar" style="display:none;background:#9C3F00;color:#fff;padding:13px 44px 13px 16px;text-align:center;font-size:.87rem;font-weight:600;line-height:1.5;position:relative;z-index:200">
+    <span id="iab-msg"></span>
+    <button onclick="document.getElementById('iab-bar').remove()"
+            aria-label="Dismiss"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer;padding:4px">&times;</button>
+  </div>
+
   <header>
     <div class="wrap nav">
       <a class="brand" href="/welcome"><img src="email-logo.png" alt="DharmaAI logo"> DharmaAI</a>
@@ -167,7 +177,11 @@
           <button id="pwa-hero-btn" class="btn btn-ghost" style="display:none;border:none;cursor:pointer;font-family:inherit;font-size:1rem" onclick="installDharmaPWA()">⬇ Install Web App</button>
           <a class="btn btn-ghost" href="https://play.google.com/store/apps/details?id=com.kdaanalytics.dharmaai">Get Android App</a>
         </div>
-        <p class="note">Use in your browser instantly, install as an app, or download from Google Play.</p>
+        <!-- iOS Safari install hint — no beforeinstallprompt on iOS; user must use Share menu -->
+        <p id="ios-hint" class="note" style="display:none">
+          📲 To install on iPhone: tap the <strong>Share</strong> button (□↑) in Safari, then choose <strong>"Add to Home Screen"</strong>.
+        </p>
+        <p class="note" id="default-note">Use in your browser instantly, install as an app, or download from Google Play.</p>
       </div>
     </section>
 
@@ -241,6 +255,9 @@
             <a class="btn" href="https://dharma.kdaanalytics.com/">Get Web App →</a>
             <a class="btn btn-ghost" href="https://play.google.com/store/apps/details?id=com.kdaanalytics.dharmaai">Get Android App</a>
           </div>
+          <p id="ios-hint-2" style="display:none;margin-top:14px;font-size:.87rem;color:var(--muted)">
+            📲 iPhone: tap <strong>Share</strong> (□↑) in Safari → <strong>"Add to Home Screen"</strong>
+          </p>
         </div>
       </div>
     </section>
@@ -261,6 +278,7 @@
   </footer>
 
   <script>
+    // ── PWA install (Android Chrome / Edge) ───────────────────────────────────
     var _dharmaWelcomePrompt = null;
     function _showInstallBtns() {
       var nb = document.getElementById('pwa-nav-btn');
@@ -293,6 +311,45 @@
         }
       });
     }
+
+    // ── In-app browser detection ──────────────────────────────────────────────
+    // Social media apps (Facebook, Instagram, LinkedIn, WhatsApp, TikTok, etc.)
+    // open links in an embedded WebView that blocks PWA install and may break JS.
+    // We detect this and guide the user to their real browser.
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isIOS     = /iPhone|iPad|iPod/.test(ua);
+      var isAndroid = /Android/.test(ua);
+
+      // In-app browser fingerprints (covers FB, IG, LinkedIn, Twitter/X,
+      // WhatsApp, WeChat, TikTok, Snapchat, YouTube-app, Pinterest…)
+      var isIAB = /FBAN|FBAV|FBIOS|FBBV|Instagram|LinkedInApp|Twitter(?:\/| for)|WhatsApp|MicroMessenger|musical_ly|BytedanceWebview|TikTok|Snapchat|Pinterest/i.test(ua);
+
+      // iOS Safari — real Safari, not Chrome/Firefox/in-app
+      var isIOSSafari = isIOS && !isIAB &&
+        /Version\/[\d.]+.*Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
+
+      if (isIAB) {
+        // Show the banner and instructions to open in the system browser
+        var msg = isIOS
+          ? '📲 Open in Safari to install DharmaAI: tap ··· (Share) then "Open in Safari".'
+          : '📲 Open in Chrome to install DharmaAI: tap ⋮ then "Open in browser" or "Open in Chrome".';
+        var bar = document.getElementById('iab-bar');
+        var txt = document.getElementById('iab-msg');
+        if (bar && txt) { txt.textContent = msg; bar.style.display = 'block'; }
+        // Also nudge the default note
+        var note = document.getElementById('default-note');
+        if (note) note.style.display = 'none';
+      } else if (isIOSSafari) {
+        // Real iOS Safari: no beforeinstallprompt — guide user to use Share menu
+        var h1 = document.getElementById('ios-hint');
+        var h2 = document.getElementById('ios-hint-2');
+        if (h1) h1.style.display = 'block';
+        if (h2) h2.style.display = 'block';
+        var note = document.getElementById('default-note');
+        if (note) note.style.display = 'none';
+      }
+    })();
   </script>
 </body>
 </html>

@@ -63,6 +63,44 @@
   <title>DharmaAI — Bhagavad Gita, AI Spiritual Guidance & Sadhana Tracker</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- In-app browser (Facebook, Instagram, LinkedIn, WhatsApp, TikTok …) detection.
+       These embedded WebViews block PWA install and can break Flutter internals.
+       We show a plain-HTML banner BEFORE Flutter boots so the message appears even
+       if the app fails to load in those environments. -->
+  <style>
+    #_dharma-iab-bar {
+      display: none;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+      background: #9C3F00; color: #fff;
+      padding: 13px 44px 13px 16px;
+      text-align: center; font-size: 14px; font-weight: 600; line-height: 1.5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #_dharma-iab-bar button {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: transparent; border: none; color: #fff;
+      font-size: 22px; line-height: 1; cursor: pointer; padding: 4px;
+    }
+  </style>
+  <script>
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPhone|iPad|iPod/.test(ua);
+      var isIAB = /FBAN|FBAV|FBIOS|FBBV|Instagram|LinkedInApp|Twitter(?:\/| for)|WhatsApp|MicroMessenger|musical_ly|BytedanceWebview|TikTok|Snapchat|Pinterest/i.test(ua);
+      if (!isIAB) return;
+      var msg = isIOS
+        ? '📲 For best experience: tap ··· (Share) → "Open in Safari"'
+        : '📲 For best experience: tap ⋮ → "Open in browser" or "Open in Chrome"';
+      // Inject the banner as soon as the DOM is ready
+      function showBar() {
+        var bar = document.getElementById('_dharma-iab-bar');
+        if (bar) { bar.querySelector('span').textContent = msg; bar.style.display = 'block'; }
+      }
+      if (document.body) { showBar(); }
+      else { document.addEventListener('DOMContentLoaded', showBar); }
+    })();
+  </script>
+
   <!-- Guard document.createEvent against browser extension wrappers that lose 'this'.
        Safari content extensions (e.g. iOS in-app browsers, ad blockers) can replace
        document.createEvent with a wrapper that calls the native method without the
@@ -178,6 +216,12 @@
   </script>
 </head>
 <body>
+  <!-- In-app browser banner (shown by the detection script above) -->
+  <div id="_dharma-iab-bar">
+    <span></span>
+    <button onclick="document.getElementById('_dharma-iab-bar').style.display='none'" aria-label="Dismiss">&times;</button>
+  </div>
+
   <!-- When a new build's service worker activates, reload once so users always
        land on the latest version (prevents getting stuck on a stale build).
        Guarded against reload loops; skips the very first install. -->
