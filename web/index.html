@@ -63,6 +63,33 @@
   <title>DharmaAI — Bhagavad Gita, AI Spiritual Guidance & Sadhana Tracker</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Guard document.createEvent against browser extension wrappers that lose 'this'.
+       Safari content extensions (e.g. iOS in-app browsers, ad blockers) can replace
+       document.createEvent with a wrapper that calls the native method without the
+       correct receiver, causing "Illegal invocation" inside Flutter's gesture dispatch.
+       We restore a correctly-bound own-property on document so Flutter always reaches
+       the real implementation. (Sentry DHARMA-AI-5) -->
+  <script>
+    (function() {
+      try {
+        // Capture whatever is on the prototype now. If an extension replaced it before
+        // our script ran, nativeCreate is the extension's version — but calling it with
+        // .call(document) fixes the 'this' binding regardless.
+        var nativeCreate = Document.prototype.createEvent;
+        // Set as an own property on the document instance so it takes precedence over
+        // any prototype-level patch the extension may add AFTER this script runs.
+        Object.defineProperty(document, 'createEvent', {
+          value: function createEvent(type) {
+            return nativeCreate.call(document, type);
+          },
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      } catch (_) {}
+    })();
+  </script>
+
   <!-- CanvasKit / WebGL crash recovery.
        When the browser loses the WebGL context (GPU memory pressure, tab
        switching, device sleep) the CanvasKit WASM module aborts with
