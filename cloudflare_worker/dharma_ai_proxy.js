@@ -49,6 +49,19 @@ export default {
       }
     }
 
+    // Supabase Database Webhook: fires when a new row is inserted into `profiles`.
+    // Authenticated by a shared secret in the Authorization header.
+    // Always returns 200 so Supabase doesn't retry on our side errors.
+    if (path === '/notify/new-user') {
+      if (request.method !== 'POST') return new Response('ok', { status: 200 });
+      try {
+        return await handleNewUserNotification(request, env);
+      } catch (e) {
+        console.error('new-user notify error:', e.message);
+        return new Response('ok', { status: 200 });
+      }
+    }
+
     const origin = request.headers.get('Origin') || '';
     if (request.method === 'OPTIONS') return cors('', 204, allowedOrigin(origin, env));
     if (request.method !== 'POST') return cors(j({ error: 'Method not allowed' }), 405, null);
@@ -544,6 +557,109 @@ async function hmacHex(secret, message) {
   );
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ── New-user admin notification ─────────────────────────────────────────────
+// Called by a Supabase Database Webhook on INSERT into public.profiles.
+// Sends a summary email to the admin (kdanalyticsai@gmail.com) via Resend.
+// Secrets needed:
+//   RESEND_API_KEY         — from resend.com dashboard
+//   SUPABASE_WEBHOOK_SECRET — any random string; paste the same value into
+//                             the Supabase webhook "Authorization" header field
+async function handleNewUserNotification(request, env) {
+  // Validate shared secret so only Supabase can call this endpoint.
+  const secret = env.SUPABASE_WEBHOOK_SECRET;
+  if (secret) {
+    const auth = request.headers.get('authorization') || '';
+    if (auth !== `Bearer ${secret}`) {
+      console.warn('new-user webhook: invalid secret');
+      return new Response('ok', { status: 200 }); // silent reject — never 401
+    }
+  }
+
+  const payload = await request.json();
+  // Supabase sends: { type: 'INSERT', table, record, old_record, schema }
+  const r = payload.record || {};
+
+  const name     = r.full_name         || '(no name)';
+  const email    = r.email             || '(no email)';
+  const tier     = r.subscription_tier || 'free';
+  const lang     = r.preferred_language || r.language || '—';
+  const method   = r.auth_provider     || '—';
+  const joinedAt = r.created_at
+    ? new Date(r.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST'
+    : new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
+
+  const tierLabel = {
+    free:     '🆓 Free',
+    sadhaka:  '⭐ Sadhaka Premium',
+    annual:   '🌟 Sadhaka Annual',
+  }[tier] || tier;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF7F2;margin:0;padding:24px}
+  .card{background:#fff;border-radius:12px;padding:28px 32px;max-width:480px;margin:0 auto;border:1px solid #ecd9cf}
+  .brand{color:#9C3F00;font-weight:800;font-size:1.2rem;margin-bottom:4px}
+  .title{font-size:1.05rem;font-weight:700;color:#251913;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse}
+  td{padding:9px 0;border-bottom:1px solid #f0e8e3;font-size:.95rem;color:#251913}
+  td:first-child{color:#6b5648;width:38%;font-weight:600}
+  .badge{display:inline-block;background:#fdeee3;color:#9C3F00;border-radius:999px;padding:2px 12px;font-size:.85rem;font-weight:700}
+  .footer{margin-top:20px;font-size:.8rem;color:#aaa;text-align:center}
+</style></head>
+<body>
+<div class="card">
+  <div class="brand">🪔 DharmaAI</div>
+  <div class="title">New user registered</div>
+  <table>
+    <tr><td>Name</td><td><strong>${escHtml(name)}</strong></td></tr>
+    <tr><td>Email</td><td>${escHtml(email)}</td></tr>
+    <tr><td>Subscription</td><td><span class="badge">${escHtml(tierLabel)}</span></td></tr>
+    <tr><td>Language</td><td>${escHtml(lang)}</td></tr>
+    <tr><td>Auth method</td><td>${escHtml(method)}</td></tr>
+    <tr><td>Joined</td><td>${escHtml(joinedAt)}</td></tr>
+  </table>
+  <div class="footer">dharma.kdaanalytics.com — admin alert</div>
+</div>
+</body></html>`;
+
+  const resendKey = env.RESEND_API_KEY;
+  if (!resendKey) {
+    console.warn('new-user notify: RESEND_API_KEY not set — skipping email');
+    return new Response('ok', { status: 200 });
+  }
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'DharmaAI Admin <onboarding@resend.dev>',
+      to: ['kdanalyticsai@gmail.com'],
+      subject: `🪔 New DharmaAI user: ${name}`,
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Resend error:', err);
+  }
+
+  return new Response('ok', { status: 200 });
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 const j = (obj) => JSON.stringify(obj);
