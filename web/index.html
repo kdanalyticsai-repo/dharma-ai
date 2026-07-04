@@ -101,25 +101,34 @@
     })();
   </script>
 
-  <!-- Guard document.createEvent against browser extension wrappers that lose 'this'.
-       Safari content extensions (e.g. iOS in-app browsers, ad blockers) can replace
-       document.createEvent with a wrapper that calls the native method without the
-       correct receiver, causing "Illegal invocation" inside Flutter's gesture dispatch.
-       We restore a correctly-bound own-property on document so Flutter always reaches
-       the real implementation. (Sentry DHARMA-AI-5) -->
+  <!-- Guard document.createEvent against browser extension wrappers that lose 'this'
+       or return null/undefined instead of a real Event object.
+       Extensions that run at document_start patch Document.prototype BEFORE any page
+       script, so capturing the prototype here gives us the extension's broken version.
+       Fix: create a hidden iframe — its Document.prototype lives in a separate JS realm
+       that extensions do NOT patch — and use that as the truly native implementation.
+       (Sentry DHARMA-AI-5: Illegal invocation; DHARMA-AI-6: NoSuchMethodError null check) -->
   <script>
     (function() {
       try {
-        // Capture whatever is on the prototype now. If an extension replaced it before
-        // our script ran, nativeCreate is the extension's version — but calling it with
-        // .call(document) fixes the 'this' binding regardless.
-        var nativeCreate = Document.prototype.createEvent;
-        // Set as an own property on the document instance so it takes precedence over
-        // any prototype-level patch the extension may add AFTER this script runs.
+        // Step 1: get the truly native createEvent from a fresh, unpatched iframe realm.
+        var _if = document.createElement('iframe');
+        _if.style.cssText = 'display:none;position:absolute;width:0;height:0';
+        document.documentElement.appendChild(_if);
+        var _native = null;
+        try { _native = _if.contentWindow.Document.prototype.createEvent; } catch (_e) {}
+        document.documentElement.removeChild(_if);
+
+        // Step 2: fall back to current prototype if iframe trick failed (cross-origin block etc.).
+        if (typeof _native !== 'function') {
+          _native = Document.prototype.createEvent;
+        }
+
+        // Step 3: set an own property on the document instance so it always shadows any
+        // prototype-level patch. The bound call guarantees correct 'this' (document).
+        var _create = _native.bind(document);
         Object.defineProperty(document, 'createEvent', {
-          value: function createEvent(type) {
-            return nativeCreate.call(document, type);
-          },
+          value: function createEvent(type) { return _create(type); },
           writable: true,
           configurable: true,
           enumerable: true,
