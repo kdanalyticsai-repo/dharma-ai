@@ -6,6 +6,7 @@ import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/dharma_logo.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
 import 'package:dharma_ai/screens/login_screen.dart';
+import 'package:dharma_ai/screens/onboarding_screen.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/widgets/pwa_install_button.dart';
 
@@ -17,6 +18,14 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      maybeShowOnboarding(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
