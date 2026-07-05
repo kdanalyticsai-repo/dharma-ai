@@ -5,6 +5,7 @@ class ChatMessage {
   final DateTime timestamp;
   final List<String>? verseCitations; // List of Verse IDs cited in the answer
   final bool isGuruMode;
+  final String? feedbackId; // Supabase ai_feedback row ID — set after response logs
 
   const ChatMessage({
     required this.id,
@@ -13,6 +14,7 @@ class ChatMessage {
     required this.timestamp,
     this.verseCitations,
     required this.isGuruMode,
+    this.feedbackId,
   });
 
   ChatMessage copyWith({
@@ -22,6 +24,7 @@ class ChatMessage {
     DateTime? timestamp,
     List<String>? verseCitations,
     bool? isGuruMode,
+    String? feedbackId,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -30,6 +33,7 @@ class ChatMessage {
       timestamp: timestamp ?? this.timestamp,
       verseCitations: verseCitations ?? this.verseCitations,
       isGuruMode: isGuruMode ?? this.isGuruMode,
+      feedbackId: feedbackId ?? this.feedbackId,
     );
   }
 
@@ -41,6 +45,7 @@ class ChatMessage {
       'timestamp': timestamp.toIso8601String(),
       'verseCitations': verseCitations,
       'isGuruMode': isGuruMode,
+      // feedbackId is session-only; not persisted to local storage
     };
   }
 

@@ -6,6 +6,7 @@ import 'package:dharma_ai/models/chat_message.dart';
 import 'package:dharma_ai/providers/chat_provider.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
+import 'package:dharma_ai/services/feedback_service.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/subscription_paywall_screen.dart';
 import 'package:dharma_ai/widgets/lotus_painter.dart';
@@ -260,15 +261,33 @@ class _GuruChatScreenState extends ConsumerState<GuruChatScreen> {
   }
 }
 
-class GuruChatBubble extends StatelessWidget {
+class GuruChatBubble extends StatefulWidget {
   final ChatMessage message;
 
   const GuruChatBubble({Key? key, required this.message}) : super(key: key);
 
   @override
+  State<GuruChatBubble> createState() => _GuruChatBubbleState();
+}
+
+class _GuruChatBubbleState extends State<GuruChatBubble> {
+  int? _rating; // 1 = thumbs up, -1 = thumbs down, null = no rating
+
+  Future<void> _rate(int value) async {
+    final feedbackId = widget.message.feedbackId;
+    if (feedbackId == null) return;
+    setState(() => _rating = value);
+    await FeedbackService.updateRating(feedbackId, value);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final isUser = message.role == 'user';
+    final isUser = widget.message.role == 'user';
+
+    final showFeedback = !isUser &&
+        widget.message.feedbackId != null &&
+        !widget.message.id.startsWith('welcome');
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -277,66 +296,112 @@ class GuruChatBubble extends StatelessWidget {
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.85,
         ),
-        child: Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: isUser
-                ? SacredTheme.secondary.withOpacity(0.9)
-                : SacredTheme.surfaceContainerLowest.withOpacity(0.9),
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(SacredTheme.radiusMd),
-              topRight: const Radius.circular(SacredTheme.radiusMd),
-              bottomLeft: isUser
-                  ? const Radius.circular(SacredTheme.radiusMd)
-                  : Radius.zero,
-              bottomRight: isUser
-                  ? Radius.zero
-                  : const Radius.circular(SacredTheme.radiusMd),
-            ),
-            border: isUser
-                ? null
-                : Border.all(color: SacredTheme.outlineVariant.withOpacity(0.4), width: 0.5),
-            boxShadow: isUser
-                ? null
-                : [
-                    BoxShadow(
-                      color: SacredTheme.secondary.withOpacity(0.02),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-          ),
-          child: Stack(
-            children: [
-              if (!isUser)
-                Positioned(
-                  bottom: -20,
-                  right: -20,
-                  child: IgnorePointer(
-                    child: CustomPaint(
-                      size: const Size(60, 60),
-                      painter: LotusPainter(
-                        color: SacredTheme.templeGold.withOpacity(0.08),
-                        animationValue: 0.0,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: isUser
+                    ? SacredTheme.secondary.withOpacity(0.9)
+                    : SacredTheme.surfaceContainerLowest.withOpacity(0.9),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(SacredTheme.radiusMd),
+                  topRight: const Radius.circular(SacredTheme.radiusMd),
+                  bottomLeft: isUser
+                      ? const Radius.circular(SacredTheme.radiusMd)
+                      : Radius.zero,
+                  bottomRight: isUser
+                      ? Radius.zero
+                      : const Radius.circular(SacredTheme.radiusMd),
+                ),
+                border: isUser
+                    ? null
+                    : Border.all(color: SacredTheme.outlineVariant.withOpacity(0.4), width: 0.5),
+                boxShadow: isUser
+                    ? null
+                    : [BoxShadow(color: SacredTheme.secondary.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+              ),
+              child: Stack(
+                children: [
+                  if (!isUser)
+                    Positioned(
+                      bottom: -20,
+                      right: -20,
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          size: const Size(60, 60),
+                          painter: LotusPainter(
+                            color: SacredTheme.templeGold.withOpacity(0.08),
+                            animationValue: 0.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Text(
+                      widget.message.text,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: isUser ? Colors.white : SacredTheme.onSurface,
+                        fontSize: isUser ? 15 : 16,
+                        height: 1.5,
                       ),
                     ),
                   ),
-                ),
+                ],
+              ),
+            ),
+            if (showFeedback)
               Padding(
-                padding: const EdgeInsets.all(18),
-                child: Text(
-                  message.text,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: isUser ? Colors.white : SacredTheme.onSurface,
-                    // Make Guru's text feel organic and soothing
-                    fontSize: isUser ? 15 : 16,
-                    height: 1.5,
-                  ),
+                padding: const EdgeInsets.only(top: 4, left: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ThumbButton(
+                      icon: Icons.thumb_up_outlined,
+                      activeIcon: Icons.thumb_up,
+                      active: _rating == 1,
+                      onTap: () => _rate(1),
+                    ),
+                    const SizedBox(width: 4),
+                    _ThumbButton(
+                      icon: Icons.thumb_down_outlined,
+                      activeIcon: Icons.thumb_down,
+                      active: _rating == -1,
+                      onTap: () => _rate(-1),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _ThumbButton extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _ThumbButton({
+    required this.icon,
+    required this.activeIcon,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(
+        active ? activeIcon : icon,
+        size: 15,
+        color: active ? SacredTheme.primary : SacredTheme.outline,
       ),
     );
   }

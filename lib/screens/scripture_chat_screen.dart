@@ -11,6 +11,7 @@ import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/search_screen.dart';
 import 'package:dharma_ai/screens/subscription_paywall_screen.dart';
+import 'package:dharma_ai/services/feedback_service.dart';
 import 'package:dharma_ai/widgets/lotus_painter.dart';
 
 class ScriptureChatScreen extends ConsumerStatefulWidget {
@@ -240,15 +241,29 @@ class _ScriptureChatScreenState extends ConsumerState<ScriptureChatScreen> {
   }
 }
 
-class ScriptureChatBubble extends ConsumerWidget {
+class ScriptureChatBubble extends ConsumerStatefulWidget {
   final ChatMessage message;
 
   const ScriptureChatBubble({Key? key, required this.message}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScriptureChatBubble> createState() => _ScriptureChatBubbleState();
+}
+
+class _ScriptureChatBubbleState extends ConsumerState<ScriptureChatBubble> {
+  int? _rating;
+
+  Future<void> _rate(int value) async {
+    final feedbackId = widget.message.feedbackId;
+    if (feedbackId == null) return;
+    setState(() => _rating = value);
+    await FeedbackService.updateRating(feedbackId, value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final isUser = message.role == 'user';
+    final isUser = widget.message.role == 'user';
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -300,7 +315,7 @@ class ScriptureChatBubble extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      message.text,
+                      widget.message.text,
                       style: textTheme.bodyLarge?.copyWith(
                         fontFamily: 'Be Vietnam Pro',
                         color: isUser ? Colors.white : SacredTheme.onSurface,
@@ -311,13 +326,40 @@ class ScriptureChatBubble extends ConsumerWidget {
               ),
             ),
 
+            // Thumbs up/down feedback
+            if (!isUser && widget.message.feedbackId != null && !widget.message.id.startsWith('welcome')) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => _rate(1),
+                    child: Icon(
+                      _rating == 1 ? Icons.thumb_up : Icons.thumb_up_outlined,
+                      size: 15,
+                      color: _rating == 1 ? SacredTheme.primary : SacredTheme.outline,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () => _rate(-1),
+                    child: Icon(
+                      _rating == -1 ? Icons.thumb_down : Icons.thumb_down_outlined,
+                      size: 15,
+                      color: _rating == -1 ? SacredTheme.primary : SacredTheme.outline,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
             // Citation items (if assistant generated)
-            if (!isUser && message.verseCitations != null && message.verseCitations!.isNotEmpty) ...[
+            if (!isUser && widget.message.verseCitations != null && widget.message.verseCitations!.isNotEmpty) ...[
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
-                children: message.verseCitations!.map((id) {
+                children: widget.message.verseCitations!.map((id) {
                   return FutureBuilder<Verse?>(
                     future: ref.read(scriptureServiceProvider).getVerseById(id),
                     builder: (context, snapshot) {

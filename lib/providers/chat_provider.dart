@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/models/chat_message.dart';
 import 'package:dharma_ai/providers/scripture_provider.dart';
 import 'package:dharma_ai/services/ai_service.dart';
+import 'package:dharma_ai/services/feedback_service.dart';
 import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/providers/auth_provider.dart';
@@ -371,6 +372,26 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
             .toList(),
       );
       await cache.put(text, currentLanguage, {'text': fullText, 'citations': citations});
+
+      // Log Q&A for quality review (fire-and-forget).
+      final userId = _ref.read(authUserProvider).valueOrNull?.id;
+      if (userId != null && mounted) {
+        FeedbackService.logResponse(
+          userId: userId,
+          mode: 'scholar',
+          language: currentLanguage.name,
+          question: text,
+          response: fullText,
+        ).then((feedbackId) {
+          if (feedbackId != null && mounted) {
+            state = state.copyWith(
+              messages: state.messages
+                  .map((m) => m.id == streamId ? m.copyWith(feedbackId: feedbackId) : m)
+                  .toList(),
+            );
+          }
+        });
+      }
     } catch (e) {
       final currentLanguage = _ref.read(languageProvider);
       final cleanMsgs =
@@ -601,6 +622,27 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
 
       if (!started) {
         state = state.copyWith(isLoading: false);
+      } else {
+        // Log Q&A for quality review (fire-and-forget).
+        final fullText = accumulated.toString();
+        final userId = _ref.read(authUserProvider).valueOrNull?.id;
+        if (userId != null && mounted) {
+          FeedbackService.logResponse(
+            userId: userId,
+            mode: 'guru',
+            language: currentLanguage.name,
+            question: text,
+            response: fullText,
+          ).then((feedbackId) {
+            if (feedbackId != null && mounted) {
+              state = state.copyWith(
+                messages: state.messages
+                    .map((m) => m.id == streamId ? m.copyWith(feedbackId: feedbackId) : m)
+                    .toList(),
+              );
+            }
+          });
+        }
       }
       _persist();
     } catch (e) {
