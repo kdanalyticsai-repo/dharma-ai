@@ -292,11 +292,12 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       // Cache hit — display immediately, no streaming needed.
       final cached = await cache.get(text, currentLanguage);
       if (cached != null) {
+        final cachedMsgId = 'cached_${DateTime.now().millisecondsSinceEpoch}';
         state = state.copyWith(
           messages: [
             ...state.messages,
             ChatMessage(
-              id: DateTime.now().toString(),
+              id: cachedMsgId,
               text: cached['text'] as String,
               role: 'assistant',
               timestamp: DateTime.now(),
@@ -308,6 +309,25 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
           ],
           isLoading: false,
         );
+        // Log cached response too so users can rate it.
+        final userId = _ref.read(authUserProvider).valueOrNull?.id;
+        if (userId != null && mounted) {
+          FeedbackService.logResponse(
+            userId: userId,
+            mode: 'scholar',
+            language: currentLanguage.name,
+            question: text,
+            response: cached['text'] as String,
+          ).then((feedbackId) {
+            if (feedbackId != null && mounted) {
+              state = state.copyWith(
+                messages: state.messages
+                    .map((m) => m.id == cachedMsgId ? m.copyWith(feedbackId: feedbackId) : m)
+                    .toList(),
+              );
+            }
+          });
+        }
         return;
       }
 
