@@ -14,6 +14,7 @@ import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
 import 'package:dharma_ai/widgets/app_download_banner.dart';
+import 'package:dharma_ai/screens/onboarding_screen.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({Key? key}) : super(key: key);
@@ -34,7 +35,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowExpiryNotice());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await maybeShowOnboarding(context);
+      if (mounted) _maybeShowExpiryNotice();
+    });
   }
 
   // Notify a user whose subscription has lapsed that they're now on Free.
