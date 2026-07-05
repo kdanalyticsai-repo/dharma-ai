@@ -454,6 +454,14 @@ class ScriptureChatNotifier extends StateNotifier<ChatState> {
       ),
     ]);
   }
+
+  void setMessageRating(String feedbackId, int rating) {
+    state = state.copyWith(
+      messages: state.messages
+          .map((m) => m.feedbackId == feedbackId ? m.copyWith(rating: rating) : m)
+          .toList(),
+    );
+  }
 }
 
 final scriptureChatProvider = StateNotifierProvider<ScriptureChatNotifier, ChatState>((ref) {
@@ -708,6 +716,14 @@ class GuruChatNotifier extends StateNotifier<ChatState> {
         isGuruMode: true,
       ),
     ]);
+  }
+
+  void setMessageRating(String feedbackId, int rating) {
+    state = state.copyWith(
+      messages: state.messages
+          .map((m) => m.feedbackId == feedbackId ? m.copyWith(rating: rating) : m)
+          .toList(),
+    );
   }
 }
 

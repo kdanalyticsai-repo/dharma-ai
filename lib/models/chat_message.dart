@@ -6,6 +6,7 @@ class ChatMessage {
   final List<String>? verseCitations; // List of Verse IDs cited in the answer
   final bool isGuruMode;
   final String? feedbackId; // Supabase ai_feedback row ID — set after response logs
+  final int? rating; // 1 = thumbs up, -1 = thumbs down; session-only, not persisted
 
   const ChatMessage({
     required this.id,
@@ -15,6 +16,7 @@ class ChatMessage {
     this.verseCitations,
     required this.isGuruMode,
     this.feedbackId,
+    this.rating,
   });
 
   ChatMessage copyWith({
@@ -25,6 +27,7 @@ class ChatMessage {
     List<String>? verseCitations,
     bool? isGuruMode,
     String? feedbackId,
+    int? rating,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -34,6 +37,7 @@ class ChatMessage {
       verseCitations: verseCitations ?? this.verseCitations,
       isGuruMode: isGuruMode ?? this.isGuruMode,
       feedbackId: feedbackId ?? this.feedbackId,
+      rating: rating ?? this.rating,
     );
   }
 

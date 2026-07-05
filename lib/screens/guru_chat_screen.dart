@@ -261,33 +261,26 @@ class _GuruChatScreenState extends ConsumerState<GuruChatScreen> {
   }
 }
 
-class GuruChatBubble extends StatefulWidget {
+class GuruChatBubble extends ConsumerWidget {
   final ChatMessage message;
 
   const GuruChatBubble({Key? key, required this.message}) : super(key: key);
 
-  @override
-  State<GuruChatBubble> createState() => _GuruChatBubbleState();
-}
-
-class _GuruChatBubbleState extends State<GuruChatBubble> {
-  int? _rating; // 1 = thumbs up, -1 = thumbs down, null = no rating
-
-  Future<void> _rate(int value) async {
-    final feedbackId = widget.message.feedbackId;
+  Future<void> _rate(WidgetRef ref, int value) async {
+    final feedbackId = message.feedbackId;
     if (feedbackId == null) return;
-    setState(() => _rating = value);
+    ref.read(guruChatProvider.notifier).setMessageRating(feedbackId, value);
     await FeedbackService.updateRating(feedbackId, value);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final isUser = widget.message.role == 'user';
+    final isUser = message.role == 'user';
 
     final showFeedback = !isUser &&
-        widget.message.feedbackId != null &&
-        !widget.message.id.startsWith('welcome');
+        message.feedbackId != null &&
+        !message.id.startsWith('welcome');
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -341,7 +334,7 @@ class _GuruChatBubbleState extends State<GuruChatBubble> {
                   Padding(
                     padding: const EdgeInsets.all(18),
                     child: Text(
-                      widget.message.text,
+                      message.text,
                       style: textTheme.bodyLarge?.copyWith(
                         color: isUser ? Colors.white : SacredTheme.onSurface,
                         fontSize: isUser ? 15 : 16,
@@ -361,15 +354,15 @@ class _GuruChatBubbleState extends State<GuruChatBubble> {
                     _ThumbButton(
                       icon: Icons.thumb_up_outlined,
                       activeIcon: Icons.thumb_up,
-                      active: _rating == 1,
-                      onTap: () => _rate(1),
+                      active: message.rating == 1,
+                      onTap: () => _rate(ref, 1),
                     ),
                     const SizedBox(width: 4),
                     _ThumbButton(
                       icon: Icons.thumb_down_outlined,
                       activeIcon: Icons.thumb_down,
-                      active: _rating == -1,
-                      onTap: () => _rate(-1),
+                      active: message.rating == -1,
+                      onTap: () => _rate(ref, -1),
                     ),
                   ],
                 ),

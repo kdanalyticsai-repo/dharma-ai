@@ -241,36 +241,29 @@ class _ScriptureChatScreenState extends ConsumerState<ScriptureChatScreen> {
   }
 }
 
-class ScriptureChatBubble extends ConsumerStatefulWidget {
+class ScriptureChatBubble extends ConsumerWidget {
   final ChatMessage message;
 
   const ScriptureChatBubble({Key? key, required this.message}) : super(key: key);
 
-  @override
-  ConsumerState<ScriptureChatBubble> createState() => _ScriptureChatBubbleState();
-}
-
-class _ScriptureChatBubbleState extends ConsumerState<ScriptureChatBubble> {
-  int? _rating;
-
-  Future<void> _rate(int value) async {
-    final feedbackId = widget.message.feedbackId;
+  Future<void> _rate(WidgetRef ref, int value) async {
+    final feedbackId = message.feedbackId;
     if (feedbackId == null) return;
-    setState(() => _rating = value);
+    ref.read(scriptureChatProvider.notifier).setMessageRating(feedbackId, value);
     await FeedbackService.updateRating(feedbackId, value);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final isUser = widget.message.role == 'user';
+    final isUser = message.role == 'user';
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.85, // 85% width limit
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
         ),
         child: Column(
           crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -315,7 +308,7 @@ class _ScriptureChatBubbleState extends ConsumerState<ScriptureChatBubble> {
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      widget.message.text,
+                      message.text,
                       style: textTheme.bodyLarge?.copyWith(
                         fontFamily: 'Be Vietnam Pro',
                         color: isUser ? Colors.white : SacredTheme.onSurface,
@@ -327,26 +320,26 @@ class _ScriptureChatBubbleState extends ConsumerState<ScriptureChatBubble> {
             ),
 
             // Thumbs up/down feedback
-            if (!isUser && widget.message.feedbackId != null && !widget.message.id.startsWith('welcome')) ...[
+            if (!isUser && message.feedbackId != null && !message.id.startsWith('welcome')) ...[
               const SizedBox(height: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   GestureDetector(
-                    onTap: () => _rate(1),
+                    onTap: () => _rate(ref, 1),
                     child: Icon(
-                      _rating == 1 ? Icons.thumb_up : Icons.thumb_up_outlined,
+                      message.rating == 1 ? Icons.thumb_up : Icons.thumb_up_outlined,
                       size: 15,
-                      color: _rating == 1 ? SacredTheme.primary : SacredTheme.outline,
+                      color: message.rating == 1 ? SacredTheme.primary : SacredTheme.outline,
                     ),
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
-                    onTap: () => _rate(-1),
+                    onTap: () => _rate(ref, -1),
                     child: Icon(
-                      _rating == -1 ? Icons.thumb_down : Icons.thumb_down_outlined,
+                      message.rating == -1 ? Icons.thumb_down : Icons.thumb_down_outlined,
                       size: 15,
-                      color: _rating == -1 ? SacredTheme.primary : SacredTheme.outline,
+                      color: message.rating == -1 ? SacredTheme.primary : SacredTheme.outline,
                     ),
                   ),
                 ],
@@ -354,12 +347,12 @@ class _ScriptureChatBubbleState extends ConsumerState<ScriptureChatBubble> {
             ],
 
             // Citation items (if assistant generated)
-            if (!isUser && widget.message.verseCitations != null && widget.message.verseCitations!.isNotEmpty) ...[
+            if (!isUser && message.verseCitations != null && message.verseCitations!.isNotEmpty) ...[
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
-                children: widget.message.verseCitations!.map((id) {
+                children: message.verseCitations!.map((id) {
                   return FutureBuilder<Verse?>(
                     future: ref.read(scriptureServiceProvider).getVerseById(id),
                     builder: (context, snapshot) {
