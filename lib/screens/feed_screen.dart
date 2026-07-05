@@ -20,6 +20,7 @@ import 'package:dharma_ai/providers/transliteration_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/purchase_service.dart';
 import 'package:dharma_ai/screens/profile_screen.dart';
+import 'package:dharma_ai/screens/admin_feedback_screen.dart';
 import 'package:dharma_ai/widgets/pwa_install_button.dart';
 
 class DailyFeedScreen extends ConsumerStatefulWidget {
@@ -30,6 +31,33 @@ class DailyFeedScreen extends ConsumerStatefulWidget {
 }
 
 class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
+  int _avatarTapCount = 0;
+  DateTime? _lastAvatarTap;
+
+  void _handleAvatarTap() {
+    final now = DateTime.now();
+    final isRapid = _lastAvatarTap != null &&
+        now.difference(_lastAvatarTap!) <= const Duration(seconds: 2);
+
+    if (isRapid) {
+      _avatarTapCount++;
+      _lastAvatarTap = now;
+      if (_avatarTapCount >= 5) {
+        _avatarTapCount = 0;
+        _lastAvatarTap = null;
+        final email = ref.read(authUserProvider).valueOrNull?.email;
+        if (email == 'kdanalyticsai@gmail.com') {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminFeedbackScreen()));
+        }
+      }
+    } else {
+      // First tap (or sequence timed out): go to profile normally.
+      _avatarTapCount = 1;
+      _lastAvatarTap = now;
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -130,14 +158,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       ],
                       ),
                     ),
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(22),
+                    GestureDetector(
+                      onTap: _handleAvatarTap,
                       child: Container(
                         width: 44,
                         height: 44,
