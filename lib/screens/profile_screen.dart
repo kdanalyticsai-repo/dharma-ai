@@ -20,6 +20,7 @@ import 'package:dharma_ai/widgets/mandala_background.dart';
 import 'package:dharma_ai/widgets/lotus_painter.dart';
 import 'package:dharma_ai/widgets/legal_footer.dart';
 import 'package:dharma_ai/widgets/circle_icon_button.dart';
+import 'package:dharma_ai/screens/admin_feedback_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -32,6 +33,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
   late TabController _tabController;
   final TextEditingController _noteController = TextEditingController();
   bool _isSavingNote = false;
+
+  int _avatarTapCount = 0;
+  DateTime? _lastAvatarTap;
+
+  void _handleAvatarTap() {
+    final now = DateTime.now();
+    final isRapid = _lastAvatarTap != null &&
+        now.difference(_lastAvatarTap!) <= const Duration(seconds: 2);
+    _lastAvatarTap = now;
+    _avatarTapCount = isRapid ? _avatarTapCount + 1 : 1;
+
+    if (_avatarTapCount >= 5) {
+      _avatarTapCount = 0;
+      _lastAvatarTap = null;
+      final email = ref.read(authUserProvider).valueOrNull?.email;
+      if (email == 'kdanalyticsai@gmail.com') {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminFeedbackScreen()));
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -418,18 +439,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
                   padding: const EdgeInsets.all(20.0),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: SacredTheme.primary,
-                        backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
-                            ? NetworkImage(avatarUrl)
-                            : null,
-                        child: (avatarUrl != null && avatarUrl.isNotEmpty)
-                            ? null
-                            : Text(
-                                avatarText,
-                                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
+                      GestureDetector(
+                        onTap: _handleAvatarTap,
+                        child: CircleAvatar(
+                          radius: 30,
+                          backgroundColor: SacredTheme.primary,
+                          backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                              ? null
+                              : Text(
+                                  avatarText,
+                                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                                ),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(

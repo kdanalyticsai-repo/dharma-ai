@@ -65,12 +65,26 @@ class _AdminFeedbackScreenState extends ConsumerState<AdminFeedbackScreen> {
     return Scaffold(
       backgroundColor: SacredTheme.surface,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Back to Profile',
+        ),
         title: const Text('Admin Dashboard'),
         backgroundColor: SacredTheme.deepMeditativeIndigo,
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load, tooltip: 'Refresh'),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: _loading ? null : _load,
+        backgroundColor: SacredTheme.deepMeditativeIndigo,
+        foregroundColor: Colors.white,
+        tooltip: 'Refresh data',
+        child: _loading
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Icon(Icons.refresh),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
