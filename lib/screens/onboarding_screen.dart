@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/theme/theme.dart';
-import 'package:dharma_ai/widgets/lotus_painter.dart';
+import 'package:dharma_ai/widgets/rotating_chakra.dart';
 
 const _prefKey = 'onboarding_v1_shown';
 
@@ -89,26 +89,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: SacredTheme.deepMeditativeIndigo,
       body: Stack(
         children: [
-          // Lotus background decoration
-          Positioned(
-            bottom: -60,
-            right: -60,
+          // Large rotating Dharmachakra — full-bleed background, same as login
+          Center(
             child: Opacity(
-              opacity: 0.06,
-              child: CustomPaint(
-                size: const Size(280, 280),
-                painter: LotusPainter(color: Colors.white, animationValue: 0.0),
-              ),
-            ),
-          ),
-          Positioned(
-            top: -40,
-            left: -40,
-            child: Opacity(
-              opacity: 0.04,
-              child: CustomPaint(
-                size: const Size(200, 200),
-                painter: LotusPainter(color: Colors.white, animationValue: 0.0),
+              opacity: 0.11,
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                child: RotatingChakra(
+                  size: MediaQuery.of(context).size.width * 0.88,
+                  spokes: 12,
+                  period: const Duration(seconds: 72),
+                ),
               ),
             ),
           ),
