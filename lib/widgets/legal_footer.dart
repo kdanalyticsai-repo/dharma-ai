@@ -10,21 +10,35 @@ class LegalFooter extends StatelessWidget {
 
   static const String _base = 'https://dharma.kdaanalytics.com';
 
-  void _open(String page) {
-    launchUrl(Uri.parse('$_base/$page'), mode: LaunchMode.externalApplication);
+  Future<void> _open(String page) async {
+    final uri = Uri.parse('$_base/$page');
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      if (!ok) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {}
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget link(String label, String page) => InkWell(
+    // GestureDetector + padding gives a larger, reliable tap area (InkWell
+    // can miss taps on small text inside bottom sheets on Android).
+    Widget link(String label, String page) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () => _open(page),
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: SacredTheme.onSurfaceVariant,
-              decoration: TextDecoration.underline,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: SacredTheme.onSurfaceVariant,
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
         );

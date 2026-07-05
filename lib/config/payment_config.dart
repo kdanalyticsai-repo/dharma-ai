@@ -10,6 +10,7 @@ class PaymentConfig {
   static bool get isConfigured =>
       workerUrl.startsWith('http') && workerUrl != 'YOUR_CLOUDFLARE_WORKER_URL';
 
+  static String get geoUrl   => '$workerUrl/geo';
   static String get orderUrl => '$workerUrl/razorpay/order';
   static String get verifyUrl => '$workerUrl/razorpay/verify';
   static String get redeemUrl => '$workerUrl/razorpay/redeem';

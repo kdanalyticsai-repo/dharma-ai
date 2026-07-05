@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/config/payment_config.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
@@ -26,11 +28,44 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   bool _isProcessingQuarterly = false;
   bool _isProcessingAnnual = false;
 
+  // Geo-based pricing: true = international prices, false = India prices.
+  // Defaults to true (international) so that if geo fetch fails, the higher
+  // price is shown — no one is shown a cheaper price and then charged more.
+  bool _isInternational = true;
+  bool _geoLoading = true;
+
   @override
   void initState() {
     super.initState();
     Analytics.paywallView();
     if (!kIsWeb) PlayBillingService().initialize();
+    if (kIsWeb) _fetchGeo();
+  }
+
+  Future<void> _fetchGeo() async {
+    if (!PaymentConfig.isConfigured) {
+      if (mounted) setState(() => _geoLoading = false);
+      return;
+    }
+    try {
+      final res = await http
+          .get(Uri.parse(PaymentConfig.geoUrl))
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final country = (data['country'] as String? ?? '').toUpperCase();
+        if (mounted) setState(() { _isInternational = country != 'IN'; _geoLoading = false; });
+        return;
+      }
+    } catch (_) {}
+    // On any error or non-200: keep _isInternational = true (safe fallback).
+    if (mounted) setState(() => _geoLoading = false);
+  }
+
+  String _price(String plan) {
+    if (plan == 'monthly')   return _isInternational ? '₹201' : '₹101';
+    if (plan == 'quarterly') return _isInternational ? '₹501' : '₹201';
+    return _isInternational ? '₹1001' : '₹501'; // annual
   }
 
   @override
@@ -230,7 +265,8 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: t('pwAnnualTitle'),
-                  price: '₹501 ${t('pwPerYear')}',
+                  price: '${_price('annual')} ${t('pwPerYear')}',
+                  priceLoading: _geoLoading,
                   badge: t('pwBadgeRecommended'),
                   benefits: [
                     t('pwBenefitEverythingPremium'),
@@ -261,7 +297,8 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: t('pwQuarterlyTitle'),
-                  price: '₹201 ${t('pwPer3Months')}',
+                  price: '${_price('quarterly')} ${t('pwPer3Months')}',
+                  priceLoading: _geoLoading,
                   badge: t('pwBadgeQuarterly'),
                   benefits: [
                     t('pwBenefitEverythingPremium'),
@@ -290,7 +327,8 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
                 _buildTierCard(
                   context,
                   title: t('pwPremiumTitle'),
-                  price: '₹101 ${t('pwPerMonth')}',
+                  price: '${_price('monthly')} ${t('pwPerMonth')}',
+                  priceLoading: _geoLoading,
                   badge: t('pwBadgeMonthly'),
                   benefits: [
                     t('pwBenefitAllScriptures'),
@@ -363,6 +401,7 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
     required bool isActive,
     bool isPremiumHighlight = false,
     bool isAnnual = false,
+    bool priceLoading = false,
     String? badge,
     String? savingsLabel,
     required Widget button,
@@ -415,13 +454,22 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
           const SizedBox(height: 6),
           Row(
             children: [
-              Text(
-                price,
-                style: textTheme.labelLarge?.copyWith(
-                  color: isPremiumHighlight ? Colors.white.withOpacity(0.8) : SacredTheme.onSurfaceVariant,
-                  fontSize: 16,
+              if (priceLoading)
+                SizedBox(
+                  width: 16, height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: isPremiumHighlight ? Colors.white54 : SacredTheme.onSurfaceVariant,
+                  ),
+                )
+              else
+                Text(
+                  price,
+                  style: textTheme.labelLarge?.copyWith(
+                    color: isPremiumHighlight ? Colors.white.withOpacity(0.8) : SacredTheme.onSurfaceVariant,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
               if (savingsLabel != null) ...[
                 const SizedBox(width: 10),
                 Container(

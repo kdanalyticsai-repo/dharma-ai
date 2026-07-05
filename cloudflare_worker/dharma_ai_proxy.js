@@ -23,8 +23,21 @@
 const PLANS = {
   monthly:   { tier: 'sadhaka', amount: 10100,  days: 30,  label: 'Sadhaka Premium (Monthly)' },
   quarterly: { tier: 'sadhaka', amount: 20100,  days: 90,  label: 'Sadhaka Quarterly' },
-  annual:    { tier: 'annual',  amount: 50100, days: 365, label: 'Sadhaka Annual' },
+  annual:    { tier: 'annual',  amount: 50100,  days: 365, label: 'Sadhaka Annual' },
 };
+
+// International prices (non-IN countries). Server picks based on request.cf.country.
+const PLANS_INTL = {
+  monthly:   { tier: 'sadhaka', amount: 20100,  days: 30,  label: 'Sadhaka Premium (Monthly)' },
+  quarterly: { tier: 'sadhaka', amount: 50100,  days: 90,  label: 'Sadhaka Quarterly' },
+  annual:    { tier: 'annual',  amount: 100100, days: 365, label: 'Sadhaka Annual' },
+};
+
+// Returns the correct plan table based on Cloudflare country header.
+function plansForCountry(request) {
+  const country = (request.cf?.country || '').toUpperCase();
+  return country === 'IN' ? PLANS : PLANS_INTL;
+}
 
 // Play product IDs → plan names (server-side mapping; client cannot override).
 const PLAY_PRODUCTS = {
@@ -64,6 +77,15 @@ export default {
 
     const origin = request.headers.get('Origin') || '';
     if (request.method === 'OPTIONS') return cors('', 204, allowedOrigin(origin, env));
+
+    // GET /geo — returns the caller's country code (from Cloudflare). Used by
+    // the Flutter web app to display the correct regional pricing tier.
+    if (path === '/geo' && request.method === 'GET') {
+      if (origin && !isAllowed(origin, env)) return cors(j({ error: 'Forbidden' }), 403, null);
+      const country = (request.cf?.country || '').toUpperCase() || 'XX';
+      return cors(j({ country }), 200, allowedOrigin(origin, env));
+    }
+
     if (request.method !== 'POST') return cors(j({ error: 'Method not allowed' }), 405, null);
     // Native clients (Android) send no Origin header — each handler enforces its own auth.
     // Only block requests that come from a browser origin NOT in the allow-list.
@@ -197,7 +219,7 @@ async function enforceRateLimit(env, userId, tier) {
 // Body: { plan: 'monthly'|'quarterly'|'annual', user_id }
 async function createOrder(request, env, origin) {
   const { plan, user_id, gift } = await request.json();
-  const p = PLANS[plan];
+  const p = plansForCountry(request)[plan];
   if (!p) return cors(j({ error: 'Invalid plan' }), 400, origin);
   if (!user_id) return cors(j({ error: 'Missing user_id' }), 400, origin);
 
@@ -316,7 +338,7 @@ async function grantFromOrder(env, order, paymentId) {
     if (Array.isArray(ex) && ex.length) {
       return { ok: true, tier: p.tier, plan, expires_at: ex[0].expires_at };
     }
-    const grant = await grantSubscription(sb, userId, p, paymentId);
+    const grant = await grantSubscription(env, sb, userId, p, paymentId);
     if (!grant.ok) return { ok: false, status: 500, error: 'Subscription insert failed', detail: grant.detail };
     return { ok: true, tier: p.tier, plan, expires_at: grant.expires_at };
   } catch (e) {
@@ -357,7 +379,7 @@ async function redeemGift(request, env, origin) {
     const p = PLANS[gc.plan];
     if (!p) return cors(j({ valid: false, error: 'Unknown plan on code.' }), 400, origin);
 
-    const grant = await grantSubscription(sb, user_id, p, gc.razorpay_id);
+    const grant = await grantSubscription(env, sb, user_id, p, gc.razorpay_id);
     if (!grant.ok) {
       return cors(j({ valid: false, error: 'Could not grant subscription', detail: grant.detail }), 500, origin);
     }
@@ -424,7 +446,7 @@ async function verifyPlayPurchase(request, env, origin) {
   // 3. Idempotent grant — use prefixed purchase_token as the unique ID.
   const sb = sbFetch(env);
   const uniqueId = `play_${purchase_token}`;
-  const grant = await grantSubscription(sb, user_id, p, uniqueId);
+  const grant = await grantSubscription(env, sb, user_id, p, uniqueId);
   if (!grant.ok) {
     return cors(j({ valid: false, error: 'Grant failed', detail: grant.detail }), 500, origin);
   }
@@ -504,7 +526,7 @@ function sbFetch(env) {
 // Grant a subscription to a user. Insert-first so a UNIQUE index on razorpay_id
 // makes it race-safe: if the webhook and verify grant the same payment at once,
 // the second insert returns 409 and we treat it as already-granted (no dupe).
-async function grantSubscription(sb, userId, p, razorpayId) {
+async function grantSubscription(env, sb, userId, p, razorpayId) {
   const now = new Date();
   const expires = new Date(now.getTime() + p.days * 86400000);
 
@@ -540,7 +562,77 @@ async function grantSubscription(sb, userId, p, razorpayId) {
     method: 'PATCH', headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({ subscription_tier: p.tier, subscription_end: expires.toISOString() }),
   });
+
+  // 4) Notify admin — fire-and-forget, never blocks the payment response.
+  sendSubscriptionEmail(env, sb, userId, p, razorpayId, expires).catch(() => {});
+
   return { ok: true, expires_at: expires.toISOString() };
+}
+
+// Sends admin notification email when a user upgrades their subscription.
+async function sendSubscriptionEmail(env, sb, userId, p, paymentId, expires) {
+  try {
+    const resendKey = env.RESEND_API_KEY;
+    if (!resendKey) return;
+
+    const profileRes = await sb(`profiles?id=eq.${userId}&select=full_name,email`, { method: 'GET' });
+    const profiles = await profileRes.json();
+    const profile = (Array.isArray(profiles) && profiles[0]) || {};
+    const name = profile.full_name || '(no name)';
+    const email = profile.email || '(no email)';
+
+    const tierLabel = { free: '🆓 Free', sadhaka: '⭐ Sadhaka Premium', annual: '🌟 Sadhaka Annual' }[p.tier] || p.tier;
+    const amountStr = p.amount ? `₹${(p.amount / 100).toFixed(0)}` : '—';
+    const expiresStr = new Date(expires).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
+    const upgradedAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF7F2;margin:0;padding:24px}
+  .card{background:#fff;border-radius:12px;padding:28px 32px;max-width:480px;margin:0 auto;border:1px solid #ecd9cf}
+  .brand{color:#9C3F00;font-weight:800;font-size:1.2rem;margin-bottom:4px}
+  .title{font-size:1.05rem;font-weight:700;color:#251913;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse}
+  td{padding:9px 0;border-bottom:1px solid #f0e8e3;font-size:.95rem;color:#251913}
+  td:first-child{color:#6b5648;width:38%;font-weight:600}
+  .badge{display:inline-block;background:#fdeee3;color:#9C3F00;border-radius:999px;padding:2px 12px;font-size:.85rem;font-weight:700}
+  .footer{margin-top:20px;font-size:.8rem;color:#aaa;text-align:center}
+</style></head>
+<body>
+<div class="card">
+  <div class="brand">🪔 DharmaAI</div>
+  <div class="title">Subscription upgraded</div>
+  <table>
+    <tr><td>Name</td><td><strong>${escHtml(name)}</strong></td></tr>
+    <tr><td>Email</td><td>${escHtml(email)}</td></tr>
+    <tr><td>Plan</td><td><span class="badge">${escHtml(tierLabel)}</span></td></tr>
+    <tr><td>Amount paid</td><td>${escHtml(amountStr)}</td></tr>
+    <tr><td>Expires</td><td>${escHtml(expiresStr)}</td></tr>
+    <tr><td>Payment ID</td><td style="font-size:.85rem;word-break:break-all">${escHtml(paymentId || '—')}</td></tr>
+    <tr><td>Upgraded at</td><td>${escHtml(upgradedAt)}</td></tr>
+  </table>
+  <div class="footer">dharma.kdaanalytics.com — admin alert</div>
+</div>
+</body></html>`;
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'DharmaAI Admin <onboarding@resend.dev>',
+        to: ['kdanalyticsai@gmail.com'],
+        subject: `⭐ Subscription upgrade: ${name} → ${p.label}`,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      console.error('Subscription notify error HTTP', res.status, await res.text());
+    }
+  } catch (e) {
+    console.error('Subscription notify error:', e.message);
+  }
 }
 
 // Generate a friendly gift code (no ambiguous chars).
@@ -648,7 +740,9 @@ async function handleNewUserNotification(request, env) {
 
   if (!res.ok) {
     const err = await res.text();
-    console.error('Resend error:', err);
+    console.error('Resend error HTTP', res.status, res.statusText, '|', err);
+  } else {
+    console.log('Resend success HTTP', res.status);
   }
 
   return new Response('ok', { status: 200 });

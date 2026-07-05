@@ -29,12 +29,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- App Links: intercept dharma.kdaanalytics.com links (auth callbacks) -->
+            <!-- App Links: only intercept root URL (OAuth callbacks use dharma.kdaanalytics.com/).
+                 Legal pages (/privacy.html etc.) are intentionally excluded so they open in the browser. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="dharma.kdaanalytics.com"/>
+                <data android:scheme="https" android:host="dharma.kdaanalytics.com" android:path="/"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
@@ -52,6 +53,12 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Required for url_launcher to open https:// URLs on Android 11+ (API 30+).
+             Without this, PackageManager hides browser apps and launchUrl silently fails. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>
