@@ -29,10 +29,10 @@ class _SubscriptionPaywallScreenState extends ConsumerState<SubscriptionPaywallS
   bool _isProcessingAnnual = false;
 
   // Geo-based pricing: true = international prices, false = India prices.
-  // Defaults to true (international) so that if geo fetch fails, the higher
-  // price is shown — no one is shown a cheaper price and then charged more.
-  bool _isInternational = true;
-  bool _geoLoading = true;
+  // Android always uses India prices (Play Store handles regional pricing).
+  // Web defaults to true so a geo failure shows the higher price, not less.
+  bool _isInternational = kIsWeb;
+  bool _geoLoading = kIsWeb;
 
   @override
   void initState() {
