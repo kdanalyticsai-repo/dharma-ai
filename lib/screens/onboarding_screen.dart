@@ -160,8 +160,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Centered logo
-                      const DharmaLogo(height: 52, showTagline: false),
+                      // Centered logo — tinted to match current slide accent
+                      ColorFiltered(
+                        colorFilter: ColorFilter.mode(accent, BlendMode.srcIn),
+                        child: const DharmaLogo(height: 52, showTagline: false),
+                      ),
                       // Skip — pinned to the right
                       Align(
                         alignment: Alignment.centerRight,
