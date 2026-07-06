@@ -10,11 +10,18 @@ Future<void> _bgMessageHandler(RemoteMessage message) async {}
 class NotificationService {
   NotificationService._();
 
-  // Emits a screen name whenever the user taps a notification (background state).
+  // Web Push certificate (VAPID) key — injected at build time via --dart-define.
+  // Generate in Firebase Console → Project Settings → Cloud Messaging →
+  // Web configuration → Generate key pair. Add FIREBASE_VAPID_KEY to
+  // run_dev.ps1, deploy.yml secrets, and (for AAB) build_release.ps1.
+  static const _vapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
+
+  // Emits a screen name whenever the user taps a notification.
   static final _tapController = StreamController<String>.broadcast();
   static Stream<String> get onNotificationTap => _tapController.stream;
 
   // Set when app was terminated and launched via a notification tap. Consumed once.
+  // Always null on web (no terminated-app concept in browsers).
   static String? _pendingScreen;
   static String? get pendingScreen {
     final s = _pendingScreen;
@@ -23,9 +30,11 @@ class NotificationService {
   }
 
   static Future<void> initialize() async {
-    if (kIsWeb) return;
-
-    FirebaseMessaging.onBackgroundMessage(_bgMessageHandler);
+    // Background handler runs in a separate isolate (Android only).
+    // Web background notifications are handled by firebase-messaging-sw.js.
+    if (!kIsWeb) {
+      FirebaseMessaging.onBackgroundMessage(_bgMessageHandler);
+    }
 
     final settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
@@ -48,10 +57,12 @@ class NotificationService {
       if (screen != null) _tapController.add(screen);
     });
 
-    // App was terminated → user taps notification to launch it.
-    final initial = await FirebaseMessaging.instance.getInitialMessage();
-    if (initial?.data['screen'] != null) {
-      _pendingScreen = initial!.data['screen'];
+    // App was terminated → user taps notification to launch it (Android only).
+    if (!kIsWeb) {
+      final initial = await FirebaseMessaging.instance.getInitialMessage();
+      if (initial?.data['screen'] != null) {
+        _pendingScreen = initial!.data['screen'];
+      }
     }
 
     // If user is already signed in at startup, save token now.
@@ -62,7 +73,11 @@ class NotificationService {
     try {
       final uid = Supabase.instance.client.auth.currentUser?.id;
       if (uid == null) return;
-      final token = await FirebaseMessaging.instance.getToken();
+      // Web requires the VAPID key; skip silently if it hasn't been configured.
+      if (kIsWeb && _vapidKey.isEmpty) return;
+      final token = await FirebaseMessaging.instance.getToken(
+        vapidKey: kIsWeb ? _vapidKey : null,
+      );
       if (token == null) return;
       await Supabase.instance.client
           .from('profiles')

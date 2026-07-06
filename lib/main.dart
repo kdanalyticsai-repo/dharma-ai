@@ -120,12 +120,10 @@ void main() async {
         }
       });
 
-      // Push notifications (Android only — non-blocking, never delays startup).
-      if (!kIsWeb) {
-        NotificationService.initialize().catchError((e) {
-          debugPrint('NotificationService init failed: $e');
-        });
-      }
+      // Push notifications: Android + web browsers (non-blocking, never delays startup).
+      NotificationService.initialize().catchError((e) {
+        debugPrint('NotificationService init failed: $e');
+      });
 
       // Android: handle auth links that arrive while the app is already running.
       if (!kIsWeb) {

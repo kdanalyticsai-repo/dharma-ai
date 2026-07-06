@@ -12,6 +12,8 @@
   Cache-Control: no-cache, must-revalidate
 /flutter_service_worker.js
   Cache-Control: no-cache, must-revalidate
+/firebase-messaging-sw.js
+  Cache-Control: no-cache, must-revalidate
 /main.dart.js
   Cache-Control: no-cache, must-revalidate
 /manifest.json

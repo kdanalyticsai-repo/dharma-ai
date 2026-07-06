@@ -47,7 +47,8 @@ jobs:
             "SUPABASE_ANON_KEY": "${{ secrets.SUPABASE_ANON_KEY }}",
             "OPENAI_WORKER_URL": "${{ secrets.OPENAI_WORKER_URL }}",
             "R2_BUCKET_URL": "${{ secrets.R2_BUCKET_URL }}",
-            "SENTRY_DSN": "${{ secrets.SENTRY_DSN }}"
+            "SENTRY_DSN": "${{ secrets.SENTRY_DSN }}",
+            "FIREBASE_VAPID_KEY": "${{ secrets.FIREBASE_VAPID_KEY }}"
           }
           EOF
 

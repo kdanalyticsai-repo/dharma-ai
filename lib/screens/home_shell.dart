@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,23 +45,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       await maybeShowOnboarding(context);
       if (mounted) _maybeShowExpiryNotice();
 
-      // App was terminated → user tapped notification to launch it.
-      if (!kIsWeb) {
-        final screen = NotificationService.pendingScreen;
-        if (screen == 'sadhana' && mounted) {
-          ref.read(homeTabProvider.notifier).state = _sadhanaTabIndex;
-        }
+      // App was terminated → user tapped notification to launch it (Android only;
+      // always null on web since browsers have no terminated-app concept).
+      final screen = NotificationService.pendingScreen;
+      if (screen == 'sadhana' && mounted) {
+        ref.read(homeTabProvider.notifier).state = _sadhanaTabIndex;
       }
     });
 
-    // App was in background → user tapped notification.
-    if (!kIsWeb) {
-      _notifTapSub = NotificationService.onNotificationTap.listen((screen) {
-        if (screen == 'sadhana' && mounted) {
-          ref.read(homeTabProvider.notifier).state = _sadhanaTabIndex;
-        }
-      });
-    }
+    // App was in background → user tapped notification (Android + web).
+    _notifTapSub = NotificationService.onNotificationTap.listen((screen) {
+      if (screen == 'sadhana' && mounted) {
+        ref.read(homeTabProvider.notifier).state = _sadhanaTabIndex;
+      }
+    });
   }
 
   @override
