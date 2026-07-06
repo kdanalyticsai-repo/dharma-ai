@@ -36,6 +36,7 @@ dependencies:
   sentry_flutter: ^8.9.0   # production error/crash monitoring (DSN via dart-define)
   firebase_core: ^3.6.0    # required by firebase_analytics
   firebase_analytics: ^11.3.3   # cross-platform analytics (web + Android)
+  firebase_messaging: ^15.1.0   # push notifications (Android only; web deferred)
 
   # Utility
   share_plus: ^10.1.1   # share branded verse images to social / WhatsApp

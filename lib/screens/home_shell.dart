@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +15,7 @@ import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/providers/navigation_provider.dart';
 import 'package:dharma_ai/providers/purchase_provider.dart';
 import 'package:dharma_ai/services/supabase_sync.dart';
+import 'package:dharma_ai/services/notification_service.dart';
 import 'package:dharma_ai/widgets/app_download_banner.dart';
 import 'package:dharma_ai/screens/onboarding_screen.dart';
 
@@ -32,13 +35,40 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     SanghaScreen(),
   ];
 
+  StreamSubscription<String>? _notifTapSub;
+
+  static const _sadhanaTabIndex = 1;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await maybeShowOnboarding(context);
       if (mounted) _maybeShowExpiryNotice();
+
+      // App was terminated → user tapped notification to launch it.
+      if (!kIsWeb) {
+        final screen = NotificationService.pendingScreen;
+        if (screen == 'sadhana' && mounted) {
+          ref.read(homeTabProvider.notifier).state = _sadhanaTabIndex;
+        }
+      }
     });
+
+    // App was in background → user tapped notification.
+    if (!kIsWeb) {
+      _notifTapSub = NotificationService.onNotificationTap.listen((screen) {
+        if (screen == 'sadhana' && mounted) {
+          ref.read(homeTabProvider.notifier).state = _sadhanaTabIndex;
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _notifTapSub?.cancel();
+    super.dispose();
   }
 
   // Notify a user whose subscription has lapsed that they're now on Free.
