@@ -55,7 +55,7 @@ const _pages = [
     icon: Icons.menu_book_outlined,
     title: 'Explore Sacred Scriptures',
     subtitle: 'Dive into the Bhagavad Gita, the Vedas, and the Upanishads. Get verse-backed answers drawn from the full depth of Hindu scripture.',
-    accentColor: Color(0xFFE8965A),   // warm saffron
+    accentColor: Color(0xFF5ABCA2),   // turquoise teal
     tabHint: 'Find it under the Wisdom tab  ↓',
   ),
   _OnboardingPage(
@@ -69,7 +69,7 @@ const _pages = [
     icon: Icons.spa_outlined,
     title: 'Build a Daily Sadhana',
     subtitle: 'Log meditation, chanting, and verse reading every day. Build streaks and watch your practice deepen over time.',
-    accentColor: Color(0xFF5ABCA2),   // turquoise teal
+    accentColor: Color(0xFFCC6B1A),   // dark saffron orange
     tabHint: 'Find it under the Sadhana tab  ↓',
   ),
 ];
