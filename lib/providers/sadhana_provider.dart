@@ -10,15 +10,18 @@ class SadhanaState {
   final int targetVerses;
   final int todayChanting;
   final int targetChanting;
+  // 7 entries: index 0 = 6 days ago, index 6 = today. True = any practice that day.
+  final List<bool> weekHistory;
 
   const SadhanaState({
-    this.streak = 0, // Earned by completing all daily goals on consecutive days
+    this.streak = 0,
     this.todayMeditation = 0,
     this.targetMeditation = 20,
     this.todayVerses = 0,
     this.targetVerses = 5,
     this.todayChanting = 0,
     this.targetChanting = 108,
+    this.weekHistory = const [false, false, false, false, false, false, false],
   });
 
   double get overallProgress {
@@ -36,6 +39,7 @@ class SadhanaState {
     int? targetVerses,
     int? todayChanting,
     int? targetChanting,
+    List<bool>? weekHistory,
   }) {
     return SadhanaState(
       streak: streak ?? this.streak,
@@ -45,6 +49,7 @@ class SadhanaState {
       targetVerses: targetVerses ?? this.targetVerses,
       todayChanting: todayChanting ?? this.todayChanting,
       targetChanting: targetChanting ?? this.targetChanting,
+      weekHistory: weekHistory ?? this.weekHistory,
     );
   }
 }
@@ -128,6 +133,46 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     } catch (_) {
       // keep local state
     }
+    await _loadWeekHistory();
+  }
+
+  // Fetch the last 7 days of practice from Supabase. A day counts as practiced
+  // if any discipline had a value > 0.
+  Future<void> _loadWeekHistory() async {
+    final client = SupabaseSync.client;
+    final uid = SupabaseSync.userId;
+    if (client == null || uid == null) return;
+    final now = DateTime.now();
+    final fromDate = now.subtract(const Duration(days: 6)).toIso8601String().substring(0, 10);
+    try {
+      final rows = await client
+          .from('sadhana_records')
+          .select('date, meditation_minutes, verses_read, chanting_rounds')
+          .eq('user_id', uid)
+          .gte('date', fromDate)
+          .lte('date', _today);
+      final Map<String, bool> practiced = {};
+      for (final row in rows) {
+        final med = (row['meditation_minutes'] as int?) ?? 0;
+        final ver = (row['verses_read'] as int?) ?? 0;
+        final cha = (row['chanting_rounds'] as int?) ?? 0;
+        practiced[row['date'] as String] = (med + ver + cha) > 0;
+      }
+      final history = List<bool>.generate(7, (i) {
+        final date = now.subtract(Duration(days: 6 - i)).toIso8601String().substring(0, 10);
+        return practiced[date] ?? false;
+      });
+      state = state.copyWith(weekHistory: List.unmodifiable(history));
+    } catch (_) {}
+  }
+
+  // Update today's slot (index 6) in weekHistory after any local change.
+  void _updateTodayInHistory() {
+    final practiced = (state.todayMeditation + state.todayVerses + state.todayChanting) > 0;
+    if (practiced != state.weekHistory[6]) {
+      final updated = List<bool>.from(state.weekHistory)..[6] = practiced;
+      state = state.copyWith(weekHistory: List.unmodifiable(updated));
+    }
   }
 
   // Upsert today's record to Supabase (keyed on user_id + date).
@@ -154,6 +199,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final newVal = state.todayMeditation + minutes;
     await prefs.setInt(_pk('today_meditation'), newVal);
     state = state.copyWith(todayMeditation: newVal);
+    _updateTodayInHistory();
     await _checkAndUpdateStreak();
     await _syncRemote();
   }
@@ -163,6 +209,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final newVal = state.todayVerses + 1;
     await prefs.setInt(_pk('today_verses'), newVal);
     state = state.copyWith(todayVerses: newVal);
+    _updateTodayInHistory();
     await _checkAndUpdateStreak();
     await _syncRemote();
   }
@@ -172,6 +219,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final newVal = state.todayChanting + rounds;
     await prefs.setInt(_pk('today_chanting'), newVal);
     state = state.copyWith(todayChanting: newVal);
+    _updateTodayInHistory();
     await _checkAndUpdateStreak();
     await _syncRemote();
   }
@@ -186,6 +234,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
       todayVerses: 0,
       todayChanting: 0,
     );
+    _updateTodayInHistory();
     await _syncRemote();
   }
 
@@ -194,6 +243,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final v = value.clamp(0, 9999);
     await prefs.setInt(_pk('today_meditation'), v);
     state = state.copyWith(todayMeditation: v);
+    _updateTodayInHistory();
     await _checkAndUpdateStreak();
     await _syncRemote();
   }
@@ -203,6 +253,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final v = value.clamp(0, 9999);
     await prefs.setInt(_pk('today_verses'), v);
     state = state.copyWith(todayVerses: v);
+    _updateTodayInHistory();
     await _checkAndUpdateStreak();
     await _syncRemote();
   }
@@ -212,6 +263,7 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     final v = value.clamp(0, 9999);
     await prefs.setInt(_pk('today_chanting'), v);
     state = state.copyWith(todayChanting: v);
+    _updateTodayInHistory();
     await _checkAndUpdateStreak();
     await _syncRemote();
   }

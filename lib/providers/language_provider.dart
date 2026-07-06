@@ -1677,7 +1677,14 @@ class AppTranslations {
       AppLanguage.oriya: 'ହାଂ, ପୁନ ଆରମ୍ଭ କରନ୍ତୁ',
       AppLanguage.gujarati: 'હા, ફરી શરૂ કરો',
     },
-    'sadhanaTodayLabel': {
+    'sadhanaThisWeek': {
+      AppLanguage.english: 'THIS WEEK',
+      AppLanguage.hindi: 'इस सप्ताह',
+      AppLanguage.tamil: 'இந்த வாரம்',
+      AppLanguage.bengali: 'এই সপ্তাহ',
+      AppLanguage.gujarati: 'આ અઠवाडियुं',
+      AppLanguage.oriya: 'ଏ ସपताह',
+    },    'sadhanaTodayLabel': {
       AppLanguage.english: 'Today',
       AppLanguage.hindi: 'आज',
       AppLanguage.tamil: 'இன்று',

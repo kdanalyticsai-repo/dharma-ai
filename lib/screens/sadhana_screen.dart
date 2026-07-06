@@ -121,6 +121,16 @@ class SadhanaScreen extends ConsumerWidget {
 
                 const SizedBox(height: SacredTheme.stackLg),
 
+                // Weekly history strip
+                Text(
+                  AppTranslations.get('sadhanaThisWeek', currentLanguage),
+                  style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                ),
+                const SizedBox(height: SacredTheme.stackMd),
+                _buildWeekStrip(context, sadhana.weekHistory, currentLanguage),
+
+                const SizedBox(height: SacredTheme.stackLg),
+
                 // Metrics List
                 Text(
                   AppTranslations.get('todaysGoals', currentLanguage),
@@ -379,6 +389,63 @@ class SadhanaScreen extends ConsumerWidget {
             child: Text(AppTranslations.get('streakInfoBtn', lang)),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWeekStrip(BuildContext context, List<bool> history, AppLanguage lang) {
+    final now = DateTime.now();
+    const dayAbbr = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+    return Card(
+      color: SacredTheme.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(7, (i) {
+            final date = now.subtract(Duration(days: 6 - i));
+            final isToday = i == 6;
+            final practiced = history[i];
+            final label = isToday
+                ? AppTranslations.get('sadhanaTodayLabel', lang)
+                : dayAbbr[date.weekday - 1];
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: practiced ? SacredTheme.primary.withOpacity(isToday ? 1.0 : 0.65) : Colors.transparent,
+                    border: Border.all(
+                      color: isToday
+                          ? SacredTheme.primary
+                          : practiced
+                              ? SacredTheme.primary.withOpacity(0.5)
+                              : SacredTheme.outlineVariant,
+                      width: isToday ? 2.0 : 1.0,
+                    ),
+                  ),
+                  child: practiced
+                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: isToday ? 9 : 9,
+                    fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
+                    color: isToday ? SacredTheme.primary : SacredTheme.outline,
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
       ),
     );
   }
