@@ -89,9 +89,7 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          displayName != null
-                              ? '${AppTranslations.get('greetingHariOm', currentLanguage)} $displayName'
-                              : AppTranslations.get('greetingSeeker', currentLanguage),
+                          '${AppTranslations.get(_timeGreetingKey(), currentLanguage)} ${displayName ?? AppTranslations.get('seekerLabel', currentLanguage)}',
                           style: textTheme.headlineMedium?.copyWith(
                             color: SacredTheme.headingColor(context),
                             fontWeight: FontWeight.w600,
@@ -162,10 +160,15 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 18),
-                const Center(child: DharmaLogo(height: 104)),
-                const SizedBox(height: 10),
-                const Center(child: PwaInstallButton()),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    DharmaLogo(height: 48),
+                    SizedBox(width: 12),
+                    PwaInstallButton(),
+                  ],
+                ),
 
                 const FadingDivider(height: 24),
 
@@ -374,6 +377,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                   current: sadhana.todayMeditation,
                   target: sadhana.targetMeditation,
                   unit: AppTranslations.get('minsLabel', currentLanguage),
+                  quickLabel: AppTranslations.get('add5Mins', currentLanguage),
+                  onQuickAdd: () => ref.read(sadhanaProvider.notifier).incrementMeditation(5),
                 ),
                 const SizedBox(height: SacredTheme.stackSm),
                 _buildProgressRow(
@@ -383,6 +388,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                   current: sadhana.todayVerses,
                   target: sadhana.targetVerses,
                   unit: AppTranslations.get('versesLabel', currentLanguage),
+                  quickLabel: AppTranslations.get('add1Verse', currentLanguage),
+                  onQuickAdd: () => ref.read(sadhanaProvider.notifier).incrementVerses(),
                 ),
                 const SizedBox(height: SacredTheme.stackSm),
                 _buildProgressRow(
@@ -392,6 +399,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                   current: sadhana.todayChanting,
                   target: sadhana.targetChanting,
                   unit: AppTranslations.get('beadsLabel', currentLanguage),
+                  quickLabel: AppTranslations.get('add10Beads', currentLanguage),
+                  onQuickAdd: () => ref.read(sadhanaProvider.notifier).incrementChanting(10),
                 ),
 
                 const SizedBox(height: SacredTheme.safeAreaBottom),
@@ -401,6 +410,13 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
         ),
       ),
     );
+  }
+
+  String _timeGreetingKey() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'greetingMorning';
+    if (hour >= 12 && hour < 17) return 'greetingAfternoon';
+    return 'greetingEvening';
   }
 
   Widget _avatarInitial(String initials) {
@@ -428,7 +444,6 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
     );
   }
 
-  // Read-only progress row: icon, title, a thin progress bar, and "x / y unit".
   Widget _buildProgressRow(
     BuildContext context, {
     required IconData icon,
@@ -436,6 +451,8 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
     required int current,
     required int target,
     required String unit,
+    String? quickLabel,
+    VoidCallback? onQuickAdd,
   }) {
     final textTheme = Theme.of(context).textTheme;
     final double progress = target == 0 ? 0 : (current / target).clamp(0.0, 1.0);
@@ -477,7 +494,28 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Text('$current / $target $unit', style: textTheme.labelSmall),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('$current / $target $unit', style: textTheme.labelSmall),
+                if (onQuickAdd != null && quickLabel != null) ...[
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 28,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        textStyle: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700),
+                      ),
+                      onPressed: onQuickAdd,
+                      child: Text(quickLabel),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
