@@ -9,8 +9,6 @@ import 'package:dharma_ai/widgets/dharma_logo.dart';
 
 const _prefKey = 'onboarding_v1_shown';
 
-/// Call from HomeShell / WelcomeScreen initState (via addPostFrameCallback).
-/// Shows the onboarding carousel once, then marks it done.
 Future<void> maybeShowOnboarding(BuildContext context) async {
   final prefs = await SharedPreferences.getInstance();
   if (prefs.getBool(_prefKey) == true) return;
@@ -27,7 +25,7 @@ Future<void> maybeShowOnboarding(BuildContext context) async {
   await prefs.setBool(_prefKey, true);
 }
 
-// ── Per-slide data (stores translation keys, not raw strings) ─────────────────
+// ── Per-slide data ────────────────────────────────────────────────────────────
 
 class _OnboardingPage {
   final IconData icon;
@@ -45,6 +43,7 @@ class _OnboardingPage {
   });
 }
 
+// Slide 0 is the language picker (special). Slides 1-4 are these content pages.
 const _pages = [
   _OnboardingPage(
     icon: Icons.auto_awesome,
@@ -75,6 +74,9 @@ const _pages = [
   ),
 ];
 
+// Total page count = 1 language slide + 4 content slides
+const _totalPages = 5;
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -88,21 +90,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
+  bool get _isLangSlide => _page == 0;
+  bool get _isLastSlide => _page == _totalPages - 1;
+
+  // Accent for language slide is gold; content slides use their own color.
+  Color get _accent =>
+      _isLangSlide ? const Color(0xFFE8C84A) : _pages[_page - 1].accentColor;
+
   void _goTo(int i) => _controller.animateToPage(
         i,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
 
-  void _next() {
-    if (_page < _pages.length - 1) {
-      _goTo(_page + 1);
-    } else {
-      _done();
-    }
-  }
+  void _next() => _isLastSlide ? _done() : _goTo(_page + 1);
 
   void _done() => Navigator.pop(context);
+
+  // Called when user taps a language on slide 0 — saves it and advances.
+  Future<void> _selectLanguage(AppLanguage lang) async {
+    await ref.read(languageProvider.notifier).setLanguage(lang);
+    if (mounted) _goTo(1);
+  }
 
   @override
   void dispose() {
@@ -113,14 +122,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
-    final isLast = _page == _pages.length - 1;
-    final accent = _pages[_page].accentColor;
     final screenW = MediaQuery.of(context).size.width;
+    final accent = _accent;
 
     return Scaffold(
       body: Stack(
         children: [
-          // ── Rich gradient background ──────────────────────────────────────
+          // ── Gradient background ───────────────────────────────────────────
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -136,7 +144,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
 
-          // ── Large rotating Dharmachakra ───────────────────────────────────
+          // ── Rotating Dharmachakra ─────────────────────────────────────────
           Center(
             child: Opacity(
               opacity: 0.13,
@@ -152,30 +160,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
 
-          // ── Main content ──────────────────────────────────────────────────
+          // ── Content ───────────────────────────────────────────────────────
           SafeArea(
             child: Column(
               children: [
-                // Logo + skip row
+                // Logo + Skip row
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Logo tinted to current slide accent
                       ColorFiltered(
                         colorFilter:
                             ColorFilter.mode(accent, BlendMode.srcIn),
                         child: const DharmaLogo(
                             height: 52, showTagline: false),
                       ),
-                      // Skip — pinned right
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _done,
                           child: Text(
-                            AppTranslations.get('onboardingSkip', lang),
+                            _isLangSlide
+                                ? 'Skip'
+                                : AppTranslations.get(
+                                    'onboardingSkip', lang),
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               color: Colors.white54,
@@ -192,7 +201,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 // Tagline
                 Text(
-                  AppTranslations.get('onboardingTagline', lang),
+                  _isLangSlide
+                      ? 'Wisdom · Intelligence · Purpose'
+                      : AppTranslations.get('onboardingTagline', lang),
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     letterSpacing: 1.2,
@@ -203,22 +214,33 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 const SizedBox(height: 8),
 
-                // Slides
+                // Slides (0 = language picker, 1-4 = content)
                 Expanded(
                   child: PageView.builder(
                     controller: _controller,
-                    itemCount: _pages.length,
+                    itemCount: _totalPages,
                     onPageChanged: (i) => setState(() => _page = i),
-                    itemBuilder: (_, i) =>
-                        _PageContent(page: _pages[i], lang: lang),
+                    itemBuilder: (_, i) {
+                      if (i == 0) {
+                        return _LanguageSlide(
+                          accent: accent,
+                          currentLang: lang,
+                          onSelect: _selectLanguage,
+                        );
+                      }
+                      return _PageContent(
+                          page: _pages[i - 1], lang: lang);
+                    },
                   ),
                 ),
 
-                // ── Clickable dot indicators ──────────────────────────────
+                // Dots
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_pages.length, (i) {
+                  children: List.generate(_totalPages, (i) {
                     final active = i == _page;
+                    final dotColor =
+                        i == 0 ? const Color(0xFFE8C84A) : _pages[i - 1].accentColor;
                     return GestureDetector(
                       onTap: () => _goTo(i),
                       behavior: HitTestBehavior.opaque,
@@ -230,12 +252,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           width: active ? 24 : 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: active ? accent : Colors.white38,
+                            color: active ? dotColor : Colors.white38,
                             borderRadius: BorderRadius.circular(4),
                             boxShadow: active
                                 ? [
                                     BoxShadow(
-                                      color: accent.withOpacity(0.55),
+                                      color: dotColor.withOpacity(0.55),
                                       blurRadius: 8,
                                       spreadRadius: 1,
                                     )
@@ -250,19 +272,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 const SizedBox(height: 20),
 
-                // ── Next / Begin button ───────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: _GlowButton(
-                    label: isLast
-                        ? AppTranslations.get('onboardingBegin', lang)
-                        : AppTranslations.get('onboardingNext', lang),
-                    color: accent,
-                    onTap: _next,
+                // Next / Begin button — hidden on language slide
+                if (!_isLangSlide)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: _GlowButton(
+                      label: _isLastSlide
+                          ? AppTranslations.get('onboardingBegin', lang)
+                          : AppTranslations.get('onboardingNext', lang),
+                      color: accent,
+                      onTap: _next,
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 32),
+                // Spacer keeps layout stable whether button is shown or not
+                SizedBox(height: _isLangSlide ? 72 : 32),
               ],
             ),
           ),
@@ -272,7 +296,135 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-// ── Slide content ─────────────────────────────────────────────────────────────
+// ── Slide 0: Language picker ──────────────────────────────────────────────────
+
+class _LanguageSlide extends StatelessWidget {
+  final Color accent;
+  final AppLanguage currentLang;
+  final ValueChanged<AppLanguage> onSelect;
+
+  const _LanguageSlide({
+    required this.accent,
+    required this.currentLang,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon
+          Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: accent.withOpacity(0.10),
+              border: Border.all(color: accent.withOpacity(0.25), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withOpacity(0.35),
+                  blurRadius: 40,
+                  spreadRadius: 8,
+                ),
+              ],
+            ),
+            child: Icon(Icons.language, size: 42, color: accent),
+          ),
+
+          const SizedBox(height: 28),
+
+          // Title — shown in all supported languages so it's self-explanatory
+          Text(
+            'Choose Your Language',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.newsreader(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              height: 1.2,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            'भाषा चुनें  •  மொழி தேர்வு  •  ভাষা বেছে নিন',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: Colors.white54,
+              height: 1.5,
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Language grid (2 columns × 3 rows)
+          GridView.count(
+            shrinkWrap: true,
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 2.8,
+            physics: const NeverScrollableScrollPhysics(),
+            children: AppLanguage.values.map((l) {
+              final selected = l == currentLang;
+              return GestureDetector(
+                onTap: () => onSelect(l),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? accent.withOpacity(0.20)
+                        : Colors.white.withOpacity(0.05),
+                    borderRadius:
+                        BorderRadius.circular(SacredTheme.radiusDefault),
+                    border: Border.all(
+                      color: selected
+                          ? accent
+                          : Colors.white.withOpacity(0.15),
+                      width: selected ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      l.displayName,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: selected ? accent : Colors.white70,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Tap hint
+          Text(
+            'Tap a language to continue  →',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: Colors.white38,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Content slide ─────────────────────────────────────────────────────────────
 
 class _PageContent extends StatelessWidget {
   final _OnboardingPage page;
@@ -284,16 +436,14 @@ class _PageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = AppTranslations.get(page.titleKey, lang);
     final subtitle = AppTranslations.get(page.subtitleKey, lang);
-    final hint = page.hintKey != null
-        ? AppTranslations.get(page.hintKey!, lang)
-        : null;
+    final hint =
+        page.hintKey != null ? AppTranslations.get(page.hintKey!, lang) : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 36),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon with glow ring
           Container(
             width: 120,
             height: 120,
