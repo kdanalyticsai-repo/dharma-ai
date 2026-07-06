@@ -303,8 +303,8 @@ class _PageContent extends StatelessWidget {
             page.title,
             textAlign: TextAlign.center,
             style: GoogleFonts.newsreader(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
               color: Colors.white,
               height: 1.2,
             ),
@@ -316,8 +316,9 @@ class _PageContent extends StatelessWidget {
             page.subtitle,
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              fontSize: 14.5,
-              color: Colors.white70,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
               height: 1.65,
             ),
           ),
