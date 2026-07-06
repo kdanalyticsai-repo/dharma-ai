@@ -135,6 +135,16 @@ class SadhanaScreen extends ConsumerWidget {
                   progressString: '${sadhana.todayMeditation} / ${sadhana.targetMeditation} ${AppTranslations.get('minsLabel', currentLanguage)}',
                   progress: sadhana.todayMeditation / sadhana.targetMeditation,
                   icon: Icons.self_improvement,
+                  onEditTap: () => _showEditDialog(
+                    context,
+                    lang: currentLanguage,
+                    title: AppTranslations.get('meditateBreathe', currentLanguage),
+                    unit: AppTranslations.get('minsLabel', currentLanguage),
+                    currentToday: sadhana.todayMeditation,
+                    currentTarget: sadhana.targetMeditation,
+                    onSetToday: notifier.setMeditationToday,
+                    onSetTarget: notifier.setTargetMeditation,
+                  ),
                   action: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -153,6 +163,16 @@ class SadhanaScreen extends ConsumerWidget {
                   progressString: '${sadhana.todayVerses} / ${sadhana.targetVerses} ${AppTranslations.get('versesLabel', currentLanguage)}',
                   progress: sadhana.todayVerses / sadhana.targetVerses,
                   icon: Icons.menu_book_outlined,
+                  onEditTap: () => _showEditDialog(
+                    context,
+                    lang: currentLanguage,
+                    title: AppTranslations.get('versesReadGoal', currentLanguage),
+                    unit: AppTranslations.get('versesLabel', currentLanguage),
+                    currentToday: sadhana.todayVerses,
+                    currentTarget: sadhana.targetVerses,
+                    onSetToday: notifier.setVersesToday,
+                    onSetTarget: notifier.setTargetVerses,
+                  ),
                   action: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -171,6 +191,16 @@ class SadhanaScreen extends ConsumerWidget {
                   progressString: '${sadhana.todayChanting} / ${sadhana.targetChanting} ${AppTranslations.get('beadsLabel', currentLanguage)}',
                   progress: sadhana.todayChanting / sadhana.targetChanting,
                   icon: Icons.grain,
+                  onEditTap: () => _showEditDialog(
+                    context,
+                    lang: currentLanguage,
+                    title: AppTranslations.get('chantingGoal', currentLanguage),
+                    unit: AppTranslations.get('beadsLabel', currentLanguage),
+                    currentToday: sadhana.todayChanting,
+                    currentTarget: sadhana.targetChanting,
+                    onSetToday: notifier.setChantingToday,
+                    onSetTarget: notifier.setTargetChanting,
+                  ),
                   action: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -239,6 +269,84 @@ class SadhanaScreen extends ConsumerWidget {
     );
   }
 
+  void _showEditDialog(
+    BuildContext context, {
+    required AppLanguage lang,
+    required String title,
+    required String unit,
+    required int currentToday,
+    required int currentTarget,
+    required Future<void> Function(int) onSetToday,
+    required Future<void> Function(int) onSetTarget,
+  }) {
+    final todayCtrl = TextEditingController(text: '$currentToday');
+    final targetCtrl = TextEditingController(text: '$currentTarget');
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SacredTheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SacredTheme.radiusMd)),
+        title: Text(
+          title,
+          style: GoogleFonts.newsreader(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: SacredTheme.headingColor(ctx),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: todayCtrl,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: '${AppTranslations.get('sadhanaTodayLabel', lang)} ($unit)',
+                labelStyle: textTheme.labelSmall,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: targetCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: '${AppTranslations.get('sadhanaDailyTarget', lang)} ($unit)',
+                labelStyle: textTheme.labelSmall,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              AppTranslations.get('cancelBtn', lang),
+              style: const TextStyle(color: SacredTheme.outline),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final todayVal = int.tryParse(todayCtrl.text.trim()) ?? currentToday;
+              final targetVal = int.tryParse(targetCtrl.text.trim()) ?? currentTarget;
+              if (targetVal > 0) {
+                onSetToday(todayVal);
+                onSetTarget(targetVal);
+              }
+              Navigator.pop(ctx);
+            },
+            child: Text(AppTranslations.get('saveBtn', lang)),
+          ),
+        ],
+      ),
+    ).then((_) {
+      todayCtrl.dispose();
+      targetCtrl.dispose();
+    });
+  }
+
   void _showStreakInfo(BuildContext context, int streak, AppLanguage lang) {
     showDialog(
       context: context,
@@ -282,6 +390,7 @@ class SadhanaScreen extends ConsumerWidget {
     required double progress,
     required IconData icon,
     required Widget action,
+    VoidCallback? onEditTap,
   }) {
     final textTheme = Theme.of(context).textTheme;
     final double fillPercentage = progress.clamp(0.0, 1.0);
@@ -305,7 +414,17 @@ class SadhanaScreen extends ConsumerWidget {
                         style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                         textAlign: TextAlign.center,
                       ),
-                      Text(progressString, style: textTheme.labelSmall),
+                      GestureDetector(
+                        onTap: onEditTap,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(progressString, style: textTheme.labelSmall),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.edit_outlined, size: 11, color: SacredTheme.outline),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),

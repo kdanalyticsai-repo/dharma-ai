@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 import 'package:dharma_ai/services/supabase_sync.dart';
@@ -1676,6 +1676,30 @@ class AppTranslations {
       AppLanguage.bengali: 'রিসেট',
       AppLanguage.oriya: 'ହାଂ, ପୁନ ଆରମ୍ଭ କରନ୍ତୁ',
       AppLanguage.gujarati: 'હા, ફરી શરૂ કરો',
+    },
+    'sadhanaTodayLabel': {
+      AppLanguage.english: 'Today',
+      AppLanguage.hindi: 'आज',
+      AppLanguage.tamil: 'இன்று',
+      AppLanguage.bengali: 'আজ',
+      AppLanguage.gujarati: 'આज',
+      AppLanguage.oriya: 'ଆଜ',
+    },
+    'sadhanaDailyTarget': {
+      AppLanguage.english: 'Daily target',
+      AppLanguage.hindi: 'दैनिक लक्ष्य',
+      AppLanguage.tamil: 'தினசரி இலக்கு',
+      AppLanguage.bengali: 'দৈনিক লক্ষ্য',
+      AppLanguage.gujarati: 'દैनिक लक्ष्य',
+      AppLanguage.oriya: 'ଦैनिक लक्ष्य',
+    },
+    'saveBtn': {
+      AppLanguage.english: 'Save',
+      AppLanguage.hindi: 'सहेजें',
+      AppLanguage.tamil: 'சேமி',
+      AppLanguage.bengali: 'সংরক্ষণ',
+      AppLanguage.gujarati: 'સाचवो',
+      AppLanguage.oriya: 'ସংরক्ষণ',
     },
     'readingOptions': {
       AppLanguage.english: 'Reading Options',

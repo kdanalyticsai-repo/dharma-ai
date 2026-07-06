@@ -70,6 +70,9 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
     int meditation = prefs.getInt(_pk('today_meditation')) ?? 0;
     int verses = prefs.getInt(_pk('today_verses')) ?? 0;
     int chanting = prefs.getInt(_pk('today_chanting')) ?? 0;
+    final int targetMeditation = prefs.getInt(_pk('target_meditation')) ?? 20;
+    final int targetVerses = prefs.getInt(_pk('target_verses')) ?? 5;
+    final int targetChanting = prefs.getInt(_pk('target_chanting')) ?? 108;
     final lastActive = prefs.getString(_pk('sadhana_last_active'));
     final lastCompleted = prefs.getString(_pk('sadhana_last_completed'));
 
@@ -96,6 +99,9 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
       todayMeditation: meditation,
       todayVerses: verses,
       todayChanting: chanting,
+      targetMeditation: targetMeditation,
+      targetVerses: targetVerses,
+      targetChanting: targetChanting,
     );
     await _loadRemoteToday();
   }
@@ -181,6 +187,54 @@ class SadhanaNotifier extends StateNotifier<SadhanaState> {
       todayChanting: 0,
     );
     await _syncRemote();
+  }
+
+  Future<void> setMeditationToday(int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = value.clamp(0, 9999);
+    await prefs.setInt(_pk('today_meditation'), v);
+    state = state.copyWith(todayMeditation: v);
+    await _checkAndUpdateStreak();
+    await _syncRemote();
+  }
+
+  Future<void> setVersesToday(int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = value.clamp(0, 9999);
+    await prefs.setInt(_pk('today_verses'), v);
+    state = state.copyWith(todayVerses: v);
+    await _checkAndUpdateStreak();
+    await _syncRemote();
+  }
+
+  Future<void> setChantingToday(int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = value.clamp(0, 9999);
+    await prefs.setInt(_pk('today_chanting'), v);
+    state = state.copyWith(todayChanting: v);
+    await _checkAndUpdateStreak();
+    await _syncRemote();
+  }
+
+  Future<void> setTargetMeditation(int target) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = target.clamp(1, 9999);
+    await prefs.setInt(_pk('target_meditation'), v);
+    state = state.copyWith(targetMeditation: v);
+  }
+
+  Future<void> setTargetVerses(int target) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = target.clamp(1, 9999);
+    await prefs.setInt(_pk('target_verses'), v);
+    state = state.copyWith(targetVerses: v);
+  }
+
+  Future<void> setTargetChanting(int target) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = target.clamp(1, 9999);
+    await prefs.setInt(_pk('target_chanting'), v);
+    state = state.copyWith(targetChanting: v);
   }
 
   Future<void> _checkAndUpdateStreak() async {
