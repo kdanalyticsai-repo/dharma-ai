@@ -363,48 +363,53 @@ class _LanguageSlide extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // Language grid (2 columns × 3 rows)
-          GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 2.8,
-            physics: const NeverScrollableScrollPhysics(),
-            children: AppLanguage.values.map((l) {
-              final selected = l == currentLang;
-              return GestureDetector(
-                onTap: () => onSelect(l),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? accent.withOpacity(0.20)
-                        : Colors.white.withOpacity(0.05),
-                    borderRadius:
-                        BorderRadius.circular(SacredTheme.radiusDefault),
-                    border: Border.all(
-                      color: selected
-                          ? accent
-                          : Colors.white.withOpacity(0.15),
-                      width: selected ? 1.5 : 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      l.displayName,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w400,
-                        color: selected ? accent : Colors.white70,
+          // Language grid — capped width so tiles stay compact on desktop
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: GridView.count(
+                shrinkWrap: true,
+                crossAxisCount: 2,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 3.2,
+                physics: const NeverScrollableScrollPhysics(),
+                children: AppLanguage.values.map((l) {
+                  final selected = l == currentLang;
+                  return GestureDetector(
+                    onTap: () => onSelect(l),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? accent.withOpacity(0.20)
+                            : Colors.white.withOpacity(0.05),
+                        borderRadius:
+                            BorderRadius.circular(SacredTheme.radiusDefault),
+                        border: Border.all(
+                          color: selected
+                              ? accent
+                              : Colors.white.withOpacity(0.15),
+                          width: selected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          l.displayName,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                            color: selected ? accent : Colors.white70,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
 
           const SizedBox(height: 20),
