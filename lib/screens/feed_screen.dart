@@ -284,10 +284,37 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
-                      child: Text(
-                        AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
-                        style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
-                        overflow: TextOverflow.ellipsis,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              AppTranslations.get('dailySadhanaCheckIn', currentLanguage),
+                              style: textTheme.labelSmall?.copyWith(color: SacredTheme.primary),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: SacredTheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(SacredTheme.radiusSm),
+                              border: Border.all(color: SacredTheme.primary.withOpacity(0.3), width: 0.5),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.local_fire_department, color: SacredTheme.primary, size: 12),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${sadhana.streak}',
+                                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: SacredTheme.primary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -314,6 +341,30 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                     ),
                   ],
                 ),
+                if (sadhana.overallProgress >= 1.0) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: SacredTheme.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(SacredTheme.radiusDefault),
+                      border: Border.all(color: SacredTheme.primary.withOpacity(0.3), width: 0.5),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: SacredTheme.primary, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            AppTranslations.get('goalsFulfilled', currentLanguage),
+                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: SacredTheme.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: SacredTheme.stackMd),
 
                 _buildProgressRow(
