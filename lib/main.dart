@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'package:dharma_ai/firebase_options.dart';
 import 'package:dharma_ai/services/analytics_service.dart';
+import 'package:dharma_ai/services/notification_service.dart';
 import 'package:dharma_ai/theme/theme.dart';
 import 'package:dharma_ai/screens/login_screen.dart';
 import 'package:dharma_ai/screens/personalize_screen.dart';
@@ -118,6 +119,13 @@ void main() async {
           );
         }
       });
+
+      // Push notifications (Android only — non-blocking, never delays startup).
+      if (!kIsWeb) {
+        NotificationService.initialize().catchError((e) {
+          debugPrint('NotificationService init failed: $e');
+        });
+      }
 
       // Android: handle auth links that arrive while the app is already running.
       if (!kIsWeb) {

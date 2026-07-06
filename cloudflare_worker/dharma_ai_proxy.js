@@ -47,6 +47,11 @@ const PLAY_PRODUCTS = {
 };
 
 export default {
+  // Cron trigger: daily sadhana reminders via FCM (see wrangler.toml [triggers]).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(sendDailySadhanaReminders(env));
+  },
+
   async fetch(request, env) {
     const path = new URL(request.url).pathname;
 
@@ -746,6 +751,114 @@ async function handleNewUserNotification(request, env) {
   }
 
   return new Response('ok', { status: 200 });
+}
+
+// ── Daily sadhana reminder cron ─────────────────────────────────────────────
+// Fires at 08:30 IST (03:00 UTC). Sends a FCM push to every user who has an
+// fcm_token stored but has NOT logged any sadhana today.
+// Secrets needed: FIREBASE_SA_JSON (Firebase service account JSON).
+async function sendDailySadhanaReminders(env) {
+  if (!env.FIREBASE_SA_JSON || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return;
+  try {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
+    const sb = sbFetch(env);
+
+    // Users who already logged sadhana today.
+    const doneRes = await sb(`sadhana_records?date=eq.${today}&select=user_id`, { method: 'GET' });
+    const doneRows = await doneRes.json();
+    const doneSet = new Set(Array.isArray(doneRows) ? doneRows.map((r) => r.user_id) : []);
+
+    // All users with an FCM token.
+    const profRes = await sb(
+      'profiles?fcm_token=not.is.null&select=id,fcm_token,preferred_language',
+      { method: 'GET' },
+    );
+    const profiles = await profRes.json();
+    if (!Array.isArray(profiles) || !profiles.length) return;
+
+    // Only notify those who haven't practised yet.
+    const targets = profiles.filter((p) => !doneSet.has(p.id) && p.fcm_token);
+    if (!targets.length) return;
+
+    const accessToken = await getFcmAccessToken(env.FIREBASE_SA_JSON);
+    const { project_id } = JSON.parse(env.FIREBASE_SA_JSON);
+    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${project_id}/messages:send`;
+
+    for (const user of targets) {
+      const { title, body } = getReminderMessage(user.preferred_language || 'en');
+      try {
+        await fetch(fcmUrl, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: {
+              token: user.fcm_token,
+              notification: { title, body },
+              data: { screen: 'sadhana' },
+              android: { priority: 'normal' },
+            },
+          }),
+        });
+      } catch (e) {
+        console.error('FCM send error user', user.id, e.message);
+      }
+    }
+    console.log(`Sadhana reminders sent to ${targets.length} user(s).`);
+  } catch (e) {
+    console.error('sendDailySadhanaReminders error:', e.message);
+  }
+}
+
+// Exchange a Firebase service account JSON key for an FCM HTTP v1 access token.
+async function getFcmAccessToken(saJson) {
+  const sa = JSON.parse(saJson);
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const payload = {
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  };
+  const encode = (obj) => btoa(JSON.stringify(obj))
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const unsigned = `${encode(header)}.${encode(payload)}`;
+  const pemBody = sa.private_key
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s/g, '');
+  const der = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8', der.buffer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false, ['sign'],
+  );
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(unsigned));
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const jwt = `${unsigned}.${sigB64}`;
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+  });
+  const tokenData = await tokenRes.json();
+  if (!tokenData.access_token) throw new Error(tokenData.error_description || 'FCM token exchange failed');
+  return tokenData.access_token;
+}
+
+// Multilingual reminder messages for the 6 supported languages.
+function getReminderMessage(lang) {
+  const msgs = {
+    en: { title: 'Your daily sadhana awaits 🪷', body: 'A few minutes of practice can transform your day.' },
+    hi: { title: 'आपकी साधना आपका इंतज़ार कर रही है 🪷', body: 'कुछ मिनटों का अभ्यास आपके दिन को बदल सकता है।' },
+    ta: { title: 'உங்கள் சாதனை காத்திருக்கிறது 🪷', body: 'சில நிமிட பயிற்சி உங்கள் நாளை மாற்றும்.' },
+    bn: { title: 'আপনার সাধনা অপেক্ষা করছে 🪷', body: 'কয়েক মিনিটের অনুশীলন আপনার দিন বদলে দিতে পারে।' },
+    gu: { title: 'તમારી સાધના રાહ જોઈ રહી છે 🪷', body: 'થોડી મિનિટ અભ્યાસ તમારો દિવસ બદલી શકે છે.' },
+    or: { title: 'ଆପଣଙ୍କ ସାଧନା ଅପେକ୍ଷା କରୁଛି 🪷', body: 'କିଛି ମିନିଟ ଅଭ୍ୟାସ ଆପଣଙ୍କ ଦିନ ବଦଳାଇ ପାରିବ।' },
+  };
+  return msgs[lang] || msgs.en;
 }
 
 function escHtml(str) {

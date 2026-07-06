@@ -26,3 +26,9 @@ ALLOWED_ORIGINS = "http://localhost:3456,https://dharmaai.kdaanalytics.com,https
 [[kv_namespaces]]
 binding = "AI_RATE_LIMIT"
 id = "181c669da44f4f9f8dddea917d30480b"
+
+# Daily sadhana reminder push notifications — fires at 08:30 IST (03:00 UTC).
+# Requires: FIREBASE_SA_JSON secret (wrangler secret put FIREBASE_SA_JSON)
+# and a `fcm_token` column on the Supabase `profiles` table.
+[triggers]
+crons = ["0 3 * * *"]
