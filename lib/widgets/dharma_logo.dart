@@ -40,6 +40,7 @@ class DharmaLogo extends ConsumerWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         image,
         SizedBox(height: height * 0.10),

@@ -200,13 +200,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(height: 4),
 
                 // Tagline
-                Text(
-                  AppTranslations.get('logoTagline', lang),
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    letterSpacing: 1.2,
-                    color: accent.withOpacity(0.85),
-                    fontWeight: FontWeight.w500,
+                SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    AppTranslations.get('logoTagline', lang),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      letterSpacing: 1.2,
+                      color: accent.withOpacity(0.85),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
 
