@@ -174,7 +174,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         colorFilter:
                             ColorFilter.mode(accent, BlendMode.srcIn),
                         child: const DharmaLogo(
-                            height: 52, showTagline: false),
+                            height: 72, showTagline: false),
                       ),
                       Align(
                         alignment: Alignment.centerRight,
