@@ -199,17 +199,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 const SizedBox(height: 4),
 
-                // Tagline
-                SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                    AppTranslations.get('logoTagline', lang),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      letterSpacing: 1.2,
-                      color: accent.withOpacity(0.85),
-                      fontWeight: FontWeight.w500,
+                // Tagline — right-padded 40px so optical center aligns with D mark
+                Padding(
+                  padding: const EdgeInsets.only(right: 40),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      AppTranslations.get('logoTagline', lang),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        letterSpacing: 1.2,
+                        color: accent.withOpacity(0.85),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
