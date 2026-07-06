@@ -352,7 +352,7 @@ class _LanguageSlide extends StatelessWidget {
           const SizedBox(height: 6),
 
           Text(
-            'Choose Your Language  •  भाषा चुनें  •  மொழி தேர்வு  •  ভাষা বেছে নিন  •  ભાષા પસંદ કરો  •  ଭାଷା ବାଛନ୍ତୁ',
+            'भाषा चुनें  •  மொழி தேர்வு  •  ভাষা বেছে নিন  •  ભાષા પસંદ કરો  •  ଭାଷା ବାଛନ୍ତୁ',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 11,
