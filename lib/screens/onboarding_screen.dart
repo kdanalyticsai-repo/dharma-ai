@@ -93,9 +93,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool get _isLangSlide => _page == 0;
   bool get _isLastSlide => _page == _totalPages - 1;
 
-  // Accent for language slide is gold; content slides use their own color.
+  // Accent for language slide is celestial blue; content slides use their own color.
   Color get _accent =>
-      _isLangSlide ? const Color(0xFFE8C84A) : _pages[_page - 1].accentColor;
+      _isLangSlide ? const Color(0xFF6AADDE) : _pages[_page - 1].accentColor;
 
   void _goTo(int i) => _controller.animateToPage(
         i,
@@ -240,7 +240,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   children: List.generate(_totalPages, (i) {
                     final active = i == _page;
                     final dotColor =
-                        i == 0 ? const Color(0xFFE8C84A) : _pages[i - 1].accentColor;
+                        i == 0 ? const Color(0xFF6AADDE) : _pages[i - 1].accentColor;
                     return GestureDetector(
                       onTap: () => _goTo(i),
                       behavior: HitTestBehavior.opaque,
