@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dharma_ai/theme/theme.dart';
+import 'package:dharma_ai/providers/language_provider.dart';
 import 'package:dharma_ai/widgets/rotating_chakra.dart';
 import 'package:dharma_ai/widgets/dharma_logo.dart';
 
@@ -26,58 +27,58 @@ Future<void> maybeShowOnboarding(BuildContext context) async {
   await prefs.setBool(_prefKey, true);
 }
 
-// ── Per-slide data ────────────────────────────────────────────────────────────
+// ── Per-slide data (stores translation keys, not raw strings) ─────────────────
 
 class _OnboardingPage {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String titleKey;
+  final String subtitleKey;
   final Color accentColor;
-  final String? tabHint;
+  final String? hintKey;
 
   const _OnboardingPage({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.titleKey,
+    required this.subtitleKey,
     required this.accentColor,
-    this.tabHint,
+    this.hintKey,
   });
 }
 
 const _pages = [
   _OnboardingPage(
     icon: Icons.auto_awesome,
-    title: 'Welcome to DharmaAI',
-    subtitle: 'Your personal gateway to Vedic wisdom — ancient teachings, made alive for your daily life.',
-    accentColor: Color(0xFFE8C84A),   // bright temple gold
+    titleKey: 'onboarding1Title',
+    subtitleKey: 'onboarding1Subtitle',
+    accentColor: Color(0xFFE8C84A),
   ),
   _OnboardingPage(
     icon: Icons.menu_book_outlined,
-    title: 'Explore Sacred Scriptures',
-    subtitle: 'Dive into the Bhagavad Gita, the Vedas, and the Upanishads. Get verse-backed answers drawn from the full depth of Hindu scripture.',
-    accentColor: Color(0xFF5ABCA2),   // turquoise teal
-    tabHint: 'Find it under the Wisdom tab  ↓',
+    titleKey: 'onboarding2Title',
+    subtitleKey: 'onboarding2Subtitle',
+    accentColor: Color(0xFF5ABCA2),
+    hintKey: 'onboarding2Hint',
   ),
   _OnboardingPage(
     icon: Icons.self_improvement,
-    title: 'Your AI Guru',
-    subtitle: 'Have a continuous spiritual conversation. Your Guru remembers your journey and offers guidance tailored to you.',
-    accentColor: Color(0xFFB07EC0),   // amethyst purple
-    tabHint: 'Find it under the AI Guru tab  ↓',
+    titleKey: 'onboarding3Title',
+    subtitleKey: 'onboarding3Subtitle',
+    accentColor: Color(0xFFB07EC0),
+    hintKey: 'onboarding3Hint',
   ),
   _OnboardingPage(
     icon: Icons.spa_outlined,
-    title: 'Build a Daily Sadhana',
-    subtitle: 'Log meditation, chanting, and verse reading every day. Build streaks and watch your practice deepen over time.',
-    accentColor: Color(0xFFCC6B1A),   // dark saffron orange
-    tabHint: 'Find it under the Sadhana tab  ↓',
+    titleKey: 'onboarding4Title',
+    subtitleKey: 'onboarding4Subtitle',
+    accentColor: Color(0xFFCC6B1A),
+    hintKey: 'onboarding4Hint',
   ),
 ];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class OnboardingScreen extends ConsumerStatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -111,6 +112,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
     final isLast = _page == _pages.length - 1;
     final accent = _pages[_page].accentColor;
     final screenW = MediaQuery.of(context).size.width;
@@ -125,9 +127,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF0E0B2E), // very deep indigo
-                  Color(0xFF1C1560), // richer mid indigo
-                  Color(0xFF0B1A30), // deep navy bottom
+                  Color(0xFF0E0B2E),
+                  Color(0xFF1C1560),
+                  Color(0xFF0B1A30),
                 ],
                 stops: [0.0, 0.55, 1.0],
               ),
@@ -139,8 +141,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Opacity(
               opacity: 0.13,
               child: ColorFiltered(
-                colorFilter: const ColorFilter.mode(
-                    Colors.white, BlendMode.srcIn),
+                colorFilter:
+                    const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 child: RotatingChakra(
                   size: screenW * 0.90,
                   spokes: 12,
@@ -160,21 +162,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Centered logo — tinted to match current slide accent
+                      // Logo tinted to current slide accent
                       ColorFiltered(
-                        colorFilter: ColorFilter.mode(accent, BlendMode.srcIn),
-                        child: const DharmaLogo(height: 52, showTagline: false),
+                        colorFilter:
+                            ColorFilter.mode(accent, BlendMode.srcIn),
+                        child: const DharmaLogo(
+                            height: 52, showTagline: false),
                       ),
-                      // Skip — pinned to the right
+                      // Skip — pinned right
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _done,
-                          child: Text('Skip',
-                              style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: Colors.white54,
-                                  fontWeight: FontWeight.w500)),
+                          child: Text(
+                            AppTranslations.get('onboardingSkip', lang),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: Colors.white54,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -185,7 +192,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 // Tagline
                 Text(
-                  'Wisdom · Intelligence · Purpose',
+                  AppTranslations.get('onboardingTagline', lang),
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     letterSpacing: 1.2,
@@ -202,7 +209,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     controller: _controller,
                     itemCount: _pages.length,
                     onPageChanged: (i) => setState(() => _page = i),
-                    itemBuilder: (_, i) => _PageContent(page: _pages[i]),
+                    itemBuilder: (_, i) =>
+                        _PageContent(page: _pages[i], lang: lang),
                   ),
                 ),
 
@@ -222,9 +230,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           width: active ? 24 : 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: active
-                                ? accent
-                                : Colors.white38,
+                            color: active ? accent : Colors.white38,
                             borderRadius: BorderRadius.circular(4),
                             boxShadow: active
                                 ? [
@@ -244,11 +250,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 const SizedBox(height: 20),
 
-                // ── Next / Get Started button ─────────────────────────────
+                // ── Next / Begin button ───────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: _GlowButton(
-                    label: isLast ? 'Begin Your Journey' : 'Next',
+                    label: isLast
+                        ? AppTranslations.get('onboardingBegin', lang)
+                        : AppTranslations.get('onboardingNext', lang),
                     color: accent,
                     onTap: _next,
                   ),
@@ -268,10 +276,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
 class _PageContent extends StatelessWidget {
   final _OnboardingPage page;
-  const _PageContent({required this.page});
+  final AppLanguage lang;
+
+  const _PageContent({required this.page, required this.lang});
 
   @override
   Widget build(BuildContext context) {
+    final title = AppTranslations.get(page.titleKey, lang);
+    final subtitle = AppTranslations.get(page.subtitleKey, lang);
+    final hint = page.hintKey != null
+        ? AppTranslations.get(page.hintKey!, lang)
+        : null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 36),
       child: Column(
@@ -300,7 +316,7 @@ class _PageContent extends StatelessWidget {
           const SizedBox(height: 36),
 
           Text(
-            page.title,
+            title,
             textAlign: TextAlign.center,
             style: GoogleFonts.newsreader(
               fontSize: 28,
@@ -313,7 +329,7 @@ class _PageContent extends StatelessWidget {
           const SizedBox(height: 16),
 
           Text(
-            page.subtitle,
+            subtitle,
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 15,
@@ -323,7 +339,7 @@ class _PageContent extends StatelessWidget {
             ),
           ),
 
-          if (page.tabHint != null) ...[
+          if (hint != null) ...[
             const SizedBox(height: 22),
             Container(
               padding:
@@ -336,7 +352,7 @@ class _PageContent extends StatelessWidget {
                     color: page.accentColor.withOpacity(0.35), width: 1),
               ),
               child: Text(
-                page.tabHint!,
+                hint,
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: page.accentColor,
