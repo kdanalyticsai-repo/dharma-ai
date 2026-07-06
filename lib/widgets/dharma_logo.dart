@@ -49,7 +49,7 @@ class DharmaLogo extends ConsumerWidget {
           style: GoogleFonts.inter(
             fontSize: height * 0.155,
             fontWeight: FontWeight.w500,
-            letterSpacing: 1.0,
+            letterSpacing: 1.2,
             color: SacredTheme.primary,
           ),
         ),

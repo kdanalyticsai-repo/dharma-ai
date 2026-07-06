@@ -201,9 +201,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 // Tagline
                 Text(
-                  _isLangSlide
-                      ? 'Wisdom · Intelligence · Purpose'
-                      : AppTranslations.get('onboardingTagline', lang),
+                  AppTranslations.get('logoTagline', lang),
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     letterSpacing: 1.2,
