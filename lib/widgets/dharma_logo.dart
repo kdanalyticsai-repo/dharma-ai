@@ -44,17 +44,14 @@ class DharmaLogo extends ConsumerWidget {
       children: [
         image,
         SizedBox(height: height * 0.10),
-        Transform.translate(
-          offset: const Offset(-20, 0),
-          child: Text(
-            AppTranslations.get('logoTagline', ref.watch(languageProvider)),
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: height * 0.155,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 1.2,
-              color: SacredTheme.primary,
-            ),
+        Text(
+          AppTranslations.get('logoTagline', ref.watch(languageProvider)),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: height * 0.155,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.2,
+            color: SacredTheme.primary,
           ),
         ),
       ],
