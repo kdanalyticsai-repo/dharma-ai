@@ -44,8 +44,8 @@ class DharmaLogo extends ConsumerWidget {
       children: [
         image,
         SizedBox(height: height * 0.10),
-        Padding(
-          padding: EdgeInsets.only(right: height * 0.55),
+        Transform.translate(
+          offset: const Offset(-20, 0),
           child: Text(
             AppTranslations.get('logoTagline', ref.watch(languageProvider)),
             textAlign: TextAlign.center,

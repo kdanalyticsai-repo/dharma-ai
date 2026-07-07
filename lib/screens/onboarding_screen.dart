@@ -199,9 +199,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                 const SizedBox(height: 4),
 
-                // Tagline — right-padded 40px so optical center aligns with D mark
-                Padding(
-                  padding: const EdgeInsets.only(right: 40),
+                // Tagline — shifted left 20px so it sits under the D mark
+                Transform.translate(
+                  offset: const Offset(-20, 0),
                   child: SizedBox(
                     width: double.infinity,
                     child: Text(
