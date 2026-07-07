@@ -161,11 +161,12 @@ class _DailyFeedScreenState extends ConsumerState<DailyFeedScreen> {
                 ),
 
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: const [
                     DharmaLogo(height: 72),
-                    SizedBox(width: 12),
+                    SizedBox(height: 8),
                     PwaInstallButton(),
                   ],
                 ),
