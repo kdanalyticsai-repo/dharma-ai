@@ -313,15 +313,19 @@ class _LanguageSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
           // Icon
           Container(
-            width: 90,
-            height: 90,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: accent.withOpacity(0.10),
@@ -334,10 +338,10 @@ class _LanguageSlide extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(Icons.language, size: 42, color: accent),
+            child: Icon(Icons.language, size: 38, color: accent),
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
 
           // Title — shown in all supported languages so it's self-explanatory
           Text(
@@ -363,7 +367,7 @@ class _LanguageSlide extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
           // Language grid — capped width so tiles stay compact on desktop
           Center(
@@ -414,7 +418,7 @@ class _LanguageSlide extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Tap hint
           Text(
@@ -425,7 +429,11 @@ class _LanguageSlide extends StatelessWidget {
               fontStyle: FontStyle.italic,
             ),
           ),
+
+          const SizedBox(height: 8),
         ],
+      ),
+        ),
       ),
     );
   }
