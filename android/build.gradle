@@ -21,7 +21,7 @@ allprojects {
 subprojects {
     if (project.name != 'app') {
         project.ext {
-            flutter = [compileSdkVersion: 36, minSdkVersion: 23, targetSdkVersion: 35, ndkVersion: "27.0.12077973"]
+            flutter = [compileSdkVersion: 36, minSdkVersion: 23, targetSdkVersion: 36, ndkVersion: "27.0.12077973"]
         }
     }
 }

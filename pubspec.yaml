@@ -1,6 +1,6 @@
 ﻿name: dharma_ai
 description: "A Sacred & Serene AI Scripture Reader and Spiritual Companion mobile app."
-version: 1.0.0+12
+version: 1.0.0+13
 
 publish_to: 'none'
 
@@ -46,8 +46,8 @@ dependencies:
   url_launcher: ^6.2.5   # open temple credit links (Audio Wisdom)
   google_sign_in: ^6.2.0   # native Google Sign-In for Android
   app_links: ^6.4.0        # intercept HTTPS App Links on Android (auth deep links)
-  in_app_purchase: ^3.3.0          # Google Play Billing for Android (Billing Library 7+)
-  in_app_purchase_android: ^0.5.1  # Access GooglePlayPurchaseDetails.purchaseToken
+  in_app_purchase: ^3.3.0          # Google Play Billing for Android (Billing Library 8+)
+  in_app_purchase_android: ^0.5.2  # Access GooglePlayPurchaseDetails.purchaseToken (GPBL 8.0)
 
 dev_dependencies:
   flutter_test:
