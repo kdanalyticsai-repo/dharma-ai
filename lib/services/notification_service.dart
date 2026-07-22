@@ -36,13 +36,46 @@ class NotificationService {
       FirebaseMessaging.onBackgroundMessage(_bgMessageHandler);
     }
 
+    // On web, wrap the entire FCM permission + token flow in a guard.
+    // firebase_messaging_web can throw null-assertion errors on certain
+    // Chrome Mobile configurations (e.g. notifications blocked at OS level,
+    // or service-worker not yet registered). Non-fatal: degrade silently.
+    if (kIsWeb) {
+      try {
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        if (settings.authorizationStatus == AuthorizationStatus.denied) return;
+        _attachListeners();
+        await _saveFcmToken();
+      } catch (_) {
+        return;
+      }
+      return;
+    }
+
+    // Android path (no try/catch needed — native FCM is stable).
     final settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
     if (settings.authorizationStatus == AuthorizationStatus.denied) return;
+    _attachListeners();
 
+    // App was terminated → user taps notification to launch it (Android only).
+    final initial = await FirebaseMessaging.instance.getInitialMessage();
+    if (initial?.data['screen'] != null) {
+      _pendingScreen = initial!.data['screen'];
+    }
+
+    // If user is already signed in at startup, save token now.
+    await _saveFcmToken();
+  }
+
+  static void _attachListeners() {
     // Save token whenever the user signs in (covers both cold start and re-auth).
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       if (data.session != null) await _saveFcmToken();
@@ -56,17 +89,6 @@ class NotificationService {
       final screen = message.data['screen'];
       if (screen != null) _tapController.add(screen);
     });
-
-    // App was terminated → user taps notification to launch it (Android only).
-    if (!kIsWeb) {
-      final initial = await FirebaseMessaging.instance.getInitialMessage();
-      if (initial?.data['screen'] != null) {
-        _pendingScreen = initial!.data['screen'];
-      }
-    }
-
-    // If user is already signed in at startup, save token now.
-    await _saveFcmToken();
   }
 
   static Future<void> _saveFcmToken() async {
